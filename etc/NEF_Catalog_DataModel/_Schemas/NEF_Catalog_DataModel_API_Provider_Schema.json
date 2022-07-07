@@ -1,0 +1,91 @@
+{
+   "name": "API_Provider",
+   "type": "object",
+   "description": "No Description for API Provider ",
+   "example": "API Provider ",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "ProviderName": {
+         "name": "ProviderName",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "ProviderDescription": {
+         "name": "ProviderDescription",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "PoviderIcon": {
+         "name": "PoviderIcon",
+         "description": "Collection Logo",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "ProviderBigLogo": {
+         "name": "ProviderBigLogo",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "Contact": {
+         "name": "Contact",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "WebSite": {
+         "name": "WebSite",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      }
+   },
+   "NAME": "API_Provider",
+   "required": [
+      "id",
+      "ProviderName",
+      "ProviderDescription",
+      "PoviderIcon",
+      "ProviderBigLogo",
+      "Contact",
+      "WebSite"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/API_Provider.json",
+   "title": "Schema for API_Provider"
+}

@@ -1,0 +1,58 @@
+{
+   "name": "API_Category",
+   "type": "object",
+   "description": "No Description for API_Category",
+   "example": "API_Category",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "CategoryName": {
+         "name": "CategoryName",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "CategoryDescription": {
+         "name": "CategoryDescription",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "CategoryLogo": {
+         "name": "CategoryLogo",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      }
+   },
+   "NAME": "API_Category",
+   "required": [
+      "id",
+      "CategoryName",
+      "CategoryDescription",
+      "CategoryLogo"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/API_Category.json",
+   "title": "Schema for API_Category"
+}

@@ -1,0 +1,144 @@
+{
+   "name": "Service",
+   "type": "object",
+   "description": "No Description for Service",
+   "example": "Service",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "Name": {
+         "name": "Name",
+         "description": "No Description for Name",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "Industry": {
+         "name": "Industry",
+         "description": "No Description for Industry",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "UseCase": {
+         "name": "UseCase",
+         "description": "No Description for UseCase",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "VolumeOrg": {
+         "name": "VolumeOrg",
+         "description": "No Description for VolumeOrg",
+         "example": "Column_1_",
+         "mandatory": "n",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "API_Subscription": {
+         "description": "Use ",
+         "$ref": "#/$defs/API_Subscription"
+      },
+      "API_Consumers": {
+         "description": "Provides Access to ",
+         "$ref": "#/$defs/API_Consumers"
+      }
+   },
+   "NAME": "Service",
+   "required": [
+      "id",
+      "Name",
+      "Industry",
+      "UseCase"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/Service.json",
+   "title": "Schema for Service",
+   "$defs": {
+      "API_Consumers": {
+         "name": "API_Consumers",
+         "type": "object",
+         "description": "No Description for API Consumers",
+         "example": "API_Consumers",
+         "properties": {
+            "ConsumerName": {
+               "name": "ConsumerName",
+               "description": "No Description for ConsumerName",
+               "example": "",
+               "mandatory": "y",
+               "pattern": "",
+               "type": "string",
+               "format": "",
+               "precision": "0"
+            },
+            "Contact_Details": {
+               "name": "Contact_Details",
+               "description": "No Description for Contact Details",
+               "example": "",
+               "mandatory": "y",
+               "pattern": "",
+               "type": "string",
+               "format": "",
+               "precision": "0"
+            },
+            "NEF_Credentials": {
+               "name": "NEF_Credentials",
+               "description": "No Description for NEF Credentials ",
+               "example": "NEF_Credentials_",
+               "mandatory": "y",
+               "pattern": "",
+               "type": "string",
+               "format": "",
+               "precision": "0"
+            }
+         },
+         "NAME": "API_Consumers",
+         "required": [
+            "ConsumerName",
+            "Contact_Details",
+            "NEF_Credentials"
+         ]
+      },
+      "API_Subscription": {
+         "name": "API_Subscription",
+         "type": "object",
+         "description": "API Subscription -",
+         "example": "API Subscription",
+         "properties": {
+            "TBC": {
+               "name": "TBC",
+               "description": "No Description for TBC",
+               "example": "",
+               "mandatory": "y",
+               "pattern": "",
+               "type": "string",
+               "format": "",
+               "precision": "0"
+            }
+         },
+         "NAME": "API_Subscription",
+         "required": [
+            "TBC"
+         ]
+      }
+   }
+}

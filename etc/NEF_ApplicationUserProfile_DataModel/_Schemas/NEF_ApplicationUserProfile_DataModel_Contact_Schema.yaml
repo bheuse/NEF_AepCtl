@@ -1,0 +1,144 @@
+$id: https://amdocs.com/schemas/nef/Contact.json
+$schema: http://json-schema.org/draft-07/schema
+NAME: Contact
+description: Contact and Credential Details
+example: Contact
+name: Contact
+properties:
+    Role:
+        -$ref: NEF_ApplicationUserProfile_DataModel_Role_Schema.json
+        description: 'Has role '
+        type: string
+    UserCreationDate:
+        description: User creation date.
+        example: ''
+        format: ''
+        mandatory: y
+        name: UserCreationDate
+        pattern: ''
+        precision: '0'
+        type: string
+    UserEmail:
+        description: User Email
+        example: eva.kumar@nxp.com
+        format: ''
+        mandatory: y
+        name: UserEmail
+        pattern: ''
+        precision: '0'
+        type: string
+    UserFirstName:
+        description: User Firstname
+        example: Eva
+        format: ''
+        mandatory: y
+        name: UserFirstName
+        pattern: ''
+        precision: '0'
+        type: string
+    UserJobRole:
+        description: User Job Role
+        example: ''
+        format: ''
+        mandatory: y
+        name: UserJobRole
+        pattern: ''
+        precision: '0'
+        type: string
+    UserLastLoginDate:
+        description: User last login date.
+        example: ''
+        format: ''
+        mandatory: y
+        name: UserLastLoginDate
+        pattern: ''
+        precision: '0'
+        type: string
+    UserModificationDate:
+        description: User modification date.
+        example: ''
+        format: ''
+        mandatory: y
+        name: UserModificationDate
+        pattern: ''
+        precision: '0'
+        type: string
+    UserName:
+        description: User Name
+        example: Kumar
+        format: ''
+        mandatory: y
+        name: UserName
+        pattern: ''
+        precision: '0'
+        type: string
+    UserPassword:
+        description: User Password
+        example: eva.kumar@nxp.com
+        format: ''
+        mandatory: y
+        name: UserPassword
+        pattern: ''
+        precision: '0'
+        type: string
+    UserPhoneNumber:
+        description: User Phone Number
+        example: eva.kumar@nxp.com
+        format: ''
+        mandatory: y
+        name: UserPhoneNumber
+        pattern: ''
+        precision: '0'
+        type: string
+    UserPicture:
+        description: User Picture
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: UserPicture
+        pattern: ''
+        precision: '0'
+        type: string
+    UserState:
+        description: User State
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: UserState
+        pattern: ''
+        precision: '0'
+        type: string
+    UserTermOfUseDate:
+        description: The date the user has agreed on Term of use.
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: UserTermOfUseDate
+        pattern: ''
+        precision: '0'
+        type: string
+    id:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: id
+        pattern: ''
+        precision: '0'
+        type: string
+required:
+- id
+- UserEmail
+- UserName
+- UserFirstName
+- UserPicture
+- UserPhoneNumber
+- UserJobRole
+- UserPassword
+- UserState
+- UserCreationDate
+- UserModificationDate
+- UserLastLoginDate
+- UserTermOfUseDate
+title: Schema for Contact
+type: object

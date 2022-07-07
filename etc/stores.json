@@ -1,0 +1,119 @@
+{ "stores" :  [
+  {
+    "name"     : "Providers",
+    "schema"   : "NEF_Catalog_DataModel_API_Provider_Schema",
+    "entity"   : "providers",
+    "name_att" : "ProviderName",
+    "desc_att" : "ProviderDescription",
+    "service"  : "catalog"
+  },
+  {
+    "name"     : "Articles",
+    "schema"   : "NEF_Catalog_DataModel_API_Article_Schema",
+    "entity"   : "articles",
+    "name_att" : "ArticleName",
+    "desc_att" : "ArticleName",
+    "service"  : "catalog"
+  },
+  {
+    "name"     : "Categories",
+    "schema"   : "NEF_Catalog_DataModel_API_Category_Schema",
+    "entity"   : "categorys",
+    "name_att" : "CategoryName",
+    "desc_att" : "CategoryName",
+    "service"  : "catalog"
+  },
+  {
+    "name"     : "Collections",
+    "schema"   : "NEF_Catalog_DataModel_API_Collection_Schema",
+    "entity"   : "collections",
+    "name_att" : "CollectionName",
+    "desc_att" : "CollectionName",
+    "service"  : "catalog"
+  },
+  {
+    "name"     : "APIs",
+    "schema"   : "NEF_Catalog_DataModel_API_Schema",
+    "entity"   : "APIs",
+    "name_att" : "API_Name",
+    "desc_att" : "API_Name",
+    "service"  : "catalog"
+  },
+  {
+    "name"     : "ApiBundles",
+    "schema"   : "NEF_Catalog_DataModel_API_Bundle_Schema",
+    "entity"   : "API_Bundles",
+    "name_att" : "Name",
+    "desc_att" : "Name",
+    "service"  : "catalog"
+  },
+  {
+    "name"     : "Accounts",
+    "schema"   : "NEF_ApplicationUserProfile_DataModel_Account_Schema",
+    "entity"   : "accounts",
+    "name_att" : "AccountName",
+    "desc_att" : "AccountName",
+    "service"  : "userprofiles"
+  },
+  {
+    "name"     : "Services",
+    "schema"   : "NEF_ApplicationUserProfile_DataModel_Service_Schema",
+    "entity"   : "services",
+    "name_att" : "Name",
+    "desc_att" : "Name",
+    "service"  : "userprofiles"
+  },
+  {
+    "name"     : "Contacts",
+    "schema"   : "NEF_ApplicationUserProfile_DataModel_Contact_Schema",
+    "entity"   : "contacts",
+    "name_att" : "UserEmail",
+    "desc_att" : "UserEmail",
+    "service"  : "userprofiles"
+  },
+  {
+    "name"     : "Roles",
+    "schema"   : "NEF_ApplicationUserProfile_DataModel_Role_Schema",
+    "entity"   : "roles",
+    "name_att" : "RoleName",
+    "desc_att" : "RoleName",
+    "service"  : "userprofiles"
+  },
+  {
+    "name"     : "Industries",
+    "schema"   : "NEF_ApplicationUserProfile_DataModel_Industry_Schema",
+    "entity"   : "industrys",
+    "name_att" : "IndustryName",
+    "desc_att" : "IndustryName",
+    "service"  : "userprofiles"
+  },
+  {
+    "name"     : "UseCases",
+    "schema"   : "NEF_ApplicationUserProfile_DataModel_UseCase_Schema",
+    "entity"   : "usecases",
+    "name_att" : "ApiConsumer",
+    "desc_att" : "ApiConsumer",
+    "service"  : "userprofiles"
+  },
+  {
+    "name"     : "Subscriptions",
+    "schema"   : "NEF_Catalog_DataModel_API_Provider_Schema",
+    "entity"   : "subscriptions",
+    "name_att" : "ApiConsumer",
+    "desc_att" : "ApiConsumer",
+    "service"  : "subscription"
+  },
+  {
+    "name"     : "ApiConsumers",
+    "schema"   : "NEF_Catalog_DataModel_API_Provider_Schema",
+    "entity"   : "api_consumers",
+    "name_att" : "API_ConsumerName",
+    "desc_att" : "API_ConsumerName",
+    "service"  : "subscription"
+  }
+
+] }
+
+
+
+

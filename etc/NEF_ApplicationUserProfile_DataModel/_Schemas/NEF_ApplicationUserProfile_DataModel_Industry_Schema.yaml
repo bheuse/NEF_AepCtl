@@ -1,0 +1,60 @@
+$id: https://amdocs.com/schemas/nef/Industry.json
+$schema: http://json-schema.org/draft-07/schema
+NAME: Industry
+description: No Description for Industry
+example: Industry
+name: Industry
+properties:
+    IndustryCategory:
+        description: Industry Category
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: IndustryCategory
+        pattern: ''
+        precision: '0'
+        type: string
+    IndustryInfo:
+        description: Industry Info
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: IndustryInfo
+        pattern: ''
+        precision: '0'
+        type: string
+    IndustryLogo:
+        description: Industry Logo
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: IndustryLogo
+        pattern: ''
+        precision: '0'
+        type: string
+    IndustryPopularity:
+        description: Industry Popularity
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: IndustryPopularity
+        pattern: ''
+        precision: '0'
+        type: string
+    id:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: id
+        pattern: ''
+        precision: '0'
+        type: string
+required:
+- id
+- IndustryPopularity
+- IndustryInfo
+- IndustryLogo
+- IndustryCategory
+title: Schema for Industry
+type: object

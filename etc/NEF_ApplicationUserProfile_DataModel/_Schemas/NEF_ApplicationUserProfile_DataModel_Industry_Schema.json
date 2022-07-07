@@ -1,0 +1,69 @@
+{
+   "name": "Industry",
+   "type": "object",
+   "description": "No Description for Industry",
+   "example": "Industry",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "IndustryPopularity": {
+         "name": "IndustryPopularity",
+         "description": "Industry Popularity",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "IndustryInfo": {
+         "name": "IndustryInfo",
+         "description": "Industry Info",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "IndustryLogo": {
+         "name": "IndustryLogo",
+         "description": "Industry Logo",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "IndustryCategory": {
+         "name": "IndustryCategory",
+         "description": "Industry Category",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      }
+   },
+   "NAME": "Industry",
+   "required": [
+      "id",
+      "IndustryPopularity",
+      "IndustryInfo",
+      "IndustryLogo",
+      "IndustryCategory"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/Industry.json",
+   "title": "Schema for Industry"
+}

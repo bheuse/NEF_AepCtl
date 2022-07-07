@@ -1,0 +1,20 @@
+{
+  "policyName": "TestPolicy1",
+  "displayName": "TestPolicy1",
+  "description": "Description of TestPolicy1",
+  "type": "SubscriptionThrottlePolicy",
+  "defaultLimit": {
+    "type": "REQUESTCOUNTLIMIT",
+    "requestCount": {
+      "timeUnit": "min",
+      "unitTime": 1,
+      "requestCount": 5
+    }
+  },
+  "rateLimitCount": 5,
+  "rateLimitTimeUnit": "sec",
+  "subscriberCount": 10,
+  "customAttributes": [],
+  "stopOnQuotaReach": true,
+  "billingPlan": "FREE"
+}

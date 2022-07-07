@@ -1,0 +1,1044 @@
+openapi: 3.0.2
+info:
+  title: NEF Business Data Model
+  version: 1.0.0
+  description: NEF Business Data Model.  This is generated, modify source architect
+    data model instead.
+  contact:
+    name: Bernard Heuse
+    url: https://www.amdocs.com/
+    email: bheuse@amdocs.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+- url: '{apiRoot}/nef-services-catalog-service/22-03'
+  description: Amdocs NEF Release 22-03
+  variables:
+    apiRoot:
+      default: https://nef.amdocs.com
+      description: The Amdocs NEF URL
+- url: http://${NEF_DOMAIN}/${NEF_SERVICE}/${VERSION}/
+  description: Amdocs NEF Play Ground Release 22-03
+  variables:
+    NEF_DOMAIN:
+      default: nef.amdocs.com
+      description: The NEF URL
+    NEF_SERVICE:
+      default: nef-services-catalog-service
+      description: The NEF Service Endpoint
+    VERSION:
+      default: 22-03
+      description: Release Version
+- url: https://127.0.0.1:5000/
+  description: Amdocs NEF Play Ground Data Store
+security:
+- {}
+- oAuth2ClientCredentials: []
+paths:
+  /datastore/APIs:
+    summary: Path used to manage the list of apis.
+    description: The REST endpoint/path used to list and create zero or more `API`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getAPIs
+      summary: List All APIs
+      description: Gets a list of all `API` entities.
+      parameters:
+      - in: query
+        name: API_Name
+        schema:
+          type: integer
+        description: TT
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      - in: query
+        name: API_Provider_Name
+        schema:
+          type: string
+        description: Filter for API_Provider_Name
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/API'
+          description: Successful response - returns an array of `API` entities.
+    post:
+      operationId: createAPI
+      summary: Create a API
+      description: Creates a new instance of a `API`.
+      requestBody:
+        description: A new `API` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API'
+  /datastore/APIs/{id}:
+    summary: Path used to manage a single API.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `API`.  This path contains `GET`, `PUT`, and `DELETE` operations used
+      to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `API`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getAPI
+      summary: Get a API
+      description: Gets the details of a single instance of a `API`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API'
+          description: Successful response - returns a single `API`.
+    put:
+      operationId: updateAPI
+      summary: Update a API
+      description: Updates an existing `API`.
+      requestBody:
+        description: Updated `API` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API'
+    delete:
+      operationId: deleteAPI
+      summary: Delete a API
+      description: Deletes an existing `API`.
+      responses:
+        '204':
+          description: Successful response.
+  /datastore/API_Bundles:
+    summary: Path used to manage the list of api_bundles.
+    description: The REST endpoint/path used to list and create zero or more `API_Bundle`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getAPI_Bundles
+      summary: List All API_Bundles
+      description: Gets a list of all `API_Bundle` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/API_Bundle'
+          description: Successful response - returns an array of `API_Bundle` entities.
+  /datastore/API_Bundles/{id}:
+    summary: Path used to manage a single API_Bundle.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `API_Bundle`.  This path contains `GET`, `PUT`, and `DELETE` operations
+      used to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `API_Bundle`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getAPI_Bundle
+      summary: Get a API_Bundle
+      description: Gets the details of a single instance of a `API_Bundle`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Bundle'
+          description: Successful response - returns a single `API_Bundle`.
+  /datastore/categorys:
+    summary: Path used to manage the list of api_categorys.
+    description: The REST endpoint/path used to list and create zero or more `API_Category`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getAPI_Categorys
+      summary: List All API_Categorys
+      description: Gets a list of all `API_Category` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/API_Category'
+          description: Successful response - returns an array of `API_Category` entities.
+    post:
+      operationId: createAPI_Category
+      summary: Create a API_Category
+      description: Creates a new instance of a `API_Category`.
+      requestBody:
+        description: A new `API_Category` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Category'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Category'
+  /datastore/categorys/{id}:
+    summary: Path used to manage a single API_Category.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `API_Category`.  This path contains `GET`, `PUT`, and `DELETE` operations
+      used to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `API_Category`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getAPI_Category
+      summary: Get a API_Category
+      description: Gets the details of a single instance of a `API_Category`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Category'
+          description: Successful response - returns a single `API_Category`.
+    put:
+      operationId: updateAPI_Category
+      summary: Update a API_Category
+      description: Updates an existing `API_Category`.
+      requestBody:
+        description: Updated `API_Category` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Category'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Category'
+    delete:
+      operationId: deleteAPI_Category
+      summary: Delete a API_Category
+      description: Deletes an existing `API_Category`.
+      responses:
+        '204':
+          description: Successful response.
+  /datastore/collections:
+    summary: Path used to manage the list of api_collections.
+    description: The REST endpoint/path used to list and create zero or more `API_Collection`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getAPI_Collections
+      summary: List All API_Collections
+      description: Gets a list of all `API_Collection` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/API_Collection'
+          description: Successful response - returns an array of `API_Collection`
+            entities.
+    post:
+      operationId: createAPI_Collection
+      summary: Create a API_Collection
+      description: Creates a new instance of a `API_Collection`.
+      requestBody:
+        description: A new `API_Collection` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Collection'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Collection'
+  /datastore/collections/{id}:
+    summary: Path used to manage a single API_Collection.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `API_Collection`.  This path contains `GET`, `PUT`, and `DELETE` operations
+      used to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `API_Collection`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getAPI_Collection
+      summary: Get a API_Collection
+      description: Gets the details of a single instance of a `API_Collection`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Collection'
+          description: Successful response - returns a single `API_Collection`.
+    put:
+      operationId: updateAPI_Collection
+      summary: Update a API_Collection
+      description: Updates an existing `API_Collection`.
+      requestBody:
+        description: Updated `API_Collection` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Collection'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Collection'
+    delete:
+      operationId: deleteAPI_Collection
+      summary: Delete a API_Collection
+      description: Deletes an existing `API_Collection`.
+      responses:
+        '204':
+          description: Successful response.
+  /datastore/providers:
+    summary: Path used to manage the list of api_providers.
+    description: The REST endpoint/path used to list and create zero or more `API_Provider`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getAPI_Providers
+      summary: List All API_Providers
+      description: Gets a list of all `API_Provider` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/API_Provider'
+          description: Successful response - returns an array of `API_Provider` entities.
+    post:
+      operationId: createAPI_Provider
+      summary: Create a API_Provider
+      description: Creates a new instance of a `API_Provider`.
+      requestBody:
+        description: A new `API_Provider` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Provider'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Provider'
+  /datastore/providers/{id}:
+    summary: Path used to manage a single API_Provider.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `API_Provider`.  This path contains `GET`, `PUT`, and `DELETE` operations
+      used to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `API_Provider`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getAPI_Provider
+      summary: Get a API_Provider
+      description: Gets the details of a single instance of a `API_Provider`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Provider'
+          description: Successful response - returns a single `API_Provider`.
+    put:
+      operationId: updateAPI_Provider
+      summary: Update a API_Provider
+      description: Updates an existing `API_Provider`.
+      requestBody:
+        description: Updated `API_Provider` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Provider'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Provider'
+    delete:
+      operationId: deleteAPI_Provider
+      summary: Delete a API_Provider
+      description: Deletes an existing `API_Provider`.
+      responses:
+        '204':
+          description: Successful response.
+  /datastore/articles:
+    summary: Path used to manage the list of api_articles.
+    description: The REST endpoint/path used to list and create zero or more `API_Article`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getAPI_Articles
+      summary: List All API_Articles
+      description: Gets a list of all `API_Article` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/API_Article'
+          description: Successful response - returns an array of `API_Article` entities.
+    post:
+      operationId: createAPI_Article
+      summary: Create a API_Article
+      description: Creates a new instance of a `API_Article`.
+      requestBody:
+        description: A new `API_Article` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Article'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Article'
+  /datastore/articles/{id}:
+    summary: Path used to manage a single API_Article.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `API_Article`.  This path contains `GET`, `PUT`, and `DELETE` operations
+      used to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `API_Article`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getAPI_Article
+      summary: Get a API_Article
+      description: Gets the details of a single instance of a `API_Article`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Article'
+          description: Successful response - returns a single `API_Article`.
+    put:
+      operationId: updateAPI_Article
+      summary: Update a API_Article
+      description: Updates an existing `API_Article`.
+      requestBody:
+        description: Updated `API_Article` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Article'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Article'
+    delete:
+      operationId: deleteAPI_Article
+      summary: Delete a API_Article
+      description: Deletes an existing `API_Article`.
+      responses:
+        '204':
+          description: Successful response.
+components:
+  securitySchemes:
+    oAuth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: '{tokenUrl}'
+          scopes: {}
+  schemas:
+    API:
+      type: object
+      description: 'API : A Set of related API Methods (YAML)'
+      example: API
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        API_Provider_Name:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        YAML:
+          description: API YAML - EndPoints
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        API_Name:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        API_Description:
+          description: No Description for API Description
+          example: API Description
+          pattern: ''
+          type: string
+          format: ''
+        Charging_Policies:
+          description: "Charging Policies that can be applied on this API.API : Charging\
+            \ Policy Profile \xE2\u20AC\u201C Charge access to APIs for API Consumers:\n\
+            Monthly fee\nPay per use\nFree \xE2\u20AC\xA6"
+          example: Charging_Policies_
+          pattern: ''
+          type: string
+          format: ''
+        API_Documentation:
+          description: 'No Description for API Documentation '
+          example: API_Documentation_
+          pattern: ''
+          type: string
+          format: ''
+        API_Use_Cases:
+          description: 'No Description for API Use Cases '
+          example: API_Use_Cases_
+          pattern: ''
+          type: string
+          format: ''
+        Version:
+          description: No Description for Version
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        UsagePolicy:
+          description: include_API_UsagePolicy
+          $ref: '#/components/schemas/UsagePolicy'
+        API_Details:
+          description: API_API_Details
+          $ref: '#/components/schemas/API_Details'
+        API_Category:
+          description: API_API_Category
+          type: array
+          items:
+            type: string
+        API_Collection:
+          description: API_API_Collection
+          type: array
+          items:
+            type: string
+        API_Provider:
+          description: 'Provides '
+          type: string
+        API_Article:
+          description: API_API_Article
+          type: array
+          items:
+            type: string
+      required:
+      - id
+      - API_Provider_Name
+      - YAML
+      - API_Name
+      - API_Description
+      - Charging_Policies
+      - API_Documentation
+      - API_Use_Cases
+      - Version
+    API_Bundle:
+      type: object
+      description: "Set of Related APIs, defined in the Catalog, for industry specific\
+        \ usage\\u000b(HealthCare, Telecom, Manufacturing, Finance, \xE2\u20AC\xA6\
+        )"
+      example: API Bundle
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        Name:
+          description: No Description for Name
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        Industry:
+          description: No Description for Industry
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        Use_Case:
+          description: No Description for Use Case
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        API:
+          description: 'Includes '
+          type: string
+      required:
+      - id
+      - Name
+      - Industry
+      - Use_Case
+    UsagePolicy:
+      type: object
+      description: No Description for UsagePolicy
+      example: UsagePolicy
+      properties:
+        VariableName:
+          description: No Description for VariableName
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        VariableSemantic:
+          description: No Description for VariableSemantic
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        VariableType:
+          description: No Description for VariableType
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - VariableName
+      - VariableSemantic
+      - VariableType
+    API_Details:
+      type: object
+      description: No Description for API Details
+      example: API Details
+      properties:
+        PublicAPI:
+          description: Public API or Private API is False.
+          example: noExampleValue
+          pattern: ''
+          type: boolean
+          format: ''
+        Verified:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: boolean
+          format: ''
+        Official:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: boolean
+          format: ''
+        Popularity:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: integer
+          format: ''
+        Latency:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        ServiceLevel:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        LastUpdate:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        Free:
+          description: Free / Paid
+          example: noExampleValue
+          pattern: ''
+          type: boolean
+          format: ''
+        ReadMe:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        Logo:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        Summary:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        OverviewPage:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        FeaturesPage:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - PublicAPI
+      - Verified
+      - Official
+      - Popularity
+      - Latency
+      - ServiceLevel
+      - LastUpdate
+      - Free
+      - ReadMe
+      - Logo
+      - Summary
+      - OverviewPage
+      - FeaturesPage
+    API_Category:
+      type: object
+      description: No Description for API_Category
+      example: API_Category
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        CategoryName:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        CategoryDescription:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        CategoryLogo:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - id
+      - CategoryName
+      - CategoryDescription
+      - CategoryLogo
+    API_Collection:
+      type: object
+      description: No Description for API Collection
+      example: API Collection
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        CollectionName:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        CollectionDescription:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        CollectionLogo:
+          description: Collection Logo
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - id
+      - CollectionName
+      - CollectionDescription
+      - CollectionLogo
+    API_Provider:
+      type: object
+      description: 'No Description for API Provider '
+      example: 'API Provider '
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        ProviderName:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        ProviderDescription:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        PoviderIcon:
+          description: Collection Logo
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        ProviderBigLogo:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        Contact:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        WebSite:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - id
+      - ProviderName
+      - ProviderDescription
+      - PoviderIcon
+      - ProviderBigLogo
+      - Contact
+      - WebSite
+    API_Article:
+      type: object
+      description: No Description for API Article
+      example: API Article
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        ArticleName:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        ArticleDescription:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        ArticlePage:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        ArticleLogo:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - id
+      - ArticleName
+      - ArticleDescription
+      - ArticlePage
+      - ArticleLogo
+  parameters: {}

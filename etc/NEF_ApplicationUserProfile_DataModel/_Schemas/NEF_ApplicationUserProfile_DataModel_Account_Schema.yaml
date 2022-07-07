@@ -1,0 +1,100 @@
+$id: https://amdocs.com/schemas/nef/Account.json
+$schema: http://json-schema.org/draft-07/schema
+NAME: Account
+description: No Description for Account
+example: Account
+name: Account
+properties:
+    AccountCreationDate:
+        description: Account creation date.
+        example: ''
+        format: ''
+        mandatory: y
+        name: AccountCreationDate
+        pattern: ''
+        precision: '0'
+        type: string
+    AccountDescription:
+        description: Account Description
+        example: ''
+        format: ''
+        mandatory: y
+        name: AccountDescription
+        pattern: ''
+        precision: '0'
+        type: string
+    AccountName:
+        description: Account Name
+        example: ''
+        format: ''
+        mandatory: y
+        name: AccountName
+        pattern: ''
+        precision: '0'
+        type: string
+    AccountState:
+        description: Account State
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: AccountState
+        pattern: ''
+        precision: '0'
+        type: string
+    CompanyName:
+        description: Company Name
+        example: NXP
+        format: ''
+        mandatory: y
+        name: CompanyName
+        pattern: ''
+        precision: '0'
+        type: string
+    CompanySize:
+        description: Company Size
+        example: 100-199
+        format: ''
+        mandatory: y
+        name: CompanySize
+        pattern: ''
+        precision: '0'
+        type: string
+    Contact:
+        -$ref: NEF_ApplicationUserProfile_DataModel_Contact_Schema.json
+        description: Account_Contact
+        type: string
+    Industry:
+        $ref: '#/components/schemas/Industry'
+        -$ref: NEF_ApplicationUserProfile_DataModel_Industry_Schema.json
+        description: Account_Industry
+        type: string
+    Service:
+        $ref: '#/components/schemas/Service'
+        -$ref: NEF_ApplicationUserProfile_DataModel_Service_Schema.json
+        description: Has Teams Partners
+        type: string
+    UseCase:
+        $ref: '#/components/schemas/UseCase'
+        -$ref: NEF_ApplicationUserProfile_DataModel_UseCase_Schema.json
+        description: Account_UseCase
+        type: string
+    id:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: id
+        pattern: ''
+        precision: '0'
+        type: string
+required:
+- id
+- AccountName
+- AccountDescription
+- AccountState
+- AccountCreationDate
+- CompanyName
+- CompanySize
+- Industry
+title: Schema for Account
+type: object

@@ -1,0 +1,122 @@
+$defs:
+    API_Consumers:
+        NAME: API_Consumers
+        description: No Description for API Consumers
+        example: API_Consumers
+        name: API_Consumers
+        properties:
+            ConsumerName:
+                description: No Description for ConsumerName
+                example: ''
+                format: ''
+                mandatory: y
+                name: ConsumerName
+                pattern: ''
+                precision: '0'
+                type: string
+            Contact_Details:
+                description: No Description for Contact Details
+                example: ''
+                format: ''
+                mandatory: y
+                name: Contact_Details
+                pattern: ''
+                precision: '0'
+                type: string
+            NEF_Credentials:
+                description: 'No Description for NEF Credentials '
+                example: NEF_Credentials_
+                format: ''
+                mandatory: y
+                name: NEF_Credentials
+                pattern: ''
+                precision: '0'
+                type: string
+        required:
+        - ConsumerName
+        - Contact_Details
+        - NEF_Credentials
+        type: object
+    API_Subscription:
+        NAME: API_Subscription
+        description: API Subscription -
+        example: API Subscription
+        name: API_Subscription
+        properties:
+            TBC:
+                description: No Description for TBC
+                example: ''
+                format: ''
+                mandatory: y
+                name: TBC
+                pattern: ''
+                precision: '0'
+                type: string
+        required:
+        - TBC
+        type: object
+$id: https://amdocs.com/schemas/nef/Service.json
+$schema: http://json-schema.org/draft-07/schema
+NAME: Service
+description: No Description for Service
+example: Service
+name: Service
+properties:
+    API_Consumers:
+        $ref: '#/$defs/API_Consumers'
+        description: 'Provides Access to '
+    API_Subscription:
+        $ref: '#/$defs/API_Subscription'
+        description: 'Use '
+    Industry:
+        description: No Description for Industry
+        example: ''
+        format: ''
+        mandatory: y
+        name: Industry
+        pattern: ''
+        precision: '0'
+        type: string
+    Name:
+        description: No Description for Name
+        example: ''
+        format: ''
+        mandatory: y
+        name: Name
+        pattern: ''
+        precision: '0'
+        type: string
+    UseCase:
+        description: No Description for UseCase
+        example: ''
+        format: ''
+        mandatory: y
+        name: UseCase
+        pattern: ''
+        precision: '0'
+        type: string
+    VolumeOrg:
+        description: No Description for VolumeOrg
+        example: Column_1_
+        format: ''
+        mandatory: n
+        name: VolumeOrg
+        pattern: ''
+        precision: '0'
+        type: string
+    id:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: id
+        pattern: ''
+        precision: '0'
+        type: string
+required:
+- id
+- Name
+- Industry
+- UseCase
+title: Schema for Service
+type: object

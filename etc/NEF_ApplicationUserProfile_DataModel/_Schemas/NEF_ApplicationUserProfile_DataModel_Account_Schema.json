@@ -1,0 +1,115 @@
+{
+   "name": "Account",
+   "type": "object",
+   "description": "No Description for Account",
+   "example": "Account",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "AccountName": {
+         "name": "AccountName",
+         "description": "Account Name",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "AccountDescription": {
+         "name": "AccountDescription",
+         "description": "Account Description",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "AccountState": {
+         "name": "AccountState",
+         "description": "Account State",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "AccountCreationDate": {
+         "name": "AccountCreationDate",
+         "description": "Account creation date.",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "CompanyName": {
+         "name": "CompanyName",
+         "description": "Company Name",
+         "example": "NXP",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "CompanySize": {
+         "name": "CompanySize",
+         "description": "Company Size",
+         "example": "100-199",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "Industry": {
+         "description": "Account_Industry",
+         "$ref": "#/components/schemas/Industry",
+         "-$ref": "NEF_ApplicationUserProfile_DataModel_Industry_Schema.json",
+         "type": "string"
+      },
+      "Service": {
+         "description": "Has Teams Partners",
+         "$ref": "#/components/schemas/Service",
+         "-$ref": "NEF_ApplicationUserProfile_DataModel_Service_Schema.json",
+         "type": "string"
+      },
+      "UseCase": {
+         "description": "Account_UseCase",
+         "$ref": "#/components/schemas/UseCase",
+         "-$ref": "NEF_ApplicationUserProfile_DataModel_UseCase_Schema.json",
+         "type": "string"
+      },
+      "Contact": {
+         "description": "Account_Contact",
+         "type": "string",
+         "-$ref": "NEF_ApplicationUserProfile_DataModel_Contact_Schema.json"
+      }
+   },
+   "NAME": "Account",
+   "required": [
+      "id",
+      "AccountName",
+      "AccountDescription",
+      "AccountState",
+      "AccountCreationDate",
+      "CompanyName",
+      "CompanySize",
+      "Industry"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/Account.json",
+   "title": "Schema for Account"
+}

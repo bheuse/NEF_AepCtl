@@ -1,0 +1,69 @@
+{
+   "name": "API_Article",
+   "type": "object",
+   "description": "No Description for API Article",
+   "example": "API Article",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "ArticleName": {
+         "name": "ArticleName",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "ArticleDescription": {
+         "name": "ArticleDescription",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "ArticlePage": {
+         "name": "ArticlePage",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "ArticleLogo": {
+         "name": "ArticleLogo",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      }
+   },
+   "NAME": "API_Article",
+   "required": [
+      "id",
+      "ArticleName",
+      "ArticleDescription",
+      "ArticlePage",
+      "ArticleLogo"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/API_Article.json",
+   "title": "Schema for API_Article"
+}

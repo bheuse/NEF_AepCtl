@@ -1,0 +1,80 @@
+$id: https://amdocs.com/schemas/nef/API_Provider.json
+$schema: http://json-schema.org/draft-07/schema
+NAME: API_Provider
+description: 'No Description for API Provider '
+example: 'API Provider '
+name: API_Provider
+properties:
+    Contact:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: Contact
+        pattern: ''
+        precision: '0'
+        type: string
+    PoviderIcon:
+        description: Collection Logo
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: PoviderIcon
+        pattern: ''
+        precision: '0'
+        type: string
+    ProviderBigLogo:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: ProviderBigLogo
+        pattern: ''
+        precision: '0'
+        type: string
+    ProviderDescription:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: ProviderDescription
+        pattern: ''
+        precision: '0'
+        type: string
+    ProviderName:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: ProviderName
+        pattern: ''
+        precision: '0'
+        type: string
+    WebSite:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: WebSite
+        pattern: ''
+        precision: '0'
+        type: string
+    id:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: id
+        pattern: ''
+        precision: '0'
+        type: string
+required:
+- id
+- ProviderName
+- ProviderDescription
+- PoviderIcon
+- ProviderBigLogo
+- Contact
+- WebSite
+title: Schema for API_Provider
+type: object

@@ -1,0 +1,15 @@
+{
+  "keyType": "PRODUCTION",
+  "keyManager": "Resident Key Manager",
+  "grantTypesToBeSupported": [
+    "password",
+    "client_credentials"
+  ],
+  "callbackUrl": "http://sample.com/callback/url",
+  "scopes": [
+    "am_application_scope",
+    "default"
+  ],
+  "validityTime": "3600",
+  "additionalProperties": {}
+}

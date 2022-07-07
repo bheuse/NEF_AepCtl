@@ -1,0 +1,15 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://service.ws.um.carbon.wso2.org" xmlns:xsd="http://common.mgt.user.carbon.wso2.org/xsd">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <ser:addUser>
+         <!--Optional:-->
+         <ser:userName>apicreator</ser:userName>
+         <!--Optional:-->
+         <ser:credential>apicreator</ser:credential>
+         <!--Zero or more repetitions:-->
+         <ser:roleList>Internal/creator</ser:roleList>
+         <!--Optional:-->
+         <ser:requirePasswordChange>false</ser:requirePasswordChange>
+      </ser:addUser>
+   </soapenv:Body>
+</soapenv:Envelope>

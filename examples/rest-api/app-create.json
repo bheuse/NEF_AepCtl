@@ -1,0 +1,9 @@
+{
+  "name": "QosApp",
+  "throttlingPolicy": "Unlimited",
+  "description": "Qos test application",
+  "tokenType": "JWT",
+  "groups": [],
+  "attributes": {},
+  "subscriptionScopes": []
+}

@@ -1,0 +1,58 @@
+{
+   "name": "Role",
+   "type": "object",
+   "description": "No Description for Role",
+   "example": "Role",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "RoleName": {
+         "name": "RoleName",
+         "description": "User Role",
+         "example": "provider",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "RoleValue": {
+         "name": "RoleValue",
+         "description": "Role Value",
+         "example": "provider",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "RoleDescription": {
+         "name": "RoleDescription",
+         "description": "Role Description",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      }
+   },
+   "NAME": "Role",
+   "required": [
+      "id",
+      "RoleName",
+      "RoleValue",
+      "RoleDescription"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/Role.json",
+   "title": "Schema for Role"
+}

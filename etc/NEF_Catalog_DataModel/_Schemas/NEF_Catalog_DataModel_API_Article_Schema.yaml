@@ -1,0 +1,60 @@
+$id: https://amdocs.com/schemas/nef/API_Article.json
+$schema: http://json-schema.org/draft-07/schema
+NAME: API_Article
+description: No Description for API Article
+example: API Article
+name: API_Article
+properties:
+    ArticleDescription:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: ArticleDescription
+        pattern: ''
+        precision: '0'
+        type: string
+    ArticleLogo:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: ArticleLogo
+        pattern: ''
+        precision: '0'
+        type: string
+    ArticleName:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: ArticleName
+        pattern: ''
+        precision: '0'
+        type: string
+    ArticlePage:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: ArticlePage
+        pattern: ''
+        precision: '0'
+        type: string
+    id:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: id
+        pattern: ''
+        precision: '0'
+        type: string
+required:
+- id
+- ArticleName
+- ArticleDescription
+- ArticlePage
+- ArticleLogo
+title: Schema for API_Article
+type: object

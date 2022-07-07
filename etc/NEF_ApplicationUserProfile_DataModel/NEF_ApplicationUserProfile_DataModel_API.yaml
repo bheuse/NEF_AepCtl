@@ -1,0 +1,915 @@
+openapi: 3.0.2
+info:
+  title: NEF Application User Profile Data Model
+  version: 1.0.0
+  description: NEF Business Data Model.  This is generated, modify source architect
+    data model instead.
+  contact:
+    name: Bernard Heuse
+    url: https://www.amdocs.com/
+    email: bheuse@amdocs.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+- url: '{apiRoot}/nef-application-user-profile-service/22-03'
+  description: Amdocs NEF Release 22-03
+  variables:
+    apiRoot:
+      default: https://nef.amdocs.com
+      description: The Amdocs NEF URL
+- url: http://${NEF_DOMAIN}/${NEF_SERVICE}/${VERSION}/
+  description: Amdocs NEF Play Ground Release 22-03
+  variables:
+    NEF_DOMAIN:
+      default: nef.amdocs.com
+      description: The NEF URL
+    NEF_SERVICE:
+      default: nef-application-user-profile-service
+      description: The NEF Service Endpoint
+    VERSION:
+      default: 22-03
+      description: Release Version
+- url: https://127.0.0.1:5000/
+  description: Amdocs NEF Play Ground Data Store
+security:
+- {}
+- oAuth2ClientCredentials: []
+paths:
+  /datastore/accounts:
+    summary: Path used to manage the list of accounts.
+    description: The REST endpoint/path used to list and create zero or more `Account`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getAccounts
+      summary: List All Accounts
+      description: Gets a list of all `Account` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Account'
+          description: Successful response - returns an array of `Account` entities.
+    post:
+      operationId: createAccount
+      summary: Create a Account
+      description: Creates a new instance of a `Account`.
+      requestBody:
+        description: A new `Account` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+  /datastore/accounts/{id}:
+    summary: Path used to manage a single Account.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `Account`.  This path contains `GET`, `PUT`, and `DELETE` operations used
+      to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `Account`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getAccount
+      summary: Get a Account
+      description: Gets the details of a single instance of a `Account`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+          description: Successful response - returns a single `Account`.
+    put:
+      operationId: updateAccount
+      summary: Update a Account
+      description: Updates an existing `Account`.
+      requestBody:
+        description: Updated `Account` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Account'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+    delete:
+      operationId: deleteAccount
+      summary: Delete a Account
+      description: Deletes an existing `Account`.
+      responses:
+        '204':
+          description: Successful response.
+  /datastore/services:
+    summary: Path used to manage the list of services.
+    description: The REST endpoint/path used to list and create zero or more `Service`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getServices
+      summary: List All Services
+      description: Gets a list of all `Service` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Service'
+          description: Successful response - returns an array of `Service` entities.
+    post:
+      operationId: createService
+      summary: Create a Service
+      description: Creates a new instance of a `Service`.
+      requestBody:
+        description: A new `Service` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Service'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+  /datastore/services/{id}:
+    summary: Path used to manage a single Service.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `Service`.  This path contains `GET`, `PUT`, and `DELETE` operations used
+      to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `Service`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getService
+      summary: Get a Service
+      description: Gets the details of a single instance of a `Service`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+          description: Successful response - returns a single `Service`.
+    put:
+      operationId: updateService
+      summary: Update a Service
+      description: Updates an existing `Service`.
+      requestBody:
+        description: Updated `Service` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Service'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+    delete:
+      operationId: deleteService
+      summary: Delete a Service
+      description: Deletes an existing `Service`.
+      responses:
+        '204':
+          description: Successful response.
+  /datastore/contacts:
+    summary: Path used to manage the list of contacts.
+    description: The REST endpoint/path used to list and create zero or more `Contact`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getContacts
+      summary: List All Contacts
+      description: Gets a list of all `Contact` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      - in: query
+        name: UserEmail
+        schema:
+          type: string
+        description: Filter for UserEmail
+      - in: query
+        name: UserPhoneNumber
+        schema:
+          type: string
+        description: Filter for UserPhoneNumber
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Contact'
+          description: Successful response - returns an array of `Contact` entities.
+    post:
+      operationId: createContact
+      summary: Create a Contact
+      description: Creates a new instance of a `Contact`.
+      requestBody:
+        description: A new `Contact` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contact'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+  /datastore/contacts/{id}:
+    summary: Path used to manage a single Contact.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `Contact`.  This path contains `GET`, `PUT`, and `DELETE` operations used
+      to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `Contact`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getContact
+      summary: Get a Contact
+      description: Gets the details of a single instance of a `Contact`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+          description: Successful response - returns a single `Contact`.
+    put:
+      operationId: updateContact
+      summary: Update a Contact
+      description: Updates an existing `Contact`.
+      requestBody:
+        description: Updated `Contact` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Contact'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+    delete:
+      operationId: deleteContact
+      summary: Delete a Contact
+      description: Deletes an existing `Contact`.
+      responses:
+        '204':
+          description: Successful response.
+  /datastore/roles:
+    summary: Path used to manage the list of roles.
+    description: The REST endpoint/path used to list and create zero or more `Role`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getRoles
+      summary: List All Roles
+      description: Gets a list of all `Role` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      - in: query
+        name: RoleName
+        schema:
+          type: string
+        description: Filter for RoleName
+      - in: query
+        name: RoleValue
+        schema:
+          type: string
+        description: Filter for RoleValue
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+          description: Successful response - returns an array of `Role` entities.
+  /datastore/roles/{id}:
+    summary: Path used to manage a single Role.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `Role`.  This path contains `GET`, `PUT`, and `DELETE` operations used
+      to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `Role`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getRole
+      summary: Get a Role
+      description: Gets the details of a single instance of a `Role`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: Successful response - returns a single `Role`.
+  /datastore/industrys:
+    summary: Path used to manage the list of industrys.
+    description: The REST endpoint/path used to list and create zero or more `Industry`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getIndustrys
+      summary: List All Industrys
+      description: Gets a list of all `Industry` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Industry'
+          description: Successful response - returns an array of `Industry` entities.
+  /datastore/industrys/{id}:
+    summary: Path used to manage a single Industry.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `Industry`.  This path contains `GET`, `PUT`, and `DELETE` operations
+      used to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `Industry`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getIndustry
+      summary: Get a Industry
+      description: Gets the details of a single instance of a `Industry`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Industry'
+          description: Successful response - returns a single `Industry`.
+  /datastore/usecases:
+    summary: Path used to manage the list of usecases.
+    description: The REST endpoint/path used to list and create zero or more `UseCase`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getUseCases
+      summary: List All UseCases
+      description: Gets a list of all `UseCase` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UseCase'
+          description: Successful response - returns an array of `UseCase` entities.
+  /datastore/usecases/{id}:
+    summary: Path used to manage a single UseCase.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `UseCase`.  This path contains `GET`, `PUT`, and `DELETE` operations used
+      to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `UseCase`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getUseCase
+      summary: Get a UseCase
+      description: Gets the details of a single instance of a `UseCase`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UseCase'
+          description: Successful response - returns a single `UseCase`.
+components:
+  securitySchemes:
+    oAuth2ClientCredentials:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: '{tokenUrl}'
+          scopes: {}
+  schemas:
+    Account:
+      type: object
+      description: No Description for Account
+      example: Account
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        AccountName:
+          description: Account Name
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        AccountDescription:
+          description: Account Description
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        AccountState:
+          description: Account State
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        AccountCreationDate:
+          description: Account creation date.
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        CompanyName:
+          description: Company Name
+          example: NXP
+          pattern: ''
+          type: string
+          format: ''
+        CompanySize:
+          description: Company Size
+          example: 100-199
+          pattern: ''
+          type: string
+          format: ''
+        Industry:
+          description: Account_Industry
+          $ref: '#/components/schemas/Industry'
+        Service:
+          description: Has Teams Partners
+          $ref: '#/components/schemas/Service'
+        UseCase:
+          description: Account_UseCase
+          $ref: '#/components/schemas/UseCase'
+        Contact:
+          description: Account_Contact
+          type: string
+      required:
+      - id
+      - AccountName
+      - AccountDescription
+      - AccountState
+      - AccountCreationDate
+      - CompanyName
+      - CompanySize
+      - Industry
+    API_Consumers:
+      type: object
+      description: No Description for API Consumers
+      example: API_Consumers
+      properties:
+        ConsumerName:
+          description: No Description for ConsumerName
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        Contact_Details:
+          description: No Description for Contact Details
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        NEF_Credentials:
+          description: 'No Description for NEF Credentials '
+          example: NEF_Credentials_
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - ConsumerName
+      - Contact_Details
+      - NEF_Credentials
+    Service:
+      type: object
+      description: No Description for Service
+      example: Service
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        Name:
+          description: No Description for Name
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        Industry:
+          description: No Description for Industry
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        UseCase:
+          description: No Description for UseCase
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        VolumeOrg:
+          description: No Description for VolumeOrg
+          example: Column_1_
+          pattern: ''
+          type: string
+          format: ''
+        API_Subscription:
+          description: 'Use '
+          $ref: '#/components/schemas/API_Subscription'
+        API_Consumers:
+          description: 'Provides Access to '
+          $ref: '#/components/schemas/API_Consumers'
+      required:
+      - id
+      - Name
+      - Industry
+      - UseCase
+    API_Subscription:
+      type: object
+      description: API Subscription -
+      example: API Subscription
+      properties:
+        TBC:
+          description: No Description for TBC
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - TBC
+    Contact:
+      type: object
+      description: Contact and Credential Details
+      example: Contact
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        UserEmail:
+          description: User Email
+          example: eva.kumar@nxp.com
+          pattern: ''
+          type: string
+          format: ''
+        UserName:
+          description: User Name
+          example: Kumar
+          pattern: ''
+          type: string
+          format: ''
+        UserFirstName:
+          description: User Firstname
+          example: Eva
+          pattern: ''
+          type: string
+          format: ''
+        UserPicture:
+          description: User Picture
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        UserPhoneNumber:
+          description: User Phone Number
+          example: eva.kumar@nxp.com
+          pattern: ''
+          type: string
+          format: ''
+        UserJobRole:
+          description: User Job Role
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        UserPassword:
+          description: User Password
+          example: eva.kumar@nxp.com
+          pattern: ''
+          type: string
+          format: ''
+        UserState:
+          description: User State
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        UserCreationDate:
+          description: User creation date.
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        UserModificationDate:
+          description: User modification date.
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        UserLastLoginDate:
+          description: User last login date.
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+        UserTermOfUseDate:
+          description: The date the user has agreed on Term of use.
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        Role:
+          description: 'Has role '
+          type: string
+      required:
+      - id
+      - UserEmail
+      - UserName
+      - UserFirstName
+      - UserPicture
+      - UserPhoneNumber
+      - UserJobRole
+      - UserPassword
+      - UserState
+      - UserCreationDate
+      - UserModificationDate
+      - UserLastLoginDate
+      - UserTermOfUseDate
+    Role:
+      type: object
+      description: No Description for Role
+      example: Role
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        RoleName:
+          description: User Role
+          example: provider
+          pattern: ''
+          type: string
+          format: ''
+        RoleValue:
+          description: Role Value
+          example: provider
+          pattern: ''
+          type: string
+          format: ''
+        RoleDescription:
+          description: Role Description
+          example: ''
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - id
+      - RoleName
+      - RoleValue
+      - RoleDescription
+    Industry:
+      type: object
+      description: No Description for Industry
+      example: Industry
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        IndustryPopularity:
+          description: Industry Popularity
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        IndustryInfo:
+          description: Industry Info
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        IndustryLogo:
+          description: Industry Logo
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        IndustryCategory:
+          description: Industry Category
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - id
+      - IndustryPopularity
+      - IndustryInfo
+      - IndustryLogo
+      - IndustryCategory
+    UseCase:
+      type: object
+      description: No Description for UseCase
+      example: UseCase
+      properties:
+        id:
+          description: Enter Description Here
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        UseCasePopularity:
+          description: UseCase Popularity
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        UseCaseInfo:
+          description: Use Case Info
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        UseCaseLogo:
+          description: Use Case Logo
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+        UseCaseCategory:
+          description: UseCase Category
+          example: noExampleValue
+          pattern: ''
+          type: string
+          format: ''
+      required:
+      - id
+      - UseCasePopularity
+      - UseCaseInfo
+      - UseCaseLogo
+      - UseCaseCategory
+  parameters: {}

@@ -1,0 +1,60 @@
+$id: https://amdocs.com/schemas/nef/UseCase.json
+$schema: http://json-schema.org/draft-07/schema
+NAME: UseCase
+description: No Description for UseCase
+example: UseCase
+name: UseCase
+properties:
+    UseCaseCategory:
+        description: UseCase Category
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: UseCaseCategory
+        pattern: ''
+        precision: '0'
+        type: string
+    UseCaseInfo:
+        description: Use Case Info
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: UseCaseInfo
+        pattern: ''
+        precision: '0'
+        type: string
+    UseCaseLogo:
+        description: Use Case Logo
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: UseCaseLogo
+        pattern: ''
+        precision: '0'
+        type: string
+    UseCasePopularity:
+        description: UseCase Popularity
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: UseCasePopularity
+        pattern: ''
+        precision: '0'
+        type: string
+    id:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: id
+        pattern: ''
+        precision: '0'
+        type: string
+required:
+- id
+- UseCasePopularity
+- UseCaseInfo
+- UseCaseLogo
+- UseCaseCategory
+title: Schema for UseCase
+type: object

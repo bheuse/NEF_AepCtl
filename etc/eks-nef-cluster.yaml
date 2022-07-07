@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Config
+clusters:
+- name: "eks-nef-cluster"
+  cluster:
+    server: "https://dubengrancher.openet.com/k8s/clusters/c-m-z9vprld9"
+    certificate-authority-data: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJwekNDQ\
+      VUyZ0F3SUJBZ0lCQURBS0JnZ3Foa2pPUFFRREFqQTdNUnd3R2dZRFZRUUtFeE5rZVc1aGJXbGoKY\
+      kdsemRHVnVaWEl0YjNKbk1Sc3dHUVlEVlFRREV4SmtlVzVoYldsamJHbHpkR1Z1WlhJdFkyRXdIa\
+      GNOTWpFeApNVEV4TVRnd05URTBXaGNOTXpFeE1UQTVNVGd3TlRFMFdqQTdNUnd3R2dZRFZRUUtFe\
+      E5rZVc1aGJXbGpiR2x6CmRHVnVaWEl0YjNKbk1Sc3dHUVlEVlFRREV4SmtlVzVoYldsamJHbHpkR\
+      1Z1WlhJdFkyRXdXVEFUQmdjcWhrak8KUFFJQkJnZ3Foa2pPUFFNQkJ3TkNBQVRpK2laMldUWmtlM\
+      UsyVVBENDZ5WnA4U3lEZHdBSjgxQlVZK0pnRittQQpYczJYWUlzTGc3SnBQYklJRFVWY1VuOUFWS\
+      HNBTFNPTTRMdkJ0SkUzTlZRRW8wSXdRREFPQmdOVkhROEJBZjhFCkJBTUNBcVF3RHdZRFZSMFRBU\
+      UgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVREoyWHErTHVDSyswWkN6VzVacHIKZXY4aUlzUXdDZ\
+      1lJS29aSXpqMEVBd0lEU0FBd1JRSWhBSkpJVWl3S2J0SW9hcHFUSkozYmsyc1oybmFKZ3BBRApNa\
+      jZ6dDN3dENtRmtBaUJ5eDNaMk9LNVgzOE83TG53TUxJem1kWDMwSm4vMFl0SjBpNWVzYW5Yak5nP\
+      T0KLS0tLS1FTkQgQ0VSVElGSUNBVEUtLS0tLQ=="
+
+users:
+- name: "eks-nef-cluster"
+  user:
+    token: "kubeconfig-user-2zm4chwwsh:c86vscjtnqj9jl9ttj7vw9f4x8b45wtg6gqkzdcl452czg2vlxg97n"
+
+
+contexts:
+- name: "eks-nef-cluster"
+  context:
+    user: "eks-nef-cluster"
+    cluster: "eks-nef-cluster"
+
+current-context: "eks-nef-cluster"

@@ -1,0 +1,307 @@
+$defs:
+    API_Details:
+        NAME: API_Details
+        description: No Description for API Details
+        example: API Details
+        name: API_Details
+        properties:
+            FeaturesPage:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: FeaturesPage
+                pattern: ''
+                precision: '0'
+                type: string
+            Free:
+                description: Free / Paid
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: Free
+                pattern: ''
+                precision: '0'
+                type: boolean
+            LastUpdate:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: LastUpdate
+                pattern: ''
+                precision: '0'
+                type: string
+            Latency:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: Latency
+                pattern: ''
+                precision: '0'
+                type: string
+            Logo:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: Logo
+                pattern: ''
+                precision: '0'
+                type: string
+            Official:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: Official
+                pattern: ''
+                precision: '0'
+                type: boolean
+            OverviewPage:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: OverviewPage
+                pattern: ''
+                precision: '0'
+                type: string
+            Popularity:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: Popularity
+                pattern: ''
+                precision: '0'
+                type: integer
+            PublicAPI:
+                description: Public API or Private API is False.
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: PublicAPI
+                pattern: ''
+                precision: '0'
+                type: boolean
+            ReadMe:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: ReadMe
+                pattern: ''
+                precision: '0'
+                type: string
+            ServiceLevel:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: ServiceLevel
+                pattern: ''
+                precision: '0'
+                type: string
+            Summary:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: Summary
+                pattern: ''
+                precision: '0'
+                type: string
+            Verified:
+                description: Enter Description Here
+                example: noExampleValue
+                format: ''
+                mandatory: y
+                name: Verified
+                pattern: ''
+                precision: '0'
+                type: boolean
+        required:
+        - PublicAPI
+        - Verified
+        - Official
+        - Popularity
+        - Latency
+        - ServiceLevel
+        - LastUpdate
+        - Free
+        - ReadMe
+        - Logo
+        - Summary
+        - OverviewPage
+        - FeaturesPage
+        type: object
+    UsagePolicy:
+        NAME: UsagePolicy
+        description: No Description for UsagePolicy
+        example: UsagePolicy
+        name: UsagePolicy
+        properties:
+            VariableName:
+                description: No Description for VariableName
+                example: ''
+                format: ''
+                mandatory: y
+                name: VariableName
+                pattern: ''
+                precision: '0'
+                type: string
+            VariableSemantic:
+                description: No Description for VariableSemantic
+                example: ''
+                format: ''
+                mandatory: y
+                name: VariableSemantic
+                pattern: ''
+                precision: '0'
+                type: string
+            VariableType:
+                description: No Description for VariableType
+                example: ''
+                format: ''
+                mandatory: y
+                name: VariableType
+                pattern: ''
+                precision: '0'
+                type: string
+        required:
+        - VariableName
+        - VariableSemantic
+        - VariableType
+        type: object
+$id: https://amdocs.com/schemas/nef/API.json
+$schema: http://json-schema.org/draft-07/schema
+NAME: API
+description: 'API : A Set of related API Methods (YAML)'
+example: API
+name: API
+properties:
+    API_Article:
+        description: API_API_Article
+        items:
+            -$ref: NEF_Catalog_DataModel_API_Article_Schema.json
+            type: string
+        type: array
+    API_Category:
+        description: API_API_Category
+        items:
+            -$ref: NEF_Catalog_DataModel_API_Category_Schema.json
+            type: string
+        type: array
+    API_Collection:
+        description: API_API_Collection
+        items:
+            -$ref: NEF_Catalog_DataModel_API_Collection_Schema.json
+            type: string
+        type: array
+    API_Description:
+        description: No Description for API Description
+        example: API Description
+        format: ''
+        mandatory: y
+        name: API_Description
+        pattern: ''
+        precision: '0'
+        type: string
+    API_Details:
+        $ref: '#/$defs/API_Details'
+        description: API_API_Details
+    API_Documentation:
+        description: 'No Description for API Documentation '
+        example: API_Documentation_
+        format: ''
+        mandatory: y
+        name: API_Documentation
+        pattern: ''
+        precision: '0'
+        type: string
+    API_Name:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: API_Name
+        pattern: ''
+        precision: '0'
+        type: string
+    API_Provider:
+        -$ref: NEF_Catalog_DataModel_API_Provider_Schema.json
+        description: 'Provides '
+        type: string
+    API_Provider_Name:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: API_Provider_Name
+        pattern: ''
+        precision: '0'
+        type: string
+    API_Use_Cases:
+        description: 'No Description for API Use Cases '
+        example: API_Use_Cases_
+        format: ''
+        mandatory: y
+        name: API_Use_Cases
+        pattern: ''
+        precision: '0'
+        type: string
+    Charging_Policies:
+        description: "Charging Policies that can be applied on this API.API : Charging\
+            \ Policy Profile \xE2\u20AC\u201C Charge access to APIs for API Consumers:\n\
+            Monthly fee\nPay per use\nFree \xE2\u20AC\xA6"
+        example: Charging_Policies_
+        format: ''
+        mandatory: y
+        name: Charging_Policies
+        pattern: ''
+        precision: '0'
+        type: string
+    UsagePolicy:
+        $ref: '#/$defs/UsagePolicy'
+        description: include_API_UsagePolicy
+    Version:
+        description: No Description for Version
+        example: ''
+        format: ''
+        mandatory: y
+        name: Version
+        pattern: ''
+        precision: '0'
+        type: string
+    YAML:
+        description: API YAML - EndPoints
+        example: ''
+        format: ''
+        mandatory: y
+        name: YAML
+        pattern: ''
+        precision: '0'
+        type: string
+    id:
+        description: Enter Description Here
+        example: noExampleValue
+        format: ''
+        mandatory: y
+        name: id
+        pattern: ''
+        precision: '0'
+        type: string
+required:
+- id
+- API_Provider_Name
+- YAML
+- API_Name
+- API_Description
+- Charging_Policies
+- API_Documentation
+- API_Use_Cases
+- Version
+title: Schema for API
+type: object

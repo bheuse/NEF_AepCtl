@@ -1,0 +1,58 @@
+{
+   "name": "API_Collection",
+   "type": "object",
+   "description": "No Description for API Collection",
+   "example": "API Collection",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "CollectionName": {
+         "name": "CollectionName",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "CollectionDescription": {
+         "name": "CollectionDescription",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "CollectionLogo": {
+         "name": "CollectionLogo",
+         "description": "Collection Logo",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      }
+   },
+   "NAME": "API_Collection",
+   "required": [
+      "id",
+      "CollectionName",
+      "CollectionDescription",
+      "CollectionLogo"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/API_Collection.json",
+   "title": "Schema for API_Collection"
+}

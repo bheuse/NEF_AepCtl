@@ -1,0 +1,5 @@
+{
+  "applicationId": "APP_ID",
+  "apiId": "API_ID",
+  "throttlingPolicy": "TestPolicy1"
+}

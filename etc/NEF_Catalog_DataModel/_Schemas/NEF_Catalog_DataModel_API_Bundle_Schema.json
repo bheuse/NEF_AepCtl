@@ -1,0 +1,63 @@
+{
+   "name": "API_Bundle",
+   "type": "object",
+   "description": "Set of Related APIs, defined in the Catalog, for industry specific usage\\u000b(HealthCare, Telecom, Manufacturing, Finance, \u00e2\u20ac\u00a6)",
+   "example": "API Bundle",
+   "properties": {
+      "id": {
+         "name": "id",
+         "description": "Enter Description Here",
+         "example": "noExampleValue",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "Name": {
+         "name": "Name",
+         "description": "No Description for Name",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "Industry": {
+         "name": "Industry",
+         "description": "No Description for Industry",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "Use_Case": {
+         "name": "Use_Case",
+         "description": "No Description for Use Case",
+         "example": "",
+         "mandatory": "y",
+         "pattern": "",
+         "type": "string",
+         "format": "",
+         "precision": "0"
+      },
+      "API": {
+         "description": "Includes ",
+         "type": "string",
+         "-$ref": "NEF_Catalog_DataModel_API_Schema.json"
+      }
+   },
+   "NAME": "API_Bundle",
+   "required": [
+      "id",
+      "Name",
+      "Industry",
+      "Use_Case"
+   ],
+   "$schema": "http://json-schema.org/draft-07/schema",
+   "$id": "https://amdocs.com/schemas/nef/API_Bundle.json",
+   "title": "Schema for API_Bundle"
+}
