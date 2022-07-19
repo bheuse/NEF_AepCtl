@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "ArticleName": {
          "name": "ArticleName",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "ArticleName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "ArticleDescription": {
          "name": "ArticleDescription",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "ArticleDescription",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "ArticlePage": {
          "name": "ArticlePage",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "ArticlePage",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,7 @@
       "ArticleLogo": {
          "name": "ArticleLogo",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "ArticleLogo",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -57,7 +57,6 @@
    },
    "NAME": "API_Article",
    "required": [
-      "id",
       "ArticleName",
       "ArticleDescription",
       "ArticlePage",

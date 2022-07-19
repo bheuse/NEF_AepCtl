@@ -37,8 +37,10 @@ jsonpath_ng
 setuptools
 rich
 PySimpleGUI
-consolemenu
+console-menu
 pyreadline
 prompt_toolkit
+pyinstaller
+
 
 

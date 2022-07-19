@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "CollectionName": {
          "name": "CollectionName",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "CollectionName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "CollectionDescription": {
          "name": "CollectionDescription",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "CollectionDescription",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "CollectionLogo": {
          "name": "CollectionLogo",
          "description": "Collection Logo",
-         "example": "noExampleValue",
+         "example": "CollectionLogo",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,6 @@
    },
    "NAME": "API_Collection",
    "required": [
-      "id",
       "CollectionName",
       "CollectionDescription",
       "CollectionLogo"

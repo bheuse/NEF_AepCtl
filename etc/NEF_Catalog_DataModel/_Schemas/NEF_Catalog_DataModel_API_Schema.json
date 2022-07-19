@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "API_Provider_Name": {
          "name": "API_Provider_Name",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "API_Provider_Name",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "YAML": {
          "name": "YAML",
          "description": "API YAML - EndPoints",
-         "example": "",
+         "example": "YAML",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "API_Name": {
          "name": "API_Name",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "API_Name",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -57,7 +57,7 @@
       "Charging_Policies": {
          "name": "Charging_Policies",
          "description": "Charging Policies that can be applied on this API.API : Charging Policy Profile \u00e2\u20ac\u201c Charge access to APIs for API Consumers:\nMonthly fee\nPay per use\nFree \u00e2\u20ac\u00a6",
-         "example": "Charging_Policies_",
+         "example": "Charging_Policies",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -67,7 +67,7 @@
       "API_Documentation": {
          "name": "API_Documentation",
          "description": "No Description for API Documentation ",
-         "example": "API_Documentation_",
+         "example": "API_Documentation",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -77,7 +77,7 @@
       "API_Use_Cases": {
          "name": "API_Use_Cases",
          "description": "No Description for API Use Cases ",
-         "example": "API_Use_Cases_",
+         "example": "API_Use_Cases",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -87,7 +87,7 @@
       "Version": {
          "name": "Version",
          "description": "No Description for Version",
-         "example": "",
+         "example": "Version",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -134,7 +134,6 @@
    },
    "NAME": "API",
    "required": [
-      "id",
       "API_Provider_Name",
       "YAML",
       "API_Name",
@@ -157,7 +156,7 @@
             "VariableName": {
                "name": "VariableName",
                "description": "No Description for VariableName",
-               "example": "",
+               "example": "VariableName",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -167,7 +166,7 @@
             "VariableSemantic": {
                "name": "VariableSemantic",
                "description": "No Description for VariableSemantic",
-               "example": "",
+               "example": "VariableSemantic",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -177,7 +176,7 @@
             "VariableType": {
                "name": "VariableType",
                "description": "No Description for VariableType",
-               "example": "",
+               "example": "VariableType",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -201,7 +200,7 @@
             "PublicAPI": {
                "name": "PublicAPI",
                "description": "Public API or Private API is False.",
-               "example": "noExampleValue",
+               "example": "PublicAPI",
                "mandatory": "y",
                "pattern": "",
                "type": "boolean",
@@ -211,7 +210,7 @@
             "Verified": {
                "name": "Verified",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "Verified",
                "mandatory": "y",
                "pattern": "",
                "type": "boolean",
@@ -221,7 +220,7 @@
             "Official": {
                "name": "Official",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "Official",
                "mandatory": "y",
                "pattern": "",
                "type": "boolean",
@@ -231,7 +230,7 @@
             "Popularity": {
                "name": "Popularity",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "Popularity",
                "mandatory": "y",
                "pattern": "",
                "type": "integer",
@@ -241,7 +240,7 @@
             "Latency": {
                "name": "Latency",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "Latency",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -251,7 +250,7 @@
             "ServiceLevel": {
                "name": "ServiceLevel",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "ServiceLevel",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -261,7 +260,7 @@
             "LastUpdate": {
                "name": "LastUpdate",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "LastUpdate",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -271,7 +270,7 @@
             "Free": {
                "name": "Free",
                "description": "Free / Paid",
-               "example": "noExampleValue",
+               "example": "Free",
                "mandatory": "y",
                "pattern": "",
                "type": "boolean",
@@ -281,7 +280,7 @@
             "ReadMe": {
                "name": "ReadMe",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "ReadMe",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -291,7 +290,7 @@
             "Logo": {
                "name": "Logo",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "Logo",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -301,7 +300,7 @@
             "Summary": {
                "name": "Summary",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "Summary",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -311,7 +310,7 @@
             "OverviewPage": {
                "name": "OverviewPage",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "OverviewPage",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -321,7 +320,7 @@
             "FeaturesPage": {
                "name": "FeaturesPage",
                "description": "Enter Description Here",
-               "example": "noExampleValue",
+               "example": "FeaturesPage",
                "mandatory": "y",
                "pattern": "",
                "type": "string",

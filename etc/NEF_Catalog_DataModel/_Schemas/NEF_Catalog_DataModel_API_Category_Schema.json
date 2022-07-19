@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "CategoryName": {
          "name": "CategoryName",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "CategoryName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "CategoryDescription": {
          "name": "CategoryDescription",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "CategoryDescription",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "CategoryLogo": {
          "name": "CategoryLogo",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "CategoryLogo",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,6 @@
    },
    "NAME": "API_Category",
    "required": [
-      "id",
       "CategoryName",
       "CategoryDescription",
       "CategoryLogo"

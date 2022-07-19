@@ -1442,6 +1442,15 @@ def textToJson(text, indent=4) -> str:
     return the_text
 
 
+def textToList(text) -> list:
+    if (not text) : return list()
+    return text.strip().strip('[]\n"').replace('"', '').replace(' ', '').replace('\'', '').split(',')
+
+
+def isListContainedInList(subList : list, fullList : list) -> bool:
+    return set(subList).issubset(fullList)
+
+
 def checkJson(text) -> bool:
     if (text == None): return True
     text = text.strip()
@@ -1859,6 +1868,14 @@ def safeListFiles(pdir: str = ".", file_ext: str = "", keepExt=False) -> list:
 ###
 ### Path Functions
 ###
+
+
+def get_cwd_directory():
+    return os.getcwd()
+
+
+def get_abs_path(filename):
+    return os.path.abspath(filename)
 
 
 def get_tmp_directory(filename):

@@ -3,6 +3,7 @@
     "name"     : "Providers",
     "schema"   : "NEF_Catalog_DataModel_API_Provider_Schema",
     "entity"   : "providers",
+    "id_att"   : "id",
     "name_att" : "ProviderName",
     "desc_att" : "ProviderDescription",
     "service"  : "catalog"
@@ -11,22 +12,25 @@
     "name"     : "Articles",
     "schema"   : "NEF_Catalog_DataModel_API_Article_Schema",
     "entity"   : "articles",
+    "id_att"   : "id",
     "name_att" : "ArticleName",
-    "desc_att" : "ArticleName",
+    "desc_att" : "ArticleDescription",
     "service"  : "catalog"
   },
   {
     "name"     : "Categories",
     "schema"   : "NEF_Catalog_DataModel_API_Category_Schema",
-    "entity"   : "categorys",
+    "entity"   : "categories",
+    "id_att"   : "id",
     "name_att" : "CategoryName",
-    "desc_att" : "CategoryName",
+    "desc_att" : "CategoryDescription",
     "service"  : "catalog"
   },
   {
     "name"     : "Collections",
     "schema"   : "NEF_Catalog_DataModel_API_Collection_Schema",
     "entity"   : "collections",
+    "id_att"   : "id",
     "name_att" : "CollectionName",
     "desc_att" : "CollectionName",
     "service"  : "catalog"
@@ -35,6 +39,7 @@
     "name"     : "APIs",
     "schema"   : "NEF_Catalog_DataModel_API_Schema",
     "entity"   : "APIs",
+    "id_att"   : "id",
     "name_att" : "API_Name",
     "desc_att" : "API_Name",
     "service"  : "catalog"
@@ -43,6 +48,7 @@
     "name"     : "ApiBundles",
     "schema"   : "NEF_Catalog_DataModel_API_Bundle_Schema",
     "entity"   : "API_Bundles",
+    "id_att"   : "id",
     "name_att" : "Name",
     "desc_att" : "Name",
     "service"  : "catalog"
@@ -51,6 +57,7 @@
     "name"     : "Accounts",
     "schema"   : "NEF_ApplicationUserProfile_DataModel_Account_Schema",
     "entity"   : "accounts",
+    "id_att"   : "id",
     "name_att" : "AccountName",
     "desc_att" : "AccountName",
     "service"  : "userprofiles"
@@ -59,6 +66,7 @@
     "name"     : "Services",
     "schema"   : "NEF_ApplicationUserProfile_DataModel_Service_Schema",
     "entity"   : "services",
+    "id_att"   : "id",
     "name_att" : "Name",
     "desc_att" : "Name",
     "service"  : "userprofiles"
@@ -67,6 +75,7 @@
     "name"     : "Contacts",
     "schema"   : "NEF_ApplicationUserProfile_DataModel_Contact_Schema",
     "entity"   : "contacts",
+    "id_att"   : "id",
     "name_att" : "UserEmail",
     "desc_att" : "UserEmail",
     "service"  : "userprofiles"
@@ -75,6 +84,7 @@
     "name"     : "Roles",
     "schema"   : "NEF_ApplicationUserProfile_DataModel_Role_Schema",
     "entity"   : "roles",
+    "id_att"   : "id",
     "name_att" : "RoleName",
     "desc_att" : "RoleName",
     "service"  : "userprofiles"
@@ -82,7 +92,8 @@
   {
     "name"     : "Industries",
     "schema"   : "NEF_ApplicationUserProfile_DataModel_Industry_Schema",
-    "entity"   : "industrys",
+    "entity"   : "industries",
+    "id_att"   : "id",
     "name_att" : "IndustryName",
     "desc_att" : "IndustryName",
     "service"  : "userprofiles"
@@ -91,6 +102,7 @@
     "name"     : "UseCases",
     "schema"   : "NEF_ApplicationUserProfile_DataModel_UseCase_Schema",
     "entity"   : "usecases",
+    "id_att"   : "id",
     "name_att" : "ApiConsumer",
     "desc_att" : "ApiConsumer",
     "service"  : "userprofiles"
@@ -99,6 +111,7 @@
     "name"     : "Subscriptions",
     "schema"   : "NEF_Catalog_DataModel_API_Provider_Schema",
     "entity"   : "subscriptions",
+    "id_att"   : "id",
     "name_att" : "ApiConsumer",
     "desc_att" : "ApiConsumer",
     "service"  : "subscription"
@@ -107,9 +120,28 @@
     "name"     : "ApiConsumers",
     "schema"   : "NEF_Catalog_DataModel_API_Provider_Schema",
     "entity"   : "api_consumers",
+    "id_att"   : "id",
     "name_att" : "API_ConsumerName",
     "desc_att" : "API_ConsumerName",
     "service"  : "subscription"
+  },
+  {
+    "name"     : "WS_Users",
+    "schema"   : null,
+    "entity"   : "ws_users",
+    "id_att"   : "name",
+    "name_att" : "name",
+    "desc_att" : "role",
+    "service"  : "wso2"
+  },
+  {
+    "name"     : "WS_Categories",
+    "schema"   : null,
+    "entity"   : "ws_categories",
+    "id_att"   : "name",
+    "name_att" : "name",
+    "desc_att" : "role",
+    "service"  : "wso2"
   }
 
 ] }

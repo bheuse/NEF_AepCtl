@@ -7,7 +7,7 @@ name: API_Category
 properties:
     CategoryDescription:
         description: Enter Description Here
-        example: noExampleValue
+        example: CategoryDescription
         format: ''
         mandatory: y
         name: CategoryDescription
@@ -16,7 +16,7 @@ properties:
         type: string
     CategoryLogo:
         description: Enter Description Here
-        example: noExampleValue
+        example: CategoryLogo
         format: ''
         mandatory: y
         name: CategoryLogo
@@ -25,7 +25,7 @@ properties:
         type: string
     CategoryName:
         description: Enter Description Here
-        example: noExampleValue
+        example: CategoryName
         format: ''
         mandatory: y
         name: CategoryName
@@ -34,15 +34,14 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - CategoryName
 - CategoryDescription
 - CategoryLogo

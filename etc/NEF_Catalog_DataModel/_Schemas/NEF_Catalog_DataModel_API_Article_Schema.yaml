@@ -7,7 +7,7 @@ name: API_Article
 properties:
     ArticleDescription:
         description: Enter Description Here
-        example: noExampleValue
+        example: ArticleDescription
         format: ''
         mandatory: y
         name: ArticleDescription
@@ -16,7 +16,7 @@ properties:
         type: string
     ArticleLogo:
         description: Enter Description Here
-        example: noExampleValue
+        example: ArticleLogo
         format: ''
         mandatory: y
         name: ArticleLogo
@@ -25,7 +25,7 @@ properties:
         type: string
     ArticleName:
         description: Enter Description Here
-        example: noExampleValue
+        example: ArticleName
         format: ''
         mandatory: y
         name: ArticleName
@@ -34,7 +34,7 @@ properties:
         type: string
     ArticlePage:
         description: Enter Description Here
-        example: noExampleValue
+        example: ArticlePage
         format: ''
         mandatory: y
         name: ArticlePage
@@ -43,15 +43,14 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - ArticleName
 - ArticleDescription
 - ArticlePage

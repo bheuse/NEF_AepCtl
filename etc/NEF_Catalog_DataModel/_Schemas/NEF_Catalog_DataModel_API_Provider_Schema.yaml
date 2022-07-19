@@ -7,25 +7,16 @@ name: API_Provider
 properties:
     Contact:
         description: Enter Description Here
-        example: noExampleValue
+        example: Contact
         format: ''
         mandatory: y
         name: Contact
         pattern: ''
         precision: '0'
         type: string
-    PoviderIcon:
-        description: Collection Logo
-        example: noExampleValue
-        format: ''
-        mandatory: y
-        name: PoviderIcon
-        pattern: ''
-        precision: '0'
-        type: string
     ProviderBigLogo:
         description: Enter Description Here
-        example: noExampleValue
+        example: ProviderBigLogo
         format: ''
         mandatory: y
         name: ProviderBigLogo
@@ -34,16 +25,25 @@ properties:
         type: string
     ProviderDescription:
         description: Enter Description Here
-        example: noExampleValue
+        example: ProviderDescription
         format: ''
         mandatory: y
         name: ProviderDescription
         pattern: ''
         precision: '0'
         type: string
+    ProviderIcon:
+        description: Collection Logo
+        example: ProviderIcon
+        format: ''
+        mandatory: y
+        name: ProviderIcon
+        pattern: ''
+        precision: '0'
+        type: string
     ProviderName:
         description: Enter Description Here
-        example: noExampleValue
+        example: ProviderName
         format: ''
         mandatory: y
         name: ProviderName
@@ -52,7 +52,7 @@ properties:
         type: string
     WebSite:
         description: Enter Description Here
-        example: noExampleValue
+        example: WebSite
         format: ''
         mandatory: y
         name: WebSite
@@ -61,18 +61,17 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - ProviderName
 - ProviderDescription
-- PoviderIcon
+- ProviderIcon
 - ProviderBigLogo
 - Contact
 - WebSite

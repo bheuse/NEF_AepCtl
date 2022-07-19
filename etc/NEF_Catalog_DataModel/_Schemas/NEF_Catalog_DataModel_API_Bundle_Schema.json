@@ -7,7 +7,7 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "id",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -17,7 +17,7 @@
       "Name": {
          "name": "Name",
          "description": "No Description for Name",
-         "example": "",
+         "example": "Name",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "Industry": {
          "name": "Industry",
          "description": "No Description for Industry",
-         "example": "",
+         "example": "Industry",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "Use_Case": {
          "name": "Use_Case",
          "description": "No Description for Use Case",
-         "example": "",
+         "example": "Use_Case",
          "mandatory": "y",
          "pattern": "",
          "type": "string",

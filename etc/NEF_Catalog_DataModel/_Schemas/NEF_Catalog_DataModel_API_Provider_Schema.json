@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "ProviderName": {
          "name": "ProviderName",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "ProviderName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,17 +27,17 @@
       "ProviderDescription": {
          "name": "ProviderDescription",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "ProviderDescription",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
          "format": "",
          "precision": "0"
       },
-      "PoviderIcon": {
-         "name": "PoviderIcon",
+      "ProviderIcon": {
+         "name": "ProviderIcon",
          "description": "Collection Logo",
-         "example": "noExampleValue",
+         "example": "ProviderIcon",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,7 @@
       "ProviderBigLogo": {
          "name": "ProviderBigLogo",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "ProviderBigLogo",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -57,7 +57,7 @@
       "Contact": {
          "name": "Contact",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "Contact",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -67,7 +67,7 @@
       "WebSite": {
          "name": "WebSite",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
+         "example": "WebSite",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -77,10 +77,9 @@
    },
    "NAME": "API_Provider",
    "required": [
-      "id",
       "ProviderName",
       "ProviderDescription",
-      "PoviderIcon",
+      "ProviderIcon",
       "ProviderBigLogo",
       "Contact",
       "WebSite"

@@ -7,7 +7,7 @@ $defs:
         properties:
             FeaturesPage:
                 description: Enter Description Here
-                example: noExampleValue
+                example: FeaturesPage
                 format: ''
                 mandatory: y
                 name: FeaturesPage
@@ -16,7 +16,7 @@ $defs:
                 type: string
             Free:
                 description: Free / Paid
-                example: noExampleValue
+                example: Free
                 format: ''
                 mandatory: y
                 name: Free
@@ -25,7 +25,7 @@ $defs:
                 type: boolean
             LastUpdate:
                 description: Enter Description Here
-                example: noExampleValue
+                example: LastUpdate
                 format: ''
                 mandatory: y
                 name: LastUpdate
@@ -34,7 +34,7 @@ $defs:
                 type: string
             Latency:
                 description: Enter Description Here
-                example: noExampleValue
+                example: Latency
                 format: ''
                 mandatory: y
                 name: Latency
@@ -43,7 +43,7 @@ $defs:
                 type: string
             Logo:
                 description: Enter Description Here
-                example: noExampleValue
+                example: Logo
                 format: ''
                 mandatory: y
                 name: Logo
@@ -52,7 +52,7 @@ $defs:
                 type: string
             Official:
                 description: Enter Description Here
-                example: noExampleValue
+                example: Official
                 format: ''
                 mandatory: y
                 name: Official
@@ -61,7 +61,7 @@ $defs:
                 type: boolean
             OverviewPage:
                 description: Enter Description Here
-                example: noExampleValue
+                example: OverviewPage
                 format: ''
                 mandatory: y
                 name: OverviewPage
@@ -70,7 +70,7 @@ $defs:
                 type: string
             Popularity:
                 description: Enter Description Here
-                example: noExampleValue
+                example: Popularity
                 format: ''
                 mandatory: y
                 name: Popularity
@@ -79,7 +79,7 @@ $defs:
                 type: integer
             PublicAPI:
                 description: Public API or Private API is False.
-                example: noExampleValue
+                example: PublicAPI
                 format: ''
                 mandatory: y
                 name: PublicAPI
@@ -88,7 +88,7 @@ $defs:
                 type: boolean
             ReadMe:
                 description: Enter Description Here
-                example: noExampleValue
+                example: ReadMe
                 format: ''
                 mandatory: y
                 name: ReadMe
@@ -97,7 +97,7 @@ $defs:
                 type: string
             ServiceLevel:
                 description: Enter Description Here
-                example: noExampleValue
+                example: ServiceLevel
                 format: ''
                 mandatory: y
                 name: ServiceLevel
@@ -106,7 +106,7 @@ $defs:
                 type: string
             Summary:
                 description: Enter Description Here
-                example: noExampleValue
+                example: Summary
                 format: ''
                 mandatory: y
                 name: Summary
@@ -115,7 +115,7 @@ $defs:
                 type: string
             Verified:
                 description: Enter Description Here
-                example: noExampleValue
+                example: Verified
                 format: ''
                 mandatory: y
                 name: Verified
@@ -145,7 +145,7 @@ $defs:
         properties:
             VariableName:
                 description: No Description for VariableName
-                example: ''
+                example: VariableName
                 format: ''
                 mandatory: y
                 name: VariableName
@@ -154,7 +154,7 @@ $defs:
                 type: string
             VariableSemantic:
                 description: No Description for VariableSemantic
-                example: ''
+                example: VariableSemantic
                 format: ''
                 mandatory: y
                 name: VariableSemantic
@@ -163,7 +163,7 @@ $defs:
                 type: string
             VariableType:
                 description: No Description for VariableType
-                example: ''
+                example: VariableType
                 format: ''
                 mandatory: y
                 name: VariableType
@@ -214,7 +214,7 @@ properties:
         description: API_API_Details
     API_Documentation:
         description: 'No Description for API Documentation '
-        example: API_Documentation_
+        example: API_Documentation
         format: ''
         mandatory: y
         name: API_Documentation
@@ -223,7 +223,7 @@ properties:
         type: string
     API_Name:
         description: Enter Description Here
-        example: noExampleValue
+        example: API_Name
         format: ''
         mandatory: y
         name: API_Name
@@ -236,7 +236,7 @@ properties:
         type: string
     API_Provider_Name:
         description: Enter Description Here
-        example: noExampleValue
+        example: API_Provider_Name
         format: ''
         mandatory: y
         name: API_Provider_Name
@@ -245,7 +245,7 @@ properties:
         type: string
     API_Use_Cases:
         description: 'No Description for API Use Cases '
-        example: API_Use_Cases_
+        example: API_Use_Cases
         format: ''
         mandatory: y
         name: API_Use_Cases
@@ -256,7 +256,7 @@ properties:
         description: "Charging Policies that can be applied on this API.API : Charging\
             \ Policy Profile \xE2\u20AC\u201C Charge access to APIs for API Consumers:\n\
             Monthly fee\nPay per use\nFree \xE2\u20AC\xA6"
-        example: Charging_Policies_
+        example: Charging_Policies
         format: ''
         mandatory: y
         name: Charging_Policies
@@ -268,7 +268,7 @@ properties:
         description: include_API_UsagePolicy
     Version:
         description: No Description for Version
-        example: ''
+        example: Version
         format: ''
         mandatory: y
         name: Version
@@ -277,7 +277,7 @@ properties:
         type: string
     YAML:
         description: API YAML - EndPoints
-        example: ''
+        example: YAML
         format: ''
         mandatory: y
         name: YAML
@@ -286,15 +286,14 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - API_Provider_Name
 - YAML
 - API_Name

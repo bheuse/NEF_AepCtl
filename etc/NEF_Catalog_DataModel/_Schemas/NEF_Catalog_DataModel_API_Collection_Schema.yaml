@@ -7,7 +7,7 @@ name: API_Collection
 properties:
     CollectionDescription:
         description: Enter Description Here
-        example: noExampleValue
+        example: CollectionDescription
         format: ''
         mandatory: y
         name: CollectionDescription
@@ -16,7 +16,7 @@ properties:
         type: string
     CollectionLogo:
         description: Collection Logo
-        example: noExampleValue
+        example: CollectionLogo
         format: ''
         mandatory: y
         name: CollectionLogo
@@ -25,7 +25,7 @@ properties:
         type: string
     CollectionName:
         description: Enter Description Here
-        example: noExampleValue
+        example: CollectionName
         format: ''
         mandatory: y
         name: CollectionName
@@ -34,15 +34,14 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - CollectionName
 - CollectionDescription
 - CollectionLogo

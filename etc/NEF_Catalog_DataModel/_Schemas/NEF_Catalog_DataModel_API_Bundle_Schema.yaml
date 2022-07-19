@@ -12,7 +12,7 @@ properties:
         type: string
     Industry:
         description: No Description for Industry
-        example: ''
+        example: Industry
         format: ''
         mandatory: y
         name: Industry
@@ -21,7 +21,7 @@ properties:
         type: string
     Name:
         description: No Description for Name
-        example: ''
+        example: Name
         format: ''
         mandatory: y
         name: Name
@@ -30,7 +30,7 @@ properties:
         type: string
     Use_Case:
         description: No Description for Use Case
-        example: ''
+        example: Use_Case
         format: ''
         mandatory: y
         name: Use_Case
@@ -39,7 +39,7 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
         mandatory: y
         name: id

@@ -62,7 +62,9 @@ class Layout :
                                '&Events ...::M_EVENTS', '&Contexts ...::M_CONTEXTS', 'Enri&chers ...::M_ENRICHERS',
                                '&Rules ...::M_RULES',   '&Actions ...::M_ACTIONS',   '&Templates ...::M_TEMPLATES']]
 
-    menu_def = [['&File',     ['&Exit::M_EXIT', 'BackUp &FS Store::M_BACKUP_FS_STORE', 'BackUp &DS Store::M_BACKUP_DS_STORE']],
+    menu_def = [['&File',     ['&Exit::M_EXIT', '---',
+                               'BackUp &FS Store::M_BACKUP_FS_STORE',              'BackUp &DS Store::M_BACKUP_DS_STORE', '---',
+                               '&Load DataSet into DS Store::M_LOAD_DS_STORE',     'Load DataSet into FS &Store::M_LOAD_FS_STORE']],
                 menu_browse,
                 ['&Settings', ['Theme, &Editor ...::M_SETTINGS', 'Toggle &Output::M_TOGGLE_OUTPUT', 'Toggle &Debug::M_DEBUG']],
                 ['&Help',     [ '&Error ...::M_ERROR', '&How To ...::M_HELP', '---', '&About ...::M_ABOUT']]]
@@ -86,6 +88,12 @@ class Layout :
     def createAddButonsLayout(Resource: str):
         BtLayout = Layout.addButonsLayout(None,     Resource, 'Hello', color=('white', 'springgreen4'))
         BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'World', color=('white', 'springgreen4'))
+        return BtLayout
+
+    @staticmethod
+    def createOpenapiSchemaButonsLayout(Resource: str):
+        BtLayout = Layout.addButonsLayout(None,     Resource, 'Schema', color=('springgreen4', 'white'))
+        BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'OpenAPI', color=('springgreen4', 'white'))
         return BtLayout
 
     @staticmethod
@@ -136,7 +144,7 @@ class Layout :
     @staticmethod
     def createButtonsLayout(Resource: str, buttonsList=None):
         default_button_list = [
-                    sg.Button(' List ',     button_color=('white', 'springgreen4'), key=Resource + "/ListBt"),
+                     sg.Button(' List ',    button_color=('white', 'springgreen4'), key=Resource + "/ListBt"),
                      sg.Button(' Load ',    button_color=('white', 'springgreen4'), key=Resource + "/LoadBt"),
                      sg.Button(' Check ',   button_color=('white', 'grey'), key=Resource + "/CheckBt"),
                      sg.Button(' BackUp ',  button_color=('white', 'grey'), key=Resource + "/BackUpBt"),
@@ -144,8 +152,6 @@ class Layout :
                      sg.Button(' Edit ',    button_color=('white', 'blue'), key=Resource + "/EditBt"),
                      sg.Button(' Save ',    button_color=('white', 'blue'), key=Resource + "/SaveBt"),
                      sg.Button(' Delete ',  button_color=('white', 'firebrick3'), key=Resource + "/DeleteBt"),
-                     sg.Button(' Schema ',  button_color=('springgreen4', 'white'), key=Resource + "/SchemaBt"),
-                     sg.Button(' OpenAPI ', button_color=('springgreen4', 'white'), key=Resource + "/OpenAPIBt"),
                      ]
         if (not buttonsList) :
             return [default_button_list]
@@ -176,33 +182,33 @@ class Layout :
 
         DS_CATALOG_TABLIST = []
         for resource in aep.AEP_CATALOG_RESSOURCES:
-            DS_CATALOG_TABLIST = Layout.addTabTabGroup(DS_CATALOG_TABLIST, "DS", str(resource).capitalize())
+            DS_CATALOG_TABLIST = Layout.addTabTabGroup(DS_CATALOG_TABLIST, "DS", str(resource).capitalize(), Layout.createOpenapiSchemaButonsLayout(resource))
         DS_CATALOG_GROUP = [[sg.TabGroup([DS_CATALOG_TABLIST], enable_events=True, font=("Courier", 12), key='DS Catalog/Tabs')]]
 
         DS_USERS_TABLIST = []
         for resource in aep.AEP_APPLICATION_USER_PROFILES_RESSOURCES:
-            DS_USERS_TABLIST = Layout.addTabTabGroup(DS_USERS_TABLIST, "DS", str(resource).capitalize())
+            DS_USERS_TABLIST = Layout.addTabTabGroup(DS_USERS_TABLIST, "DS", str(resource).capitalize(), Layout.createOpenapiSchemaButonsLayout(resource))
         DS_USERS_GROUP = [[sg.TabGroup([DS_USERS_TABLIST], enable_events=True, font=("Courier", 12), key='DS Users/Tabs')]]
 
         FS_CATALOG_TABLIST = []
         for resource in aep.AEP_CATALOG_RESSOURCES:
-            FS_CATALOG_TABLIST = Layout.addTabTabGroup(FS_CATALOG_TABLIST, "FS", str(resource).capitalize())
+            FS_CATALOG_TABLIST = Layout.addTabTabGroup(FS_CATALOG_TABLIST, "FS", str(resource).capitalize(), Layout.createOpenapiSchemaButonsLayout(resource))
         FS_CATALOG_GROUP = [[sg.TabGroup([FS_CATALOG_TABLIST], enable_events=True, font=("Courier", 12), key='FS Catalog/Tabs')]]
 
         FS_USERS_TABLIST = []
         for resource in aep.AEP_APPLICATION_USER_PROFILES_RESSOURCES:
-            FS_USERS_TABLIST = Layout.addTabTabGroup(FS_USERS_TABLIST, "FS", str(resource).capitalize())
+            FS_USERS_TABLIST = Layout.addTabTabGroup(FS_USERS_TABLIST, "FS", str(resource).capitalize(), Layout.createOpenapiSchemaButonsLayout(resource))
         FS_USERS_GROUP = [[sg.TabGroup([FS_USERS_TABLIST], enable_events=True, font=("Courier", 12), key='FS Users/Tabs')]]
 
         WS_TABLIST = []
         for resource in aep.WSO2_RESSOURCES:
-            WS_TABLIST = Layout.addTabTabGroup(WS_TABLIST, "WS", str(resource).capitalize(), Layout.createAddButonsLayout(resource))
+            WS_TABLIST = Layout.addTabTabGroup(WS_TABLIST, "WS", str(resource).capitalize())
         WS_GROUP = [[sg.TabGroup([WS_TABLIST], enable_events=True, font=("Courier", 12), key='WS WSO2/Tabs')]]
 
-        TAB_GROUP = sg.TabGroup([[sg.Tab(' DS Catalog ', DS_CATALOG_GROUP,     font=("Courier", 12), background_color='green',   key='DS_CatalogTab'),
-                                  sg.Tab(' DS Users ',   DS_USERS_GROUP,       font=("Courier", 12), background_color='green',   key='DS_UsersTab'),
-                                  sg.Tab(' FS Catalog ', FS_CATALOG_GROUP,     font=("Courier", 12), background_color='red',     key='FS_CatalogTab'),
+        TAB_GROUP = sg.TabGroup([[sg.Tab(' FS Catalog ', FS_CATALOG_GROUP,     font=("Courier", 12), background_color='red',     key='FS_CatalogTab'),
                                   sg.Tab(' FS Users ',   FS_USERS_GROUP,       font=("Courier", 12), background_color='red',     key='FS_UsersTab'),
+                                  sg.Tab(' DS Catalog ', DS_CATALOG_GROUP,     font=("Courier", 12), background_color='green',   key='DS_CatalogTab'),
+                                  sg.Tab(' DS Users ',   DS_USERS_GROUP,       font=("Courier", 12), background_color='green',   key='DS_UsersTab'),
                                   sg.Tab(' WS WSO2 ',    WS_GROUP,             font=("Courier", 12), background_color='blue',    key='WS_Tab'),
                                   sg.Tab(' System ',     Layout.systemLayout,  font=("Courier", 12),                             key='System_Tab')]],
                     enable_events=True, font=("Courier", 12), key='Tabs')
@@ -507,6 +513,49 @@ class MainGUI(threading.Thread):
                 self.setWidgetValue("TimeStamp", self.reqServer.d_data["VersionControl/TimeStamp"])
         """
 
+    def updateWso2Entry(self, entry : str , what : str = None, version=True):
+        if (what == None):
+            self.current_element = self.getWidgetValue(self.Resources + "/Name")
+        else:
+            self.current_element = what
+        obj = ut.loadDataContent(entry)
+        if ("role" in obj):  # WS Users
+            self.setWidgetValue(self.Resources + "/Name",        str(obj["name"]))
+            self.setWidgetValue(self.Resources + "/Identifier",  str(obj["name"]))
+            self.setWidgetValue(self.Resources + "/Text",        str(entry))
+            self.setWidgetValue(self.Resources + "/Output",      str(entry))
+            self.setWidgetValue(self.Resources + "/Description", str(obj["role"]))
+            return
+
+        if ((not obj) or ("id" not in obj)):
+            ident = "(No identifier found)"
+            self.setWidgetValue(self.Resources + "/Name",        str(what))
+            self.setWidgetValue(self.Resources + "/Identifier",  str(ident))
+            self.setWidgetValue(self.Resources + "/Text",        str(entry))
+            self.setWidgetValue(self.Resources + "/Output",      str(entry))
+            self.setWidgetValue(self.Resources + "/Description", str(aep.StoreManager.get_description(str(self.Resources), str(ident))))
+        else:
+            ident = obj["id"]
+            self.setWidgetValue(self.Resources + "/Name",        str(what))
+            self.setWidgetValue(self.Resources + "/Identifier",  str(ident))
+            self.setWidgetValue(self.Resources + "/Text",        str(entry))
+            self.setWidgetValue(self.Resources + "/Output",      str(entry))
+            self.setWidgetValue(self.Resources + "/Description", str(aep.StoreManager.get_description(str(self.Resources), str(ident))))
+        """
+        self.restRequest(self.resources+"/" + self.current_element + "?VC=False")
+        self.setWidgetValue("Tag",          "(Tag)")
+        self.setWidgetValue("Description",  "(Description)")
+        self.setWidgetValue("Version",      "(Version)")
+        self.setWidgetValue("TimeStamp",    "(TimeStamp)")
+        if (version == True):
+            self.restRequest(self.resources+"/" + self.current_element + "?versioncontrol")
+            if (self.reqServer.d_data):
+                self.setWidgetValue("Tag", self.reqServer.d_data["VersionControl/Tag"])
+                self.setWidgetValue("Description", self.reqServer.d_data["VersionControl/Comment"])
+                self.setWidgetValue("Version", self.reqServer.d_data["VersionControl/Version"])
+                self.setWidgetValue("TimeStamp", self.reqServer.d_data["VersionControl/TimeStamp"])
+        """
+
     def clearAepEntry(self, output=True):
         self.setWidgetValue("Name",         "")
         self.setWidgetValue("Text",         "( < Select "+self.Resource+")")
@@ -616,6 +665,8 @@ class MainGUI(threading.Thread):
         res = aep.main(command, interactive=False)
         if (res == None) :
             self.error("aepctl : returned " + str(res))
+            self.handleOutput(event=event, command=command, result="None - Error or Invalid Command")
+            return res
         if (not (res.strip().startswith("{") or res.strip().startswith("["))):
             if (not ut.to_yaml(res)):
                 self.error(res)
@@ -644,7 +695,10 @@ class MainGUI(threading.Thread):
         res = self.aepctl(cmd, event)
         if self.isError():
             return False
-        self.updateAepEntry(res, entry_id)
+        if (event.startswith("WS")) :
+            self.updateWso2Entry(res, entry_id)
+        else:
+            self.updateAepEntry(res, entry_id)
         self.setWidgetValue("Output", res)
         return True
 
@@ -691,6 +745,18 @@ class MainGUI(threading.Thread):
         cmd = self.Resource + " backUp " + bupdir
         res = self.aepctl(cmd, self.Resource + "/backUp")
         self.statusDone("BackedUp " + self.Resource + ".")
+        return True
+
+    def loadDataSet(self, resource):
+        self.Resource = resource
+        event = self.Resource + "/LoadDataSet"
+        self.statusDoing("Load DataSet " + self.Resource + " ...")
+        loadPath = utg.fileDirectorySelectorForm(buttonName="Load", windowTitle="Select Load Data Set")
+        if (not loadPath): return False
+        cmd = self.Resource + " load " + loadPath
+        res = self.aepctl(cmd, self.Resource + "/LoadDataSet")
+        self.setWidgetValue(self.Resources + "/Text", str(res))
+        self.statusDone("Loaded DataSet " + self.Resource + ".")
         return True
 
     def handleAepEvent(self, event, values):
@@ -782,6 +848,99 @@ class MainGUI(threading.Thread):
         if (event == self.Resources + "/EditBt"):
             self.statusDoing("Editing "+self.Resource+" ...")
             self.loadEntry()
+            content = self.getWidgetValue("Text", "NO_TEXT")
+            self.openFile(content, self.Resources, self.current_element)
+            return self.statusDone("Edit "+self.Resource+".")
+
+    def handleWso2Event(self, event, values):
+
+        widget   = self.eventWidget(event)
+
+        if ("Tabs" in widget):  # Tab Focus
+            self.loadList(self.current_value)
+            return True
+
+        if (widget == "ListBt"):  # Load List
+            self.loadList(event)
+            return self.statusDone("Listed "+self.Resource+".")
+
+        if (widget == "Listing"):  # Load List
+            if (self.current_value[0] in ["(Click List)", "-Empty-"]):
+                self.loadList(event)
+                return self.statusDone("Listed " + self.Resource + ".")
+            else:
+                self.loadEntry(event)
+                return self.statusDone("Loaded " + self.Resource + " " + self.current_element + ".")
+
+        if (widget == "DeleteBt"):
+            self.checkPayload(self.getWidgetValue(self.Resources + "/Text"))
+            if (self.isError()): return True
+            self.statusDoing("Deleting "+self.Resource+" ...")
+            entry    = self.getWidgetValue(self.Resources + "/Text")
+            dentry   = json.loads(entry)
+            name_att = aep.StoreManager().get_name_att(entity=self.Resources)
+            name     = dentry[name_att]
+            if (sg.PopupYesNo("Delete " + self.Resource + " [" + name + "] ?", title="Delete ?") != "Yes"): return True
+            self.deleteResource(self.Resources, name)
+            return self.statusDone("Deleted "+self.Resource+".")
+
+        if (widget == "SaveBt"):
+            self.checkPayload(self.getWidgetValue(self.Resources + "/Text"))
+            if (self.isError()): return True
+            self.statusDoing("Saving "+self.Resource+" ...")
+            entry    = self.getWidgetValue(self.Resources + "/Text")
+            dentry   = json.loads(entry)
+            name_att = aep.StoreManager().get_name_att(entity=self.Resources)
+            name = dentry[name_att]
+            if (sg.PopupYesNo("Save " + self.Resource + " as [" + name + "] ?", title="Save ?") != "Yes"): return True
+            self.saveResource(self.Resources, entry)
+            return self.statusDone("Saved "+self.Resource+" ["+name+"]")
+
+        if (widget == "CheckBt"):
+            self.statusDoing("Check "+self.Resource+" ...")
+            self.checkPayload(self.getWidgetValue(self.Resources + "/Text"))
+            if (self.isError()):
+                sg.PopupScrolled(self.error_text, title="Check Error : ", size=(60, 20))
+                return self.statusError("Check Error")
+            else:
+                return self.statusDone("Check OK")
+
+        if (widget == "ClearBt"):
+            self.statusDoing("Clear "+self.Resource+" ...")
+            self.clearAepEntry()
+            self.loadList(event)
+            return self.statusDone("Cleared "+self.Resource+".")
+
+        if (widget == "LoadBt") :
+            self.statusDoing("Load "+self.Resource+" ...")
+            self.loadEntry(event, self.getWidgetValue("Name"))
+            return self.statusDone("Load "+self.Resource+".")
+
+        if (widget == "SchemaBt"):
+            self.statusDoing("Schema "+self.Resource+" ...")
+            cmd = self.eventResource(event) + " schema "
+            res = self.aepctl(cmd, event)
+            self.setWidgetValue(self.Resources + "/Text",        str(res))
+            return self.statusDone("Schema "+self.Resource+".")
+
+        if (widget == "OpenAPIBt"):
+            self.statusDoing("OpenAPI "+self.Resource+" ...")
+            cmd = self.eventResource(event) + " openapi "
+            res = self.aepctl(cmd, event)
+            self.setWidgetValue(self.Resources + "/Text",        str(res))
+            return self.statusDone("OpenAPI "+self.Resource+".")
+
+        if (event == self.Resources + "/BackUpBt"):
+            self.statusDoing("BackUp "+self.Resource+" ...")
+            if (sg.PopupYesNo("BackUp " + self.Resource + " ?", title="BackUp ?") != "Yes"): return True
+            cmd = self.eventResource(event) + " backUp "
+            res = self.aepctl(cmd, event)
+            self.setWidgetValue(self.Resources + "/Text",        str(res))
+            return self.statusDone("BackedUp "+self.Resource+".")
+
+        if (event == self.Resources + "/EditBt"):
+            self.statusDoing("Editing "+self.Resource+" ...")
+            self.loadEntry(event)
             content = self.getWidgetValue("Text", "NO_TEXT")
             self.openFile(content, self.Resources, self.current_element)
             return self.statusDone("Edit "+self.Resource+".")
@@ -981,6 +1140,13 @@ class MainGUI(threading.Thread):
                 self.backupResource("DS providers")
                 continue
 
+            if (self.current_event == 'Load DataSet into DS Store') or ('M_LOAD_DS_STORE' in self.current_event):
+                self.loadDataSet("DS providers")
+                continue
+
+            if (self.current_event == 'Load DataSet into FS Store') or ('M_LOAD_FS_STORE' in self.current_event):
+                self.loadDataSet("FS providers")
+                continue
 
 
             ###
@@ -1044,6 +1210,8 @@ class MainGUI(threading.Thread):
             self.status("OK", color="green")
             self.logEvent("Details")
 
+            if (self.current_event.startswith("WS")) :
+                if self.handleWso2Event(self.current_event, self.current_values):      continue
             if self.handleAepEvent(self.current_event, self.current_values):           continue
             if self.handleSystemEvent(self.current_event, self.current_values):        continue
             self.error("Widget Event Not Implemented : "+self.current_event+" - "+str(self.current_value))
