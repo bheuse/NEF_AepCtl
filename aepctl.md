@@ -1,5 +1,100 @@
 
-AF-DEMO Instrutions : NEF-330
+# aepctl overview
+
+A utility to manage the Amdocs Exposure Platform, in the flavour of kubectl and apictl for wso2
+- Command line interface, interactive prompt, basic ui
+- Manage datastore, api gateway, nef services
+- Back up and restore
+
+![img.png](images/concepts-img.png)
+
+`aepectl` is a command line interface for running commands against Amdocs Exposure Platforms.
+This overview covers `aepectl` syntax, describes the command operations, and provides common 
+examples. For details about each command, including all the supported flags and subcommands, 
+see the `aepectl` reference documentation. For installation instructions see installing `aepectl`.
+
+### Syntax
+Use the following syntax to run `aepectl` commands from your terminal window:
+
+`aepectl [flags] [service] [resource] [command] [identifier] [payload]`
+
+    $ alias aepctl='python3 /cygdrive/c/Users/bheuse/PycharmProjects/NEF_AepCtl/aepctl.py'
+    $ aepctl ds list providers 
+    $ aepctl ws list categories
+
+Where: 
+- `flags` : -v for verbose logs, -h for help / usage, -c <file> to use an alternative configuration file.
+- `service`: specifies the service to address the command to. 
+   `fs` for the local file datastore, 
+   `ds` for the remote rest datastore 
+   `ws` for the api manager entities, 
+- `command`: specifies the operation that you want to perform on one or more resources, 
+    for example list, create, get, describe, delete. 
+- `resource`: specifies the entities on which the command applies,
+    for providers, apis, categories. 
+- `identifier`: specifies the identifier of the entry the command applies on. 
+    It can be the UUID or the primary key 
+- `payload`: specifies the content of an entry. 
+    For example : `$ aepctl ws categories create Finance "The Financial Servcie APIs"`
+    A file can also be specified : `$ aepctl ws providers Finance -p finance.json`
+
+###  Resources Objects
+#### DataStores :
+    CATALOG = ["PROVIDERS", "ARTICLES", "CATEGORIES", "COLLECTIONS", "APIS", "API_BUNDLES"]
+    APPLICATION_PROFILES = ["ACCOUNTS", "SERVICES", "CONTACTS", "ROLES", "INDUSTRIES", "USECASES"]
+    SUBSCRIPTION = ["SUBSCRIPTIONS", "API_CONSUMERS"]
+#### WS :
+    APIM  = ["APIS", "POLICIES", "CATEGORIES", "PRODUCTS"]
+    DEVM = ["APPLICATIONS", "SUBSCRIPTIONS"]
+    ADM   = ["USERS", "SETTINGS"]
+
+## Interactive Prompt
+
+An interactive version is available, that prompt for commands and support command completion and history.
+
+    $ aepctl        
+
+![img.png](images/aepctl-img.png)
+
+   `apctl ds > verbose`    # for debug logs
+
+   `eapctl ds > exit` # to exit
+
+   `eapctl ds > config` # to see the configuration 
+
+## Basic UI
+
+    $ aepctlui
+
+![img.png](images/ui-img.png)
+
+## Configuration File
+
+On the first execution, a default configuration file is created in `~/.aepctl/AEPCTL_Configuration.json`
+
+The addresses of the servers can be specified here :
+
+    "WSO2_SERVER": "https://localhost:9443",
+    "CATALOG_SERVER": "http://localhost:32106",
+    "USERS_SERVER": "http://localhost:32107",
+
+## Building an executable
+
+`aepctl` is written in python. 
+A self-contained executable can be generated using `build.bat` or build.sh. 
+The UI requires an X server in Linux for display.
+
+## aepectl reference
+
+`TO BE COMPLETED`
+
+## installing aepctl 
+
+`TO BE COMPLETED`
+
+
+
+AF-DEMO Instructions : NEF-330
 
 
 # WSO2 API Manager Portals
