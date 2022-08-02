@@ -556,10 +556,32 @@ class DataStoreInterface():
         pass   # pragma: no cover
 
     def dump_all(self, filename : str = None, directory : str = BACKUP_DIRECTORY) -> dict:
-        pass   # pragma: no cover
+        self.resetError()
+        entries = self.list()
+        store = dict()
+        store["desc_att"]  = self.desc_att
+        store["name_att"]  = self.name_att
+        store["service"]   = self.service
+        store["entity"]    = self.entity_type
+        store["count"]     = len(entries) if (entries) else 0
+        store["timestamp"] = ut.timestamp()
+        store["entries"]   = entries if (entries) else []
+        if (not ut.safeDirExist(directory)):
+            logger.info("Creating Directory : " + directory)
+            ut.safeCreateDir(directory)
+        if (not filename):
+            ut.safeCreateDir(directory)
+            logger.info("BackUp Dir : " + directory)
+            filename = directory + os.sep + self.entity_type + "_dump.json"
+        ut.saveJsonFile(store, filename)
+        logger.info(str(self.service)+" [" + self.entity_type + "] Store saved in file : " + filename)
+        return store
+
+    def backup(self, filename : str = None, directory : str = BACKUP_DIRECTORY) -> dict:
+        return self.dump_all(filename, directory)
 
     def store_file(self, filename : str = None, directory : str = STORE_DIRECTORY) -> dict:
-        pass   # pragma: no cover
+        return self.dump_all(filename, directory)
 
     def load_file(self, filename : str = None, directory : str = STORE_DIRECTORY) -> list:
         self.resetError()
@@ -609,42 +631,47 @@ class FileDataStore(DataStoreInterface):
 
     def list(self, names : bool = False, ids : bool = False, count : bool = False) -> Union [list, None, int]:
         self.resetError()
+        entries = self.cache
         if (names) :
             names = []
-            for entry in self.cache:
+            for entry in entries:
                 names.append(entry[self.name_att])
             return names
         if (ids) :
             ids = []
-            for entry in self.cache:
+            for entry in entries:
                 ids.append(entry[self.id_att])
             return ids
         if (count) :
-            return len(self.cache)
-        self.cache = sorted(self.cache, key=lambda d: d[self.name_att])
-        return self.cache
+            return len(entries)
+        self.cache = sorted(entries, key=lambda d: d[self.name_att])
+        return entries
 
     def id_by_name(self, idName : str) -> Union[str, None]:
-        for entry in self.cache:
+        entries = self.cache
+        for entry in entries:
             if (entry[self.name_att] == idName): return entry[self.id_att]
             if (entry[self.id_att] == idName):   return entry[self.id_att]
         return None
 
     def name_by_id(self, idName : str) -> str:
-        for entry in self.cache:
+        entries = self.cache
+        for entry in entries:
             if (entry[self.id_att] == idName):   return entry[self.name_att]
             if (entry[self.name_att] == idName): return entry[self.name_att]
         return None
 
     def desc_by_idname(self, idName : str) -> Union[str, None]:
-        for entry in self.cache:
+        entries = self.cache
+        for entry in entries:
             if (entry[self.id_att] == idName):   return entry[self.desc_att]
             if (entry[self.name_att] == idName): return entry[self.desc_att]
         return None
 
     def exist(self, idName : str) -> bool:
         self.resetError()
-        for entry in self.cache:
+        entries = self.cache
+        for entry in entries:
             if (entry[self.name_att] == idName): return True
             if (entry[self.id_att]   == idName): return True
         return False
@@ -686,32 +713,6 @@ class FileDataStore(DataStoreInterface):
         self.cache.clear()
         self.store_file()
         return deleted
-
-    def dump_all(self, filename : str = None, directory : str = BACKUP_DIRECTORY) -> dict:
-        self.resetError()
-        store = dict()
-        if (not self.cache):
-            self.cache = list()
-        store["name_att"]   = self.name_att
-        store["desc_att"]   = self.desc_att
-        store["service"]    = self.service
-        store["entity"]     = self.entity_type
-        store["count"]      = len(self.cache)
-        store["entries"]    = self.cache
-        store["timestamp"]  = ut.timestamp()
-        if (not ut.safeDirExist(directory)):
-            logger.info("Creating Directory : " + directory)
-            ut.safeCreateDir(directory)
-        if (not filename):
-            ut.safeCreateDir(directory)
-            logger.info("BackUp Dir : " + directory)
-            filename = directory + os.sep + self.entity_type + "_dump.json"
-        ut.saveJsonFile(store, filename)
-        logger.info("Saved File  : " + str(filename))
-        return store
-
-    def store_file(self, filename : str = None, directory : str = STORE_DIRECTORY) -> dict:
-        return self.dump_all(filename, directory)
 
     def load_file(self, filename : str = None, directory : str = STORE_DIRECTORY) -> list:
         entry_list = super(FileDataStore, self).load_file(filename=filename, directory=directory)
@@ -873,26 +874,6 @@ class RestDataStore(DataStoreInterface, RestHandler):
             self.setError(all_errors)
         logger.info("Rest Store Deleted all : ["+self.entity_type+"]")
         return entries
-
-    def dump_all(self, filename : str = None, directory : str = BACKUP_DIRECTORY) -> dict:
-        self.resetError()
-        entries = self.list()
-        store = dict()
-        store["desc_att"] = self.desc_att
-        store["name_att"] = self.name_att
-        store["service"]  = self.service
-        store["entity"]   = self.entity_type
-        store["count"]    = len(entries) if (entries) else 0
-        store["entries"]  = entries if (entries) else []
-        if (not filename):
-            ut.safeCreateDir(directory)
-            filename = directory + os.sep + self.entity_type + "_dump.json"
-        ut.saveJsonFile(store, filename)
-        logger.info("Rest Store ["+self.entity_type+"] Dumped in file : "+filename)
-        return store
-
-    def store_file(self, filename : str = None, directory : str = STORE_DIRECTORY) -> dict:
-        return self.dump_all(filename, directory)
 
     def load_file(self, filename : str = None, directory : str = STORE_DIRECTORY) -> dict:
         entry_list = super(DataStoreInterface, self).load_file(filename=filename, directory=directory)
@@ -1847,11 +1828,18 @@ class FactoryLoader:
         return loaded
 
     @staticmethod
-    def factory_loader(pathname, delete_all : bool = False, service : str = "file"):
+    def factory_loader(pathname, delete_all : bool = False, entity : str = None, service : str = None, backup : bool = False):
+        # Directory
         if (ut.safeDirExist(pathname)):
+            logger.info("Loading Directory : "  + pathname)
             # All json Files in directory
+            logger.info("Scanning JSON Files in : "  + pathname)
             for file in ut.safeListFiles(dir=pathname, file_ext=".json", keepExt=True):
-                FactoryLoader.factory_loader(file, delete_all)
+                FactoryLoader.factory_loader(file, delete_all=delete_all, service=service)
+            # All yaml Files in directory
+            logger.info("Scanning YAML Files in : "  + pathname)
+            for file in ut.safeListFiles(dir=pathname, file_ext=".yaml", keepExt=True):
+                FactoryLoader.factory_loader(file, delete_all=delete_all, service=service)
             return
         # Specific File
         if (not ut.safeFileExist(pathname)):
@@ -1866,13 +1854,41 @@ class FactoryLoader:
             logger.info(ut.to_json(data))
             # All Entries to same store
             data     = StoreManager.check_entry(data)
-            service  = data["service"]
-            entity   = data["entity"]
+            if (not service and "service" in data) :
+                service  = data["service"]
+            if (not service):
+                # No Service Specified
+                text = "No service specified for entry : " + str(pathname) + \
+                       "\n Service : " + str(service) + \
+                       "\n" + ut.to_json(data)
+                logger.error(text)
+                raise Exception(text)
+            if (not entity and "entity" in data) :
+                entity   = data["entity"]
+            if (not entity):
+                # No entity Specified
+                text = "No entity specified for entry : " + str(pathname) + \
+                       "\n entity : " + str(entity) + \
+                       "\n" + ut.to_json(data)
+                logger.error(text)
+                raise Exception(text)
             server = StoreManager().getStore(entity, service.lower())
+            if (not server):
+                # No StoreManager found
+                text = "No Store Manager for entry : " + str(pathname) + \
+                       "\n- entity  : " + str(entity) + \
+                       "\n- service : " + str(service) + \
+                       "\n" + ut.to_json(data)
+                logger.error(text)
+                raise Exception(text)
+            if (backup):
+                server.backup(backup=backup)
+                backup = False
             if (delete_all):
-                server.delete_all(backup=True)
+                server.delete_all(backup=backup)
+                backup = False
             for entry in data["entries"]:
-                AepCtl.entry_loader(entity, service.lower(), entry, backup=False)
+                AepCtl.entry_loader(entity, service.lower(), entry, backup=backup)
         elif ("entries" in data) :
             logger.info(ut.to_json(data))
             # Multiples Entries to different stores
