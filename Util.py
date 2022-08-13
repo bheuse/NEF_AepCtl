@@ -19,10 +19,15 @@ import uncurl
 import logging.config
 import unittest
 from termcolor import colored
+import mako.runtime
 from mako.template import Template as MakoTemplate
 from mako import exceptions
+from mako.lookup import TemplateLookup
+
+import Util
 import VersionControl as vc
 from typing import Union, cast
+import webbrowser
 
 # import qprompt
 # https://qprompt.readthedocs.io/en/latest/
@@ -196,7 +201,7 @@ def setup_logging(default_path=CURRENT_LOGGING_CONFIGURATION, default_level=logg
 # log_config = setup_logging(LOGGING_CONFIGURATION,default_level=logging.DEBUG,env_key="LOGGING_CONFIGURATION")
 
 class Verbose:
-    VERBOSE = None
+    VERBOSE  = None
 
     @staticmethod
     def init_verbose(p_verbose: bool = False):
@@ -223,6 +228,9 @@ class Verbose:
             logging.basicConfig(format='%(levelname)s : %(message)s', level=logging.ERROR)
             if (not silent): Term.print_yellow("Verbose OFF")
             Verbose.VERBOSE = False
+
+logger = logging.getLogger(__name__)
+
 
 ###
 ### File Formats
@@ -251,7 +259,6 @@ ZIP_FILES  = ['.zip' , '.tar', '.tgz']
 ### Misc
 ###
 
-
 def getHostPort():
     host = os.getenv('$AWS_ANME_NGINX', 'localhost')
     port = os.getenv('AWS_ANME_ENGINE_NGINX_PORT', '5000')
@@ -269,6 +276,10 @@ def uuid():
 def getMainScript():
     return get_nakedname(sys.argv[0])
 
+
+def open_browser(url):
+    logger.info("Opening Browser on ULF : "+str(url))
+    webbrowser.open(url)
 
 ###
 ### Term Util - Print
@@ -2245,6 +2256,22 @@ class Template():
         dct["VersionControl"]       = vc.getVCfromContent(MAKO_FILE, self.getText()).asDict()["VersionControl"]
         return dct
 
+    @staticmethod   # Rendering
+    def renderFile(p_template_filename : str, p_rendered_filename, p_context: dict):
+        logger.info("Rendering : [" + p_template_filename)
+        logger.info("   > into : [" + p_rendered_filename + "]")
+        if (not safeFileExist(p_template_filename)):
+            logger.error("renderFile : Template File not found : "+p_template_filename)
+            return None
+        template_string = loadFileContent(p_template_filename)
+        # dos2unix magic !
+        "\n".join(template_string.splitlines())
+        # Rendering Template
+        mako.runtime.UNDEFINED = 'MISSING_IN_CONTEXT'
+        rendered_template = MakoTemplate(template_string).render(**p_context)
+        # And Saving to File ...
+        saveFileContent(rendered_template, p_rendered_filename)
+        return Util.loadFileContent(p_rendered_filename)
 
 ###
 ### Static
@@ -3317,6 +3344,69 @@ def generateSchema(sampleObjects) -> dict :
     if (isinstance(sampleObjects, dict)):
         builder.add_object(sampleObjects)
         return builder.to_schema()
+
+
+def readObjectForThisSchema(schema_data, object : dict = None)-> dict :
+    if (not isinstance(schema_data, dict)):
+        schema_data = loadDataFile(schema_data)
+    schema_data = SuperDict(schema_data)
+    if (not object) : object = dict()
+    object_type = schema_data["name"]
+    print("Reading Object : "+object_type)
+    for property in schema_data["properties"]:
+        prop = SuperDict(schema_data["properties"][property])
+        prop_name = prop.get("name",property)
+        prop_type = prop.get("type","string")
+        prop_desc = prop.get("description",None)
+        prop_expl = prop.get("example",None)
+        prop_patn = prop.get("pattern",None)
+        prop_mand = prop.get("mandatory",None)
+        if (prop_mand):
+            prop_mand = "" if (prop_mand.upper() in ["N", "NO", "FALSE"]) else "*"
+        if (prop.has("-$ref")): # Reference to Other Object (Foreign Key)
+            prop_mand = "$"
+        # logger.info(to_json(prop.getAsData()))
+        if (prop.has("$ref")):
+            continue
+        if (prop.has("items")):
+            continue
+
+        def_value   = ""
+        def_display = ""
+        if (prop_name in object) :
+            def_value   = str(object[prop_name])
+            def_display = "["+def_value+"] "
+        Term.print_blue("Reading Property ("+prop_type+") : "+prop_name+" "+prop_mand)
+        if (prop_desc) : Term.print_yellow("> "      + prop_desc)
+        if (prop_expl) : Term.print_yellow("E.g. : " + prop_expl)
+        valid_input = False
+        while (not valid_input):
+            # Type : object / array / string / number / boolean / null
+            if (prop_type == "string"):
+                read_input = input("Enter String Value " + def_display + ": ")
+            if (prop_type == "number"):
+                read_input = input("Enter Number Value " + def_display + ": ")
+            if (prop_type == "boolean"):
+                read_input = input("Enter Boolean Value " + def_display + ": ")
+            read_input = read_input.strip()
+            if ((read_input == "") and (def_value != "")):
+                read_input = def_value
+            # print("["+read_input+"]")
+            if ((prop_mand != "") and (read_input == "")):
+                Term.print_red("Value is mandatory")
+            if ((prop_patn) and not bool(re.match(prop_patn, read_input))):
+                Term.print_red("Value ["+read_input+"] does not match pattern : ["+prop_patn+"]")
+            valid_input = True
+        object[prop["name"]] = read_input
+    try:
+        validateSchema(object,schema_data.getAsData())
+        logger.info(to_json(object))
+        return object
+    except Exception as e:
+        logger.error("Object : " + str(object_type) + " : \n" + to_json(object) + "\n" + str(e))
+        return None
+    return object
+
 
 ###
 ### Instanciate Class from Module
@@ -4729,6 +4819,12 @@ end code
 
         text = render_string(template_text, dc2)
         self.assertEqual(text, "TT VAR1VALUE  VAR22VALUE  ['L1', 'L2', {'L31': 'TT1', 'L32': 'TT2'}]  44 TT2 VAR22VALUE TT")
+
+    def test_ReadSchema(self):
+        schema_file = "etc"+os.sep+"NEF_Catalog_DataModel"+os.sep+"_Schemas"+os.sep+"NEF_Catalog_DataModel_API_Schema.json"
+        obj = { "id": "def_id", "API_Provider_Name": "def_pn", "YAML": "def_yaml", "API_Name": "def_name" }
+        obj = readObjectForThisSchema(schema_file,obj)
+        print(str(obj))
 
 class TestSuperDictMethods(unittest.TestCase):
 

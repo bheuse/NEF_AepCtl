@@ -20,6 +20,8 @@ walrus
 wheel
 connexion
 six
+shutil
+glob2
 termcolor
 urllib3
 setuptools

@@ -5,19 +5,12 @@ import platform
 import os
 import threading
 import re
-import urllib
 import tempfile
 import json
-import time
-import csv
-import io
-import webbrowser
 import logging
-
-import yaml
-
 import Util as ut
 import Util_GUI as utg
+from threading import Thread
 import aepctl as aep
 
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
@@ -51,9 +44,6 @@ settings = {
 ###
 ###  Layout
 ###
-
-sg.theme(utg.settingsForm.getSettings(application=application_settings, item="Theme"))
-
 
 class Layout :
 
@@ -1148,7 +1138,6 @@ class MainGUI(threading.Thread):
                 self.loadDataSet("FS providers")
                 continue
 
-
             ###
             ### Menu Events
             ###
@@ -1217,13 +1206,32 @@ class MainGUI(threading.Thread):
             self.error("Widget Event Not Implemented : "+self.current_event+" - "+str(self.current_value))
 
 
-MainGUI().run()
+def aepctlui_thread():
+    MainGUI().run()
+
+
+def start_aepctlui():
+    global aep_debug
+    aep_debug = ""
+    ut.Verbose.init_verbose(False)
+    sg.theme(utg.settingsForm.getSettings(application=application_settings, item="Theme"))
+    Thread(target=aepctlui_thread).start()
+    return "aepctlui"
+
+
+if __name__ == '__main__':
+    logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    aep_debug = "-v "
+    ut.Verbose.init_verbose(True)
+    sg.theme(utg.settingsForm.getSettings(application=application_settings, item="Theme"))
+    MainGUI().run()
 
 
 '''
 # ------ Column Definition ------ #
 column1 = [[sg.Text('Column 1', background_color='#F7F3EC', justification='center', size=(10, 1))],
-           [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 1')],
+x           [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 1')],
            [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 2')],
            [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 3')]]
 
