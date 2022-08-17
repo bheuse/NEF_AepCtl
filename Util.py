@@ -3346,39 +3346,66 @@ def generateSchema(sampleObjects) -> dict :
         return builder.to_schema()
 
 
-def readObjectForThisSchema(schema_data, object : dict = None)-> dict :
-    if (not isinstance(schema_data, dict)):
-        schema_data = loadDataFile(schema_data)
-    schema_data = SuperDict(schema_data)
-    if (not object) : object = dict()
-    object_type = schema_data["name"]
-    print("Reading Object : "+object_type)
-    for property in schema_data["properties"]:
-        prop = SuperDict(schema_data["properties"][property])
-        prop_name = prop.get("name",property)
-        prop_type = prop.get("type","string")
-        prop_desc = prop.get("description",None)
-        prop_expl = prop.get("example",None)
-        prop_patn = prop.get("pattern",None)
-        prop_mand = prop.get("mandatory",None)
+class ObjectReader():
+
+    def __init__(self):
+        self.schema = None
+        self.object = None
+
+    def readObjectForThisSchema(self, schema_data : Union[str,dict], object : dict = None)-> dict :
+        if (not isinstance(schema_data, dict)):
+            schema_data = loadDataFile(schema_data)
+        schema_data = SuperDict(schema_data)
+        self.schema = schema_data
+        if (not object) : object = dict()
+        self.object = SuperDict(object)
+
+        object_type = self.schema["name"]
+        print("Reading Object : "+object_type)
+
+        for property in self.schema["properties"]:
+            prop = SuperDict(self.schema["properties"][property])
+            # logger.info(to_json(prop.getAsData()))
+            if (prop.has("$ref")):
+                continue
+            elif (prop.has("items")):
+                continue
+            elif ((prop.has("type")) and (prop.get("type") in ["boolean", "number", "string"])):
+                object[prop.get("name", property)] = self.readBasicProperty(prop, property, prop.get("name", property))
+            elif (prop.has("-$ref")):  # Reference to Other Object (Foreign Key)
+                object[prop.get("name", property)] = self.readReferenceProperty(prop, property, prop.get("name", property))
+        try:
+            validateSchema(object,self.schema.getAsData())
+            logger.info(to_json(object))
+            return object
+        except Exception as e:
+            logger.error("Object : " + str(object_type) + " : \n" + to_json(object) + "\n" + str(e))
+            return None
+        return object
+
+    def readBasicProperty(self, property_def: dict, prop_name: str = None, def_value: str = None) -> str:
+        prop = SuperDict(property_def)
+
+        prop_name = prop.get("name", prop_name)
+        prop_type = prop.get("type", "string")
+        prop_desc = prop.get("description", None)
+        prop_expl = prop.get("example", None)
+        prop_patn = prop.get("pattern", None)
+        prop_mand = prop.get("mandatory", None)
         if (prop_mand):
             prop_mand = "" if (prop_mand.upper() in ["N", "NO", "FALSE"]) else "*"
-        if (prop.has("-$ref")): # Reference to Other Object (Foreign Key)
+        if (prop.has("-$ref")):  # Reference to Other Object (Foreign Key)
             prop_mand = "$"
-        # logger.info(to_json(prop.getAsData()))
+        logger.info(to_json(prop.getAsData()))
         if (prop.has("$ref")):
-            continue
+            return None
         if (prop.has("items")):
-            continue
+            return None
+        def_display = "[" + def_value + "] " if def_value else ""
 
-        def_value   = ""
-        def_display = ""
-        if (prop_name in object) :
-            def_value   = str(object[prop_name])
-            def_display = "["+def_value+"] "
-        Term.print_blue("Reading Property ("+prop_type+") : "+prop_name+" "+prop_mand)
-        if (prop_desc) : Term.print_yellow("> "      + prop_desc)
-        if (prop_expl) : Term.print_yellow("E.g. : " + prop_expl)
+        Term.print_blue("Reading Property (" + prop_type + ") : " + prop_name + " " + prop_mand)
+        if (prop_desc): Term.print_yellow("> " + prop_desc)
+        if (prop_expl): Term.print_yellow("E.g. : " + prop_expl)
         valid_input = False
         while (not valid_input):
             # Type : object / array / string / number / boolean / null
@@ -3395,18 +3422,36 @@ def readObjectForThisSchema(schema_data, object : dict = None)-> dict :
             if ((prop_mand != "") and (read_input == "")):
                 Term.print_red("Value is mandatory")
             if ((prop_patn) and not bool(re.match(prop_patn, read_input))):
-                Term.print_red("Value ["+read_input+"] does not match pattern : ["+prop_patn+"]")
+                Term.print_red("Value [" + read_input + "] does not match pattern : [" + prop_patn + "]")
             valid_input = True
-        object[prop["name"]] = read_input
-    try:
-        validateSchema(object,schema_data.getAsData())
-        logger.info(to_json(object))
-        return object
-    except Exception as e:
-        logger.error("Object : " + str(object_type) + " : \n" + to_json(object) + "\n" + str(e))
-        return None
-    return object
+        return read_input
 
+    def readReferenceProperty(self, property_def: dict, prop_name: str = None, def_value: str = None) -> str:
+        prop = SuperDict(property_def)
+
+        prop_desc = prop.get("description", None)
+        prop_type = prop.get("type", None)
+        prop_mand = "$"
+        logger.info(to_json(prop.getAsData()))
+        if (prop.has("$ref")):
+            return None
+        if (prop.has("items")):
+            return None
+        def_display = "[" + def_value + "] " if def_value else ""
+
+        Term.print_blue("Reading Property (" + prop_type + ") : " + prop_name + " " + prop_mand)
+        if (prop_desc): Term.print_yellow("> " + prop_desc)
+        valid_input = False
+        while (not valid_input):
+            read_input = input("Enter String Reference Value " + def_display + ": ")
+            read_input = read_input.strip()
+            if ((read_input == "") and (def_value != "")):
+                read_input = def_value
+            # print("["+read_input+"]")
+            if ((prop_mand != "") and (read_input == "")):
+                Term.print_red("Value is mandatory")
+            valid_input = True
+        return read_input
 
 ###
 ### Instanciate Class from Module
@@ -4823,7 +4868,7 @@ end code
     def test_ReadSchema(self):
         schema_file = "etc"+os.sep+"NEF_Catalog_DataModel"+os.sep+"_Schemas"+os.sep+"NEF_Catalog_DataModel_API_Schema.json"
         obj = { "id": "def_id", "API_Provider_Name": "def_pn", "YAML": "def_yaml", "API_Name": "def_name" }
-        obj = readObjectForThisSchema(schema_file,obj)
+        obj = ObjectReader().readObjectForThisSchema(schema_file,obj)
         print(str(obj))
 
 class TestSuperDictMethods(unittest.TestCase):
