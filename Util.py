@@ -1978,7 +1978,9 @@ def change_basename(full_filename, filename, ext = ""):
 def get_sys(sysData: dict = None) -> dict:
     if (sysData == None):
         sysData = dict()
-    sysData["Name"]        = socket.gethostname()
+    sysData["Time"]        = timestamp()
+    sysData["User"]        = os.getlogin()
+    sysData["Host"]        = socket.gethostname()
     sysData["FQDN"]        = socket.getfqdn()
     sysData["Sys Platf."]  = sys.platform
     sysData["Machine"]     = platform.machine()

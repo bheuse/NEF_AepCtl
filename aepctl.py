@@ -79,19 +79,19 @@ CONFIG_FILE        = None
 STORE_DIRECTORY    = AEPCTL_WORK_DIR + os.sep + "store"
 
 
-def set_aepctl_dirs(AEPCTL_ROOT_DIR : str, AEPCTL_WORK_DIR : str):
+def set_aepctl_dirs(P_AEPCTL_ROOT_DIR : str, P_AEPCTL_WORK_DIR : str):
     global CONFIG_DIRECTORY, TMP_DIRECTORY, DATA_DIRECTORY, TEST_DIRECTORY
     global LOGS_DIRECTORY, SCRIPTS_DIRECTORY, BACKUP_DIRECTORY, STORE_DIRECTORY
     global STORES_FILE, CONFIG_FILE
-    CONFIG_DIRECTORY   = AEPCTL_ROOT_DIR + os.sep + "etc"
-    DATA_DIRECTORY     = AEPCTL_ROOT_DIR + os.sep + "data"
-    TMP_DIRECTORY      = AEPCTL_ROOT_DIR + os.sep + "tmp"
-    TEST_DIRECTORY     = AEPCTL_ROOT_DIR + os.sep + "tests"
-    LOGS_DIRECTORY     = AEPCTL_ROOT_DIR + os.sep + "logs"
-    SCRIPTS_DIRECTORY  = AEPCTL_ROOT_DIR + os.sep + "scripts"
-    BACKUP_DIRECTORY   = AEPCTL_ROOT_DIR + os.sep + "backup"
-    STORE_DIRECTORY    = AEPCTL_WORK_DIR + os.sep + "store"
-    STORES_FILE        = AEPCTL_ROOT_DIR + os.sep + "etc" + os.sep + "stores.json"
+    CONFIG_DIRECTORY   = P_AEPCTL_ROOT_DIR + os.sep + "etc"
+    DATA_DIRECTORY     = P_AEPCTL_ROOT_DIR + os.sep + "data"
+    TMP_DIRECTORY      = P_AEPCTL_ROOT_DIR + os.sep + "tmp"
+    TEST_DIRECTORY     = P_AEPCTL_ROOT_DIR + os.sep + "tests"
+    LOGS_DIRECTORY     = P_AEPCTL_ROOT_DIR + os.sep + "logs"
+    SCRIPTS_DIRECTORY  = P_AEPCTL_ROOT_DIR + os.sep + "scripts"
+    BACKUP_DIRECTORY   = P_AEPCTL_ROOT_DIR + os.sep + "backup"
+    STORE_DIRECTORY    = P_AEPCTL_WORK_DIR + os.sep + "store"
+    STORES_FILE        = P_AEPCTL_ROOT_DIR + os.sep + "etc" + os.sep + "stores.json"
 
 WSO2_SERVER     = "https://localhost:9443"
 CATALOG_SERVER  = "http://localhost:30106"
@@ -388,12 +388,11 @@ class RestHandler:
             if (isinstance(payload, str)):          self.s_text = payload
         if (self.s_data):
             self.s_text = json.dumps(self.s_data)
-        jsonObject = None
+        payload = None
         if (payload):
             if (isinstance(payload, dict)):         payload  = json.dumps(payload)
             if (isinstance(payload, ut.SuperDict)): payload  = json.dumps(payload.clean().getAsData())
             if (isinstance(payload, str)):          payload  = ut.loadDataContent(payload)
-            jsonObject = ut.to_json(payload)
             payload    = ut.to_json(payload)
         # print(str(payload))
         # print(str(jsonObject))
@@ -502,7 +501,7 @@ class DataStoreInterface():
         if (self.error()):
             return None
         if (backup):
-            StoreManager.store_back_up(store_type="file")
+            StoreManager.store_back_up(service="file")
         return entity
 
     def list(self, names : bool = False, ids : bool = False, count : bool = False) -> Union [list, None, int]:
@@ -552,7 +551,7 @@ class DataStoreInterface():
         if (self.error()):
             return None
         if (backup):
-            StoreManager.store_back_up(store_type=self.service)
+            StoreManager.store_back_up(service=self.service)
 
     def delete(self, idName : str = None , name : str = None, identifier : str = None, backup : bool = True) -> Union [dict, None]:
         self.resetError()
@@ -572,7 +571,7 @@ class DataStoreInterface():
             self.setError("No such entry : " + str(value))
             return None
         if (backup):
-            StoreManager.store_back_up(store_type="file")
+            StoreManager.store_back_up(service="file")
         return entry
 
     def delete_all(self, backup : bool = True) -> Union [list, None]:
@@ -684,7 +683,7 @@ class FileDataStore(DataStoreInterface):
             if ((self.id_att in entry) and entry[self.id_att] == idName):   return entry[self.id_att]
         return None
 
-    def name_by_id(self, idName : str) -> str:
+    def name_by_id(self, idName : str) -> Union[None, str]:
         entries = self.cache
         for entry in entries:
             if ((self.id_att in entry) and entry[self.id_att] == idName):  return entry[self.name_att]
@@ -741,7 +740,7 @@ class FileDataStore(DataStoreInterface):
     def delete_all(self, backup : bool = True) -> Union [list, None]:
         self.resetError()
         if (backup):
-            StoreManager.store_back_up(store_type="file")
+            StoreManager.store_back_up(service="file")
         deleted = copy.deepcopy(self.cache)
         self.cache.clear()
         self.store_file()
@@ -903,7 +902,7 @@ class RestDataStore(DataStoreInterface, RestHandler):
         all_errors = ""
         entries    = list()
         if (backup):
-            StoreManager.store_back_up(store_type="rest")
+            StoreManager.store_back_up(service="rest")
         for entry_id in self.list(ids=True) :
             entry = self.delete(idName=entry_id, backup=False)
             if (entry): entries.append(entry)
@@ -1051,7 +1050,7 @@ class Wso2UsersManager(DataStoreInterface):
         user["requirePasswordChange"] = requirePasswordChange
         return user
 
-    def list_users(self) -> Union[None, dict]:
+    def list_users(self) -> Union[None, str]:
         self.last_operation = "List Users"
         headers = {
             'Authorization': 'Basic '+self.authorization,
@@ -1309,7 +1308,7 @@ class Wso2UsersManager(DataStoreInterface):
         if (self.isError()):  return None
         for entry in entry_list:
             if (entry[self.name_att] == idName): return entry[self.name_att]
-            if (entry[self.id_att] == idName):   return entry[self.name_att]
+            if (entry[self.id_att]   == idName): return entry[self.name_att]
         return None
 
     def desc_by_idname(self, idName: str) -> Union[str, None]:
@@ -1346,7 +1345,7 @@ class Wso2UsersManager(DataStoreInterface):
         if (backup):
             self.dump_all()
         for entry_id in self.list(ids=True):
-            entry = self.delete(entry_id=entry_id, backup=False)
+            entry = self.delete(identifier=entry_id, backup=False)
             if (entry): entries.append(entry)
             if (self.isError()):
                 all_errors = all_errors + "\n" + self.getError()
@@ -1890,9 +1889,10 @@ class Wso2Provisioning():
         if (apiName.upper() == "ALL"):
             api_store = StoreManager().getStore(name="APIs", store_type=dataStore)
             apiList   = api_store.list(names=True)
+            rc = True
             for apiName in apiList:
-                self.provisionAPI(apiName)
-            return
+                rc = rc and self.provisionAPI(apiName)
+            return rc
         logger.info("Provisioning API : " + apiName)
         api_store = StoreManager().getStore(name="APIs", store_type=self.service)
         api       = api_store.get(apiName)
@@ -1917,7 +1917,6 @@ class Wso2Provisioning():
             return self.error("Directory not found : "+api_path)
         # Check the Swagger Definition
         b64yaml = re.sub("@b64file:.*:", "", api["YAML"])
-        print(b64yaml)
         swagger_str  = ut.to_b64_to_str(b64yaml)
         swagger_json = ut.loadDataContent(swagger_str)
         if (not swagger_json): return self.error("Cannot Decode Swagger YAML in API Definition : "+apiName)
@@ -1943,7 +1942,7 @@ class Wso2Provisioning():
 
     def provisionCategory(self, categoryName : str, dataStore: str ="file") -> bool:
         if (categoryName.upper() == "ALL"):
-            cat_store = StoreManager().getStore(name="Categories",store_type=dataStore)
+            cat_store = StoreManager().getStore(name="Categories", store_type=dataStore)
             catList   = cat_store.list(names=True)
             rc = True
             for categoryName in catList:
@@ -2045,7 +2044,7 @@ class Wso2Provisioning():
             ut.saveDataFile(desc_api, api_dir+os.sep+apiname+"_api.json")
             # Store in DataStore
             if (dataStore) :
-                store = StoreManager().getStore(name="apis",file=(dataStore.lower() == "file"))
+                store = StoreManager().getStore(name="apis", file=(dataStore.lower() == "file"))
                 store.create(ds_api)
             api_list.append(ds_api)
         return api_list
@@ -2187,18 +2186,25 @@ class FactoryLoader:
         for key in entry:
             val = entry[key]
             if isinstance(val, str) and val.startswith("@b64file:"):
+                b64data  = re.sub("@b64file:.*:", "", val)
+                no_data = True if (b64data == "") else False
                 filename = re.sub("@b64file:", "", val)
                 filename = re.sub(":.*$", "", filename)
                 filepathname = pathname + os.sep + filename
                 logger.info("Loading b64file : "+filepathname)
                 if (not ut.safeFileExist(filepathname)):
-                    self.raise_error("File not found : " + filepathname)
-                entry[key] = "@b64file:" + filename + ":" + ut.to_file_2_b64(filepathname)
+                    if (no_data):
+                        self.raise_error("File not found : " + filepathname)
+                    else:
+                        logger.error("File not found : " + filepathname)
+                        entry[key] = val
+                else:
+                    entry[key] = "@b64file:" + filename + ":" + ut.to_file_2_b64(filepathname)
             if isinstance(val, dict):
                 entry[key] = self.b64file_handler(val, pathname)
         return entry
 
-    def entry_loader(self, entry: dict, dir_path : str=None, entity_type: str=None, pathname : str=None, only_entity : str=None) -> dict:
+    def entry_loader(self, entry: dict, dir_path : str=None, entity_type: str=None, pathname : str=None, only_entity : str=None) -> Union[None, dict]:
         logger.info("Loading : \n" + ut.to_json(entry))
         if ((entity_type == None) and ("entity" in entry)):
             entity_type = entry["entity"]
@@ -2312,7 +2318,15 @@ class FactoryLoader:
                 rd = self.entry_loader(entry, dir_path=dir_path, only_entity=only_entity)
                 if (rd) : added_data.append(rd)
         else:
-            self.raise_error("Invalid File Content (not \"entries\" found): " + pathname)
+            for entity_type in StoreManager.list_store_entities():
+                if ((entity_type.upper() in data) and (isinstance(data[entity_type.upper()], list))):  # Save Format
+                    for entry in data[entity_type.upper()]:
+                        rd = self.entry_loader(entry, dir_path=dir_path, only_entity=only_entity, entity_type=entity_type)
+                        if (rd): added_data.append(rd)
+                if (entity_type in data) and ("entries" in data[entity_type]):  # Backup Format
+                    for entry in data[entity_type]["entries"]:
+                        rd = self.entry_loader(entry, dir_path=dir_path, only_entity=only_entity, entity_type=entity_type)
+                        if (rd): added_data.append(rd)
         # Include other files
         if ("include" in data):
             for include_file in data["include"]:
@@ -2323,6 +2337,8 @@ class FactoryLoader:
                         self.raise_error("File Not Found : " + file)
                     logger.info("Including File : " + file)
                     added_data = added_data + self.factory_loader(file)
+        if (len(added_data) == 0):
+            self.raise_error("Invalid File Content (not entry found): " + pathname)
         return added_data
 
 FileStoreCache = dict()
@@ -2369,7 +2385,7 @@ class StoreManager():
         StoredDict  = self.stored
         return self.stored
 
-    def getStore(self, name : str, file : Union[bool,str] = False, store_type : str = "") -> Union[DataStoreInterface, None]:
+    def getStore(self, name : str, file : Union[bool, str] = False, store_type : str = "") -> Union[DataStoreInterface, None]:
         if (isinstance(file, str)):
             file = True if (file.lower() in ["file", "fs", "filestore"]) else False
         for store_key in self.stored :
@@ -2416,7 +2432,7 @@ class StoreManager():
         return  entity
 
     @staticmethod
-    def get_store_entity(entity : str) -> str:
+    def get_store_entity(entity : str) -> Union[str, None]:
         sm = StoreManager()
         entity = StoreManager.get_entity(entity)
         for store in sm.stored:
@@ -2572,14 +2588,14 @@ class StoreManager():
             return str(e)
 
     @staticmethod
-    def get_schema(entity: str) -> dict:
+    def get_schema(entity: str) -> Union[None, dict]:
         schemaFile = StoreManager.get_schema_file(entity)
         if (not schemaFile):
             return None  # pragma: no cover
         return ut.loadFileData(schemaFile)
 
     @staticmethod
-    def get_openapi(entity: str) -> dict:
+    def get_openapi(entity: str) -> Union[None, dict]:
         openApiFile = StoreManager.get_openapi_file(entity)
         if (not openApiFile):
             return None
@@ -2613,27 +2629,32 @@ class StoreManager():
         return store.name_by_id(idName)
 
     @staticmethod
-    def store_back_up(directory: str = None, store_file: str = None, store_type: str = "rest", resource : str = "", pstore : str = None ):
-        global STORES_FILE
-        if (not store_file) : store_file = STORES_FILE
+    def store_back_up(service: str="file", resource : str="all", operation="unknown"):
         global BACKUP_DIRECTORY
-        if (not directory) : directory = BACKUP_DIRECTORY
-        lresource = StoreManager.get_entity(resource)
-        lservice  = re.sub(" .*$", "", str(resource))
-        if (lservice.lower() == "fs") : store_type = "file"
-        if (not ut.safeDirExist(directory)) : directory = BACKUP_DIRECTORY
-        stores     = StoreManager.check_stores(store_file)
-        directory  = directory + os.sep + ut.safeTimestamp() + "_" + store_type
-        all_stores = dict()
-        for store in stores["stores"]:
-            if (pstore) and (pstore.lower() != store.lower()): continue
-            server = StoreManager().getStore(store["entity"], store_type.lower())
-            all_stores[store["entity"]] = server.dump_all(directory=directory)
+        filename  = BACKUP_DIRECTORY + os.sep + ut.safeTimestamp() + "_" + service + "_all_stores.json"
+        return StoreManager.store_save(service=service, resource=resource, save_file=filename, operation="back_up "+operation)
+
+    @staticmethod
+    def store_save(service: str="file", resource : str="all", save_file : str=None, operation="save"):
+        resources = list()
+        if (resource == "all"):
+            resources = StoreManager.list_store_entities()
+        elif (resource.lower() in StoreManager.list_store_entities(lower=True)):
+            resources.append(resource)
+        else:
+            logger.error("Save : Unknown Resource : "+resource)
+            return None
+        all_data = dict()
+        for res in resources :
+            server = StoreManager().getStore(res, service)
+            all_data[res] = server.list()
         sys_data = ut.get_sys()
-        all_stores_file = directory + os.sep + "all_stores.json"
-        res = { "operation" : "back_up" , "status" : "success" , "directory" : directory , "system" : sys_data, "stores" : all_stores, "filename" : all_stores_file}
-        ut.saveJsonFile(res, all_stores_file)
-        return json.dumps(res, indent=2)
+        details = { "operation" : operation, "service" : service, "resources" : resources,
+                    "timestamp" : ut.timestamp(), "configuration": ut.getCurrentConfiguration().getAsData(),
+                    "status" : "success"   , "system" : sys_data, "filename" : save_file}
+        all_data["__details__"] = details
+        ut.saveJsonFile(all_data, save_file)
+        return ut.to_json(details)
 
 
 LOCAL_SERVICE     = ["LOCAL", "FILES", "FS"]
@@ -3224,15 +3245,15 @@ class AepCtl:
             "all"      : None,
             "<idName>" : None,
         },
+        "openapi"      : handle_output_commands,
+        "schema"       : handle_output_commands,
         "load"    : {
             "delete_all" : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
             "merge"      : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
         },
+        "save"         : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
         "backup"       : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
-        "openapi"      : handle_output_commands,
-        "schema"       : handle_output_commands,
-        "save"         : {"<id/name>", "<name/version>", "all", "dir", "help"},
-        "extract"      : {"<id/name>", "<name/version>", "all", "dir", "help"},
+        "restore"      : {"<id/name>", "<name/version>", "all", "dir", "help"},
         "provision"    : {"<id/name>", "<name/version>", "all", "help"},
         "import"       : {"<id/name>", "<name/version>", "all", "dir", "help"},
         "export"       : {"<id/name>", "<name/version>", "all", "help"},
@@ -3285,7 +3306,7 @@ class AepCtl:
             return AepCtl.print(resource, str(StoreManager.list_store_entities()))
         if ((command == "") and (resource == "")):
             return AepCtl.error(resource, command, "No command nor resource specified.", AepCtl.help(resource, AepCtl.get_aep_commands()))
-        store=None
+        store = None
         if (resource != "all"):
             try:
                 store = StoreManager().getStore(resource, file="file")
@@ -3362,7 +3383,7 @@ class AepCtl:
         elif (command in ["BACKUP"]):
             directory = (idName + " " + str(payload)).strip()
             logger.info("BackUp Dir : "+directory)
-            res = StoreManager().store_back_up(resource=resource, store_type=service, directory=directory)
+            res = StoreManager().store_back_up(resource=resource, service=service)
             return AepCtl.print(resource, res)
         elif (command in ["LOAD"]):
             delete_all = False
@@ -3380,6 +3401,12 @@ class AepCtl:
             logger.info("To      : " + service)
             res = FactoryLoader(service=service).factory_loader(pathname=pathname, delete_all=delete_all, backup=True, no_dir=True, only_entity=resource)
             return AepCtl.print(resource, res)
+        elif (command in ["SAVE"]):
+            pathname = ut.get_cwd_directory()+os.sep+str(idName).strip()
+            pathname = ut.get_basename(pathname)+".json"
+            logger.info("Saving : " + pathname)
+            res = StoreManager.store_save(service=service, resource=resource, back_up_file=pathname)
+            return AepCtl.print(resource, res)
         elif (command in ["EXTRACT"]):
             logger.info("Extracting : " + str(idName))
             wsp = Wso2Provisioning()
@@ -3389,7 +3416,7 @@ class AepCtl:
             if (resource.upper() not in ["APIS", "CATEGORIES"]):
                 return AepCtl.error(resource, command, "Invalid Resource to Provision : "+resource, AepCtl.help(resource, AepCtl.get_aep_commands()))
             wsp = Wso2Provisioning()
-            logger.info("Provisioning " + resource + " : "+ str(idName))
+            logger.info("Provisioning " + resource + " : " + str(idName))
             if (resource.upper() == "APIS"):
                 res = wsp.provisionAPI(idName, dataStore=service)
                 return AepCtl.print(resource, res)
@@ -3476,7 +3503,7 @@ class AepCtl:
 ###
 
 
-def interactive_prompt(): # pragma: no cover
+def interactive_prompt():  # pragma: no cover
     ut.Verbose.set_verbose(False, silent=True)
     current_context = "ds"
     try:
@@ -3685,13 +3712,13 @@ def main(argv, interactive : bool = False):
                                                  default_cfg=def_AEPCTL_Configuration,        # Default Configuration
                                                  tag="AEPCTL Configuration")
 
-    AEPCTL_ROOT_DIR = AEPCTL_Configuration.get("AEPCTL_ROOT_DIR")
-    AEPCTL_WORK_DIR = AEPCTL_Configuration.get("AEPCTL_WORK_DIR")
-    AEPCTL_HOME_DIR = AEPCTL_Configuration.get("AEPCTL_HOME_DIR")
-    set_aepctl_dirs(AEPCTL_ROOT_DIR, AEPCTL_WORK_DIR)
-    logger.info("AEPCTL_HOME_DIR  : " + str(AEPCTL_HOME_DIR))
-    logger.info("AEPCTL_ROOT_DIR  : " + str(AEPCTL_ROOT_DIR))
-    logger.info("AEPCTL_WORK_DIR  : " + str(AEPCTL_WORK_DIR))
+    CFG_AEPCTL_ROOT_DIR = AEPCTL_Configuration.get("AEPCTL_ROOT_DIR")
+    CFG_AEPCTL_WORK_DIR = AEPCTL_Configuration.get("AEPCTL_WORK_DIR")
+    CFG_AEPCTL_HOME_DIR = AEPCTL_Configuration.get("AEPCTL_HOME_DIR")
+    set_aepctl_dirs(CFG_AEPCTL_ROOT_DIR, CFG_AEPCTL_WORK_DIR)
+    logger.info("AEPCTL_HOME_DIR  : " + str(CFG_AEPCTL_HOME_DIR))
+    logger.info("AEPCTL_ROOT_DIR  : " + str(CFG_AEPCTL_ROOT_DIR))
+    logger.info("AEPCTL_WORK_DIR  : " + str(CFG_AEPCTL_WORK_DIR))
     # os.chdir(AEPCTL_HOME_DIR)
 
     return AepCtl.handle_command(args)
@@ -4327,7 +4354,7 @@ class TestDataStore(unittest.TestCase):
         # It differs because of create which creates new ids. ... to be fixed.
         # self.assertEqual(backup_entries_list, entry_list)
 
-    def generic_commands(self, store : str , new_entry : str, store_type = "file", backup : bool = False):  # Need DataStore server to test this
+    def generic_commands(self, store : str , new_entry : str, store_type="file", backup : bool=False):  # Need DataStore server to test this
         store    = self.storeManager.getStore(store, file=store_type)
         id_att   = self.storeManager.get_id_att(store.entity_type)
         name_att = self.storeManager.get_name_att(store.entity_type)
