@@ -264,7 +264,7 @@ class RestHandler:
     def getSuperDict(self):
         return self.d_data
 
-    def hasData(self, code=[200, 202, 204]):
+    def hasData(self, code : list=[200, 202, 204]):
         if (self.r_code in code) and (self.d_data) :
             return self.d_data
         return None
@@ -388,14 +388,13 @@ class RestHandler:
             if (isinstance(payload, str)):          self.s_text = payload
         if (self.s_data):
             self.s_text = json.dumps(self.s_data)
-        payload = None
+        # payload = None
         if (payload):
             if (isinstance(payload, dict)):         payload  = json.dumps(payload)
             if (isinstance(payload, ut.SuperDict)): payload  = json.dumps(payload.clean().getAsData())
             if (isinstance(payload, str)):          payload  = ut.loadDataContent(payload)
             payload    = ut.to_json(payload)
-        # print(str(payload))
-        # print(str(jsonObject))
+        logger.info("Rest Payload : "+str(payload))
         self.rest_response = None
         try:
             self.rest_headers = self.headers(files=files)
@@ -599,8 +598,10 @@ class DataStoreInterface():
         logger.info(str(self.service)+" [" + self.entity_type + "] Store saved in file : " + filename)
         return store
 
-    def backup(self, filename : str = None, directory : str = BACKUP_DIRECTORY) -> dict:
-        return self.dump_all(filename, directory)
+    def backup(self) -> dict:
+        store    = "file" if (isinstance(self,FileDataStore)) else "rest"
+        filename = BACKUP_DIRECTORY + os.sep + ut.timestamp() + "_" + store + "_" + self.service + "_" + self.entity_type + "_backup.json"
+        return self.dump_all(filename, BACKUP_DIRECTORY)
 
     def store_file(self, filename : str = None, directory : str = None) -> dict:
         global STORE_DIRECTORY
@@ -752,7 +753,7 @@ class FileDataStore(DataStoreInterface):
         entry_list = super(FileDataStore, self).load_file(filename=filename, directory=directory)
         return entry_list
 
-    def copy_ds_to_fs(self, reset=False) -> dict:
+    def copy_ds_to_fs(self, reset=False) -> list:
         self.resetError()
         server = RestDataStore(entity_type=self.entity_type, name_att=self.name_att, desc_att=self.desc_att, id_att=self.id_att, service=self.service)
         if (reset) :
@@ -762,7 +763,7 @@ class FileDataStore(DataStoreInterface):
         self.cache = sorted(self.cache, key=lambda d: d[self.name_att])
         return self.cache
 
-    def copy_fs_to_ds(self, reset=False) -> dict:
+    def copy_fs_to_ds(self, reset=False) -> list:
         self.resetError()
         server = RestDataStore(entity_type=self.entity_type, name_att=self.name_att, desc_att=self.desc_att, id_att=self.id_att, service=self.service)
         if (reset) :
@@ -788,7 +789,7 @@ class RestDataStore(DataStoreInterface, RestHandler):
             return None
         return ut.loadDataContent(self.r_text)
 
-    def list(self, names : bool = False, ids : bool = False, count : bool = False) -> Union [list, None]:
+    def list(self, names : bool = False, ids : bool = False, count : bool = False) -> Union [list, None, int]:
         self.resetError()
         self.handle_request("LIST", self.entity_type, service=self.service)
         if (self.isError()) :     return None
@@ -851,11 +852,11 @@ class RestDataStore(DataStoreInterface, RestHandler):
         self.handle_request("LIST", self.entity_type, service=self.service)
         if (not self.hasData()) :
             self.setError("LIST ["+self.entity_type+"] : No Data from Server\n"+str(self._getError()))
-            return None
+            return False
         entry_list = sorted(self.d_data.getAsData()["list"], key=lambda d: d[self.name_att])
         for cat in entry_list :
             if (cat[self.name_att] == idName): return True
-            if (cat[self.id_att] == idName):   return True
+            if (cat[self.id_att]   == idName):   return True
         return False
 
     def get(self, idName : str = None , name : str = None, identifier : str = None) -> Union [dict, None]:
@@ -2364,7 +2365,7 @@ class StoreManager():
         self.stored    = None
         self.loadStores()
 
-    def loadStores(self, storefile : str = None) -> dict:
+    def loadStores(self, storefile : str = None) -> Union[dict,None]:
         global StoresCache, StoredDict
         if (not storefile) : storefile = self.storefile
         if (StoresCache):
@@ -3116,7 +3117,7 @@ class AepCtl:
                     AepCtl.browse(resource, elist)
                 return None
             if (command == "GET" or command == "DISPLAY"):  # products get|display id|name
-                entry = apim.product_get(category_id=idName)
+                entry = apim.product_get(product_id=idName)
                 if (command == "GET"):  # products display
                     AepCtl.print(resource, entry, idName)
                 elif (command == "DISPLAY"):  # products display
@@ -3234,6 +3235,7 @@ class AepCtl:
         },
         "browse": None,
         "create": {
+            "interactive"            : None,
             "<json / yaml fileName>" : None,
             "<json / yaml payload>"  : None,
         },
@@ -3360,14 +3362,23 @@ class AepCtl:
         elif (command in ["CREATE", "UPDATE"]):
             filename = payload
             payload  = payload
-            if (ut.safeFileExist(filename)):
-                logger.info("Filename : " + filename)
-                payload = ut.loadFileData(filename)
+            entry     = None
+            if (idName.upper()  == "INTERACTIVE"):
+                schema = StoreManager.get_schema(resource)
+                if (not schema):
+                    return AepCtl.error(resource, command, "Cannot Get Schema for : " + resource)
+                payload = ut.ObjectReader().readObjectForThisSchema(schema)
+                if (not payload):
+                    return AepCtl.error(resource, command, "Cannot Get Entry for : " + resource)
             else:
-                logger.info("Payload : " + payload)
-                payload = ut.loadDataContent(payload)
-            if (not payload):
-                return AepCtl.error(resource, command, "Cannot JSON/YAML Decode : " + filename)
+                if (ut.safeFileExist(filename)):
+                    logger.info("Filename : " + filename)
+                    payload = ut.loadFileData(filename)
+                else:
+                    logger.info("Payload : " + payload)
+                    payload = ut.loadDataContent(payload)
+                if (not payload):
+                    return AepCtl.error(resource, command, "Cannot JSON/YAML Decode : " + filename)
             if (not isinstance(payload, dict)):
                 return AepCtl.error(resource, command, "Cannot JSON/YAML Decode : " + filename)
             logger.info("Entry : \n" + json.dumps(payload, indent=2))
@@ -3405,7 +3416,7 @@ class AepCtl:
             pathname = ut.get_cwd_directory()+os.sep+str(idName).strip()
             pathname = ut.get_basename(pathname)+".json"
             logger.info("Saving : " + pathname)
-            res = StoreManager.store_save(service=service, resource=resource, back_up_file=pathname)
+            res = StoreManager.store_save(service=service, resource=resource, save_file=pathname)
             return AepCtl.print(resource, res)
         elif (command in ["EXTRACT"]):
             logger.info("Extracting : " + str(idName))
@@ -3712,9 +3723,9 @@ def main(argv, interactive : bool = False):
                                                  default_cfg=def_AEPCTL_Configuration,        # Default Configuration
                                                  tag="AEPCTL Configuration")
 
-    CFG_AEPCTL_ROOT_DIR = AEPCTL_Configuration.get("AEPCTL_ROOT_DIR")
-    CFG_AEPCTL_WORK_DIR = AEPCTL_Configuration.get("AEPCTL_WORK_DIR")
-    CFG_AEPCTL_HOME_DIR = AEPCTL_Configuration.get("AEPCTL_HOME_DIR")
+    CFG_AEPCTL_ROOT_DIR = AEPCTL_Configuration.get("AEPCTL_DIRECTORY")
+    CFG_AEPCTL_WORK_DIR = AEPCTL_Configuration.get("AEPCTL_DIRECTORY")
+    CFG_AEPCTL_HOME_DIR = AEPCTL_HOME_DIR
     set_aepctl_dirs(CFG_AEPCTL_ROOT_DIR, CFG_AEPCTL_WORK_DIR)
     logger.info("AEPCTL_HOME_DIR  : " + str(CFG_AEPCTL_HOME_DIR))
     logger.info("AEPCTL_ROOT_DIR  : " + str(CFG_AEPCTL_ROOT_DIR))
