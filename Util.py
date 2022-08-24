@@ -2,6 +2,7 @@ import json, yaml, ast, traceback, tempfile
 from datetime import datetime
 from jsonschema import validate, ValidationError
 from genson import SchemaBuilder
+from shutil import which
 import jk_commentjson as jsonc
 from collections import deque
 # import pandas as pd
@@ -19,6 +20,8 @@ import uncurl
 import logging.config
 import unittest
 from termcolor import colored
+import os
+if which('color') is not None : os.system('color')
 import mako.runtime
 from mako.template import Template as MakoTemplate
 from mako import exceptions
@@ -259,6 +262,11 @@ ZIP_FILES  = ['.zip' , '.tar', '.tgz']
 ### Misc
 ###
 
+def is_tool(name):
+    """Check whether `name` is on PATH and marked as executable."""
+    return which(name) is not None
+
+
 def getHostPort():
     host = os.getenv('$AWS_ANME_NGINX', 'localhost')
     port = os.getenv('AWS_ANME_ENGINE_NGINX_PORT', '5000')
@@ -278,7 +286,7 @@ def getMainScript():
 
 
 def open_browser(url):
-    logger.info("Opening Browser on ULF : "+str(url))
+    logger.info("Opening Browser on URL : "+str(url))
     webbrowser.open(url)
 
 ###
@@ -3454,6 +3462,59 @@ class ObjectReader():
                 Term.print_red("Value is mandatory")
             valid_input = True
         return read_input
+
+    def templateBasicProperty(self, property_def: dict, prop_name: str = None, def_value: str = None) -> str:
+        prop = SuperDict(property_def)
+
+        prop_name = prop.get("name", prop_name)
+        prop_type = prop.get("type", "string")
+        prop_desc = prop.get("description", None)
+        prop_expl = prop.get("example", None)
+        prop_patn = prop.get("pattern", None)
+        prop_mand = prop.get("mandatory", None)
+        if (prop_mand):
+            prop_mand = "" if (prop_mand.upper() in ["N", "NO", "FALSE"]) else "*"
+        if (prop.has("-$ref")):  # Reference to Other Object (Foreign Key)
+            prop_mand = "$"
+        logger.info(to_json(prop.getAsData()))
+        if (prop.has("$ref")):
+            return None
+        if (prop.has("items")):
+            return None
+        value = def_value if def_value else (prop_expl if prop_expl else "")
+        return value
+
+    def templateObjectForThisSchema(self, schema_data : Union[str,dict], object : dict = None)-> dict :
+        if (not isinstance(schema_data, dict)):
+            schema_data = loadDataFile(schema_data)
+        schema_data = SuperDict(schema_data)
+        self.schema = schema_data
+        if (not object) : object = dict()
+        self.object = SuperDict(object)
+
+        object_type = self.schema["name"]
+        print("Template Object : "+object_type)
+
+        for property in self.schema["properties"]:
+            prop = SuperDict(self.schema["properties"][property])
+            # logger.info(to_json(prop.getAsData()))
+            if (prop.has("$ref")):
+                continue
+            elif (prop.has("items")):
+                continue
+            elif ((prop.has("type")) and (prop.get("type") in ["boolean", "number", "string"])):
+                object[prop.get("name", property)] = self.templateBasicProperty(prop, property, prop.get("name", property))
+            elif (prop.has("-$ref")):  # Reference to Other Object (Foreign Key)
+                # object[prop.get("name", property)] = self.readReferenceProperty(prop, property, prop.get("name", property))
+                continue
+        try:
+            validateSchema(object,self.schema.getAsData())
+            logger.info(to_json(object))
+            return object
+        except Exception as e:
+            logger.error("Object : " + str(object_type) + " : \n" + to_json(object) + "\n" + str(e))
+            return None
+        return object
 
 ###
 ### Instanciate Class from Module

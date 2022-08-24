@@ -20,7 +20,6 @@ walrus
 wheel
 connexion
 six
-shutil
 glob2
 termcolor
 urllib3
@@ -43,6 +42,4 @@ console-menu
 pyreadline
 prompt_toolkit
 pyinstaller
-
-
-
+shutil

@@ -363,6 +363,10 @@ class dataBrowserForm():
         self.repos          = data  # List Data Structure (RepositoryStore - with a Name)
         self.dico           = data  # Dict Data Structure (SuperDict)
         self.style          = style # TREE or LIST
+        if (isinstance(data,list)):
+            self.style          = "LIST" # TREE or LIST
+        if (isinstance(data,dict)):
+            self.style          = "TREE" # TREE or LIST
         self.index_prefix   = index_prefix # For list items
         if (isinstance(data,ut.RepositoryStore)):
             self.dico    = ut.SuperDict(data.getAsData())
@@ -384,7 +388,7 @@ class dataBrowserForm():
         elif (isinstance(data,list)):
             self.dico  = ut.SuperDict(data, name=name)
             self.repos = ut.RepositoryStore(storeName=self.name, data=data, index_prefix=index_prefix)
-        self.sname          = self.repos.getStoreName()
+        self.sname          = self.name  # self.repos.getStoreName()
         self.names          = self.repos.getNames()
         self.current        = current_selection
         self.payload        = "-"+default_format+"-"
@@ -500,7 +504,8 @@ class dataBrowserForm():
         self.window['-SOURCE-'].Update(self.source)
         if (not self.display): self.display = self.name
         if (self.read_only):
-            self.window['-SELECT-'].Update("Browse "+self.display)
+            # self.window['-SELECT-'].Update("Browse "+self.display)
+            pass
         else:
             self.window['-SELECT-'].Update("Select "+self.display)
         self.window['-STATUS-'].Update(" " + self.display + " ")
@@ -550,8 +555,11 @@ class dataBrowserForm():
                [sg.Text('Path :',     size=(col_1, 1)),  sg.InputText(key='-SOURCE-',     default_text=self.source,      size=(col_2, 1), disabled=True)],
                [sg.Radio(text, 1,enable_events = True, key="-"+text+"-") for text in self.radio_choices ],
                [sg.Multiline(default_text=self.name, size=(col_2 + col_1 - 8  , height -5 ), font=("Courier", font), key='-PAYLOAD-', disabled=True)]]
-        buttons = [sg.Button(select_text, key="-SELECT-", size=(col_0+18, 1), button_color=color), sg.Text('', size=(0, 1)),
-                   sg.Button(cancel_text, key="-CANCEL-", size=(col_0+2, 1), button_color=color)]
+        if (self.read_only):
+            buttons = [sg.Button(cancel_text, key="-CANCEL-", size=(col_0+2, 1), button_color=color)]
+        else:
+            buttons = [sg.Button(select_text, key="-SELECT-", size=(col_0 + 18, 1), button_color=color), sg.Text('', size=(0, 1)),
+                       sg.Button(cancel_text, key="-CANCEL-", size=(col_0 + 2, 1), button_color=color)]
         status  = [sg.StatusBar("Status", key="-STATUS-",tooltip=" Current Key Path ",size=(col_0+col_1+col_2+15,1))]
         if (self.style == "TREE"): # headings=['Value']
             return [[sg.Tree( data=self.treedata, show_expanded=False,
@@ -656,7 +664,8 @@ class treeBrowserForm():
             self.loadItem(current_name)
         if (self.current != None):
             self.window.Element('-TITLE-').Update(self.current)
-            self.window.Element('-SELECT-').Update(str(self.dico.get(self.current)))
+            if (not self.read_only):
+                self.window.Element('-SELECT-').Update(str(self.dico.get(self.current)))
 
     def layout(self, title="Data Browser"):
         num_rows     = 20

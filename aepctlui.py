@@ -1,4 +1,6 @@
-#!/usr/bin/env Python3      
+#!/usr/bin/env python3
+
+from typing import Union
 import PySimpleGUI as sg
 import subprocess
 import platform
@@ -12,6 +14,7 @@ import Util as ut
 import Util_GUI as utg
 from threading import Thread
 import aepctl as aep
+import sys
 
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,7 +26,7 @@ aep_debug = "-v "
 ut.Verbose.init_verbose(True)
 hint_text = "Select Data Store ... >"
 
-refresh_timeout = 200
+refresh_timeout = 200  # ms
 
 settings = {
     "Extensions"   :
@@ -48,31 +51,37 @@ settings = {
 class Layout :
 
     # ------ Menu Definition ------ #
-    menu_browse = ['&Browse', ['All &Data ...::M_ALLDATA',
+    @staticmethod
+    def createMenuBrowse():
+        return ['&Browse', ['All &Data ...::M_ALLDATA',
                                '&Events ...::M_EVENTS', '&Contexts ...::M_CONTEXTS', 'Enri&chers ...::M_ENRICHERS',
                                '&Rules ...::M_RULES',   '&Actions ...::M_ACTIONS',   '&Templates ...::M_TEMPLATES']]
 
-    menu_def = [['&File',     ['&Exit::M_EXIT', '---',
+    @staticmethod
+    def createMenuDefinition():
+        return [['&File',     ['&Exit::M_EXIT', '---',
                                'BackUp &FS Store::M_BACKUP_FS_STORE',              'BackUp &DS Store::M_BACKUP_DS_STORE', '---',
                                '&Load DataSet into DS Store::M_LOAD_DS_STORE',     'Load DataSet into FS &Store::M_LOAD_FS_STORE']],
-                menu_browse,
+                # Layout.createMenuBrowse(),
                 ['&Settings', ['Theme, &Editor ...::M_SETTINGS', 'Toggle &Output::M_TOGGLE_OUTPUT', 'Toggle &Debug::M_DEBUG']],
-                ['&Help',     [ '&Error ...::M_ERROR', '&How To ...::M_HELP', '---', '&About ...::M_ABOUT']]]
+                ['&Help',     [ '&Error ...::M_ERROR', '&Configuration ...::M_CONFIG', '&Help ...::M_HELP', '---', '&About ...::M_ABOUT']]]
 
-    systemLayout = [
-        [sg.Text('System Management', size=(20, 1), justification='left', font=("Courier", 15, 'bold'), key='System/Header'),
-         sg.Text('System Operations', size=(50, 1), justification='left', font=("Courier", 9, 'bold'),  key='System/Title')],
-        [sg.Button(' System ', button_color=('white', 'springgreen4'), key='System/SystemBt'),
-         sg.Button(' Environment ', button_color=('white', 'springgreen4'), key='System/EnvironmentBt'),
-         sg.Button('  Reset  ', button_color=('white', 'firebrick3'), key='System/ResetBt'),
-         sg.Button(' System Logs ', button_color=('white', 'blue'), key='System/SystemLogsBt'),
-         sg.Button(' System Errors ', button_color=('white', 'orange'), key='System/SystemErrorsBt'),
-         sg.Button(' Help ', button_color=('white', 'grey'), key='System/HelpBt'),
-         sg.Button(' Requests ', button_color=('white', 'grey'), key='System/RequestsBt'),
-         sg.Button(' Cluster Logs ', button_color=('white', 'blue'), key='System/ClusterLogsBt'),
-         sg.Button(' Operations API ', button_color=('orange', 'white'), key='System/OperationsAPIBt')],
-        [sg.Multiline(default_text='(Click a Button ^ )', size=(98, 35), font=("Courier", 10), key='System/Output')],
-    ]
+    @staticmethod
+    def createSystemLayout():
+        return [
+            [sg.Text('System Management', size=(20, 1), justification='left', font=("Courier", 15, 'bold'), key='System/Header'),
+             sg.Text('System Operations', size=(50, 1), justification='left', font=("Courier", 9, 'bold'),  key='System/Title')],
+            [sg.Button(' System ', button_color=('white', 'springgreen4'), key='System/SystemBt'),
+             sg.Button(' Environment ', button_color=('white', 'springgreen4'), key='System/EnvironmentBt'),
+             sg.Button('  Reset  ', button_color=('white', 'firebrick3'), key='System/ResetBt'),
+             sg.Button(' System Logs ', button_color=('white', 'blue'), key='System/SystemLogsBt'),
+             sg.Button(' System Errors ', button_color=('white', 'orange'), key='System/SystemErrorsBt'),
+             sg.Button(' Help ', button_color=('white', 'grey'), key='System/HelpBt'),
+             sg.Button(' Requests ', button_color=('white', 'grey'), key='System/RequestsBt'),
+             sg.Button(' Cluster Logs ', button_color=('white', 'blue'), key='System/ClusterLogsBt'),
+             sg.Button(' Operations API ', button_color=('orange', 'white'), key='System/OperationsAPIBt')],
+            [sg.Multiline(default_text='(Click a Button ^ )', size=(98, 35), font=("Courier", 10), key='System/Output')],
+        ]
 
     @staticmethod
     def createAddButonsLayout(Resource: str):
@@ -81,15 +90,28 @@ class Layout :
         return BtLayout
 
     @staticmethod
-    def createOpenapiSchemaButonsLayout(Resource: str):
+    def createOpenapiSchemaProvisionButonsLayout(Resource: str):
         BtLayout = Layout.addButonsLayout(None,     Resource, 'Schema', color=('springgreen4', 'white'))
         BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'OpenAPI', color=('springgreen4', 'white'))
+        if (Resource in ["FS Apis", "FS Categories", "FS Services", "FS Contacts",
+                         "DS Apis", "DS Categories", "DS Services", "FS Contacts"]):
+            BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'Provision', color=('white', 'orange'))
+        if (Resource in ["WS Apis"]):
+            BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'Details', color=('white', 'orange'))
+        return BtLayout
+
+    def createWso2ButonsLayout(Resource: str):
+        BtLayout = None
+        if (Resource in ["WS Apis"]):
+            BtLayout = Layout.addButonsLayout(None, Resource, 'Details', color=('white', 'orange'))
+            BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'OpenAPI', color=('white', 'orange'))
+            BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'Thumbnail', color=('white', 'orange'))
         return BtLayout
 
     @staticmethod
-    def addButonsLayout(Layout, Resource: str, Label : str, color=('white', 'springgreen4')):
-        if (Layout is None) : Layout = [[]]
-        return [Layout[0] + [sg.Button(" "+Label+" ",   button_color=color, key=Resource+"/"+Label.strip()+"Bt")]]
+    def addButonsLayout(pLayout, Resource: str, Label : str, color=('white', 'springgreen4')):
+        if (pLayout is None) : pLayout = [[]]
+        return [pLayout[0] + [sg.Button(" "+Label+" ",   button_color=color, key=Resource+"/"+Label.strip()+"Bt")]]
 
     @staticmethod
     def createRestLayout(Resource : str, InitialContext: str= "Context Input", withContext=False):
@@ -99,7 +121,7 @@ class Layout :
                   sg.Tab('  Rest  ',  [[sg.Multiline(default_text='', font=("Courier", 8), size=(43, 32), key=Resource + "/Rest")]])]])]
         else:
             return [sg.TabGroup([
-                 [sg.Tab(' Input ',   [[sg.Multiline(default_text='', font=("Courier", 8), size=(43, 32), key=Resource + "/Context")]]),
+                 [sg.Tab(' Input ',   [[sg.Multiline(default_text=InitialContext, font=("Courier", 8), size=(43, 32), key=Resource + "/Context")]]),
                   sg.Tab(' Output ',  [[sg.Multiline(default_text='', font=("Courier", 8), size=(43, 32), key=Resource + "/Output")]]),
                   sg.Tab('  Rest  ',  [[sg.Multiline(default_text='', font=("Courier", 8), size=(43, 32), key=Resource + "/Rest")]])]])]
 
@@ -139,6 +161,7 @@ class Layout :
                      sg.Button(' Check ',   button_color=('white', 'grey'), key=Resource + "/CheckBt"),
                      sg.Button(' BackUp ',  button_color=('white', 'grey'), key=Resource + "/BackUpBt"),
                      sg.Button(' Clear ',   button_color=('white', 'blue'), key=Resource + "/ClearBt"),
+                     sg.Button(' New ',     button_color=('white', 'blue'), key=Resource + "/NewBt"),
                      sg.Button(' Edit ',    button_color=('white', 'blue'), key=Resource + "/EditBt"),
                      sg.Button(' Save ',    button_color=('white', 'blue'), key=Resource + "/SaveBt"),
                      sg.Button(' Delete ',  button_color=('white', 'firebrick3'), key=Resource + "/DeleteBt"),
@@ -149,7 +172,7 @@ class Layout :
             return [default_button_list + buttonsList[0] ]
 
     @staticmethod
-    def createBodyLayout(Resource : str, InitialText: str = "Text Input", withContext=False):
+    def createBodyLayout(Resource : str) :  # , InitialText: str = "Text Input", withContext=False):
         return [[sg.Listbox(values=('(Click List)', ''), font=("Courier", 12), size=(20, 25), enable_events=True,  key=Resource+"/Listing"),
                  sg.Multiline(default_text="( < Select "+Resource+")", size=(55, 26), font=("Courier", 12), key=Resource+"/Text")]
                  # + createRestLayout(Resource, InitialText, withContext=False)
@@ -172,27 +195,32 @@ class Layout :
 
         DS_CATALOG_TABLIST = []
         for resource in aep.AEP_CATALOG_RESSOURCES:
-            DS_CATALOG_TABLIST = Layout.addTabTabGroup(DS_CATALOG_TABLIST, "DS", str(resource).capitalize(), Layout.createOpenapiSchemaButonsLayout(resource))
+            service_resource = "DS " + str(resource).capitalize()
+            DS_CATALOG_TABLIST = Layout.addTabTabGroup(DS_CATALOG_TABLIST, "DS", str(resource).capitalize(), Layout.createOpenapiSchemaProvisionButonsLayout(service_resource))
         DS_CATALOG_GROUP = [[sg.TabGroup([DS_CATALOG_TABLIST], enable_events=True, font=("Courier", 12), key='DS Catalog/Tabs')]]
 
         DS_USERS_TABLIST = []
         for resource in aep.AEP_APPLICATION_USER_PROFILES_RESSOURCES:
-            DS_USERS_TABLIST = Layout.addTabTabGroup(DS_USERS_TABLIST, "DS", str(resource).capitalize(), Layout.createOpenapiSchemaButonsLayout(resource))
+            service_resource = "DS " + str(resource).capitalize()
+            DS_USERS_TABLIST = Layout.addTabTabGroup(DS_USERS_TABLIST, "DS", str(resource).capitalize(), Layout.createOpenapiSchemaProvisionButonsLayout(service_resource))
         DS_USERS_GROUP = [[sg.TabGroup([DS_USERS_TABLIST], enable_events=True, font=("Courier", 12), key='DS Users/Tabs')]]
 
         FS_CATALOG_TABLIST = []
         for resource in aep.AEP_CATALOG_RESSOURCES:
-            FS_CATALOG_TABLIST = Layout.addTabTabGroup(FS_CATALOG_TABLIST, "FS", str(resource).capitalize(), Layout.createOpenapiSchemaButonsLayout(resource))
+            service_resource = "FS " + str(resource).capitalize()
+            FS_CATALOG_TABLIST = Layout.addTabTabGroup(FS_CATALOG_TABLIST, "FS", str(resource).capitalize(), Layout.createOpenapiSchemaProvisionButonsLayout(service_resource))
         FS_CATALOG_GROUP = [[sg.TabGroup([FS_CATALOG_TABLIST], enable_events=True, font=("Courier", 12), key='FS Catalog/Tabs')]]
 
         FS_USERS_TABLIST = []
         for resource in aep.AEP_APPLICATION_USER_PROFILES_RESSOURCES:
-            FS_USERS_TABLIST = Layout.addTabTabGroup(FS_USERS_TABLIST, "FS", str(resource).capitalize(), Layout.createOpenapiSchemaButonsLayout(resource))
+            service_resource = "FS " + str(resource).capitalize()
+            FS_USERS_TABLIST = Layout.addTabTabGroup(FS_USERS_TABLIST, "FS", str(resource).capitalize(), Layout.createOpenapiSchemaProvisionButonsLayout(service_resource))
         FS_USERS_GROUP = [[sg.TabGroup([FS_USERS_TABLIST], enable_events=True, font=("Courier", 12), key='FS Users/Tabs')]]
 
         WS_TABLIST = []
         for resource in aep.WSO2_RESSOURCES:
-            WS_TABLIST = Layout.addTabTabGroup(WS_TABLIST, "WS", str(resource).capitalize())
+            service_resource = "WS " + str(resource).capitalize()
+            WS_TABLIST = Layout.addTabTabGroup(WS_TABLIST, "WS", str(resource).capitalize(), Layout.createWso2ButonsLayout(service_resource))
         WS_GROUP = [[sg.TabGroup([WS_TABLIST], enable_events=True, font=("Courier", 12), key='WS WSO2/Tabs')]]
 
         TAB_GROUP = sg.TabGroup([[sg.Tab(' FS Catalog ', FS_CATALOG_GROUP,     font=("Courier", 12), background_color='red',     key='FS_CatalogTab'),
@@ -200,11 +228,11 @@ class Layout :
                                   sg.Tab(' DS Catalog ', DS_CATALOG_GROUP,     font=("Courier", 12), background_color='green',   key='DS_CatalogTab'),
                                   sg.Tab(' DS Users ',   DS_USERS_GROUP,       font=("Courier", 12), background_color='green',   key='DS_UsersTab'),
                                   sg.Tab(' WS WSO2 ',    WS_GROUP,             font=("Courier", 12), background_color='blue',    key='WS_Tab'),
-                                  sg.Tab(' System ',     Layout.systemLayout,  font=("Courier", 12),                             key='System_Tab')]],
+                                  sg.Tab(' System ',     Layout.createSystemLayout(),  font=("Courier", 12),                     key='System_Tab')]],
                     enable_events=True, font=("Courier", 12), key='Tabs')
 
         mainLayout = [
-                  [sg.Menu(Layout.menu_def, tearoff=True)],
+                  [sg.Menu(Layout.createMenuDefinition(), tearoff=True)],
                   [sg.Text(application, size=(50, 1), justification='left', font=("Courier", 20, 'bold'), key='Title')],
                   [sg.Text('OK', text_color="green", size=(100, 1), key='Status')],
                   [TAB_GROUP],
@@ -243,28 +271,11 @@ class MainGUI(threading.Thread):
         self.editor          = None  # External Editor Location
         self.aep_service     = None  # FS / DS / WS
         self.aep_store       = None  # Providers / Articles etc ...
+        self.aepctl_last_command = None
+        self.aepctl_last_result  = None
         self.initWindow()
 
-    def setResource(self, Resource):
-        if (Resource == None) or (Resource == ""):
-            self.Resource  = None
-            self.Resources = None
-            self.resources = None
-            return
-        self.aep_service = re.sub(" .*$", "", self.current_event)
-        self.aep_store   = re.sub("^.. ", "", self.current_event)
-        self.aep_store   = re.sub("/.*$", "", self.aep_store)
-        if (Resource.endswith("ies")):
-            self.Resource = re.sub("ies$", "y", self.Resource)
-        if (Resource.endswith("s")):
-            self.Resource = re.sub("s$", "", Resource)
-        if (self.Resource.endswith("ies")):
-            self.Resources = re.sub("y$", "ies", self.Resource)
-        else:
-            self.Resources = self.Resource + "s"
-        self.resources = self.Resources.lower()
-
-    def error(self, text="Error"):
+    def error(self, text : Union[str, None] ="Error"):
         if (not text):  # Reset Error
             self.error_text  = None
             return
@@ -282,22 +293,23 @@ class MainGUI(threading.Thread):
         return True
 
     def statusDoing(self, text="Doing ..."):
-        self.window.set_cursor("wait")
+        self.cursor("circle")
         return self.status(text, color="orange")
 
     def statusDone(self, text="Done."):
-        self.window.set_cursor("arrow")
+        self.cursor("arrow")
         if (self.isError()) : return True
         return self.status(text, color="green")
 
     def statusReady(self, text="Ready"):
-        self.window.set_cursor("arrow")
+        self.cursor("arrow")
         if (self.isError()) : return True
         return self.status(text, color="blue")
 
     def statusError(self, text="Error"):
-        self.window.set_cursor("arrow")
-        text = text + " : " + self.error_text
+        self.cursor("arrow")
+        # text = text + " : " + self.error_text
+        self.error_text = text
         return self.status(text, color="red")
 
     @staticmethod
@@ -354,7 +366,7 @@ class MainGUI(threading.Thread):
             if (the_dict): return True
             return False
         except Exception as e:
-            self.error(str(e))
+            self.error("checkJson : "+str(e))
             return False
 
     ###
@@ -363,10 +375,11 @@ class MainGUI(threading.Thread):
             return False
         res  = self.current_tab
         name = self.current_element
-        if (self.Resources not in settings["Extensions"].keys()):
-            logger.error("No Extension defined in settings for : "+self.Resources)
-            return False
-        filepath = tempfile.gettempdir() + os.sep + res + "_" + name + "." + settings["Extensions"][res]
+        if (self.Resources in settings["Extensions"].keys()):
+            extension = settings["Extensions"][self.current_tab]
+        else:
+            extension = 'json'
+        filepath = tempfile.gettempdir() + os.sep + res + "_" + name + "." + extension
         if (not ut.safeFileExist(filepath)): return False
         tt = str(os.stat(filepath).st_mtime)
         if (tt == self.runTime["TimeStamps/"+filepath]):
@@ -387,7 +400,11 @@ class MainGUI(threading.Thread):
     ###
     def openFile(self, text, res, name):
         if ((not self.current_content_ext) or (self.current_content_ext == "")):
-            self.current_content_ext = settings["Extensions"][self.current_tab]
+            if (self.current_tab not in settings["Extensions"]) :
+                self.current_content_ext = 'json'
+            else:
+                logger.info("No Extension defined in settings for : " + self.Resources)
+                self.current_content_ext = settings["Extensions"][self.current_tab]
         filepath = tempfile.gettempdir() + os.sep + res + "_" + name + "." + str(self.current_content_ext)
         logger.info("Opening file : " + filepath)
         ut.saveFileContent(text, filepath)
@@ -406,12 +423,40 @@ class MainGUI(threading.Thread):
     ### Common
     ###
 
+    def setResource(self, Resource):
+        if (Resource == None) or (Resource == ""):
+            self.Resource  = None
+            self.Resources = None
+            self.resources = None
+            return
+        self.aep_service = re.sub(" .*$", "", self.current_event)
+        self.aep_store   = re.sub("^.. ", "", self.current_event)
+        self.aep_store   = re.sub("/.*$", "", self.aep_store)
+        if (Resource.endswith("ies")):
+            self.Resource = re.sub("ies$", "y", self.Resource)
+        if (Resource.endswith("s")):
+            self.Resource = re.sub("s$", "", Resource)
+        if (self.Resource.endswith("ies")):
+            self.Resources = re.sub("y$", "ies", self.Resource)
+        else:
+            self.Resources = self.Resource + "s"
+        self.resources = self.Resources.lower()
+
     def handleOutput(self, event : str, command : str, result : str, payload : str = ""):
         self.last_output = result
         output = self.last_output  # self.quotedTextToText(self.last_output)
-        self.setWidgetValue("Output", output)
+        resource = re.sub("/.*$","",event)
+        resource = re.sub("^.. ","",resource)
+        # self.setWidgetValue("Output", output)
         if (self.output_popup):
-            sg.PopupScrolled(output, title=event + " : " + command, size=(80, 30))
+            output_data = ut.loadDataContent(output)
+            if ((output_data) and isinstance(output_data, dict)):
+                # name = str(resource).lower() + " " + str(idName)
+                utg.dataBrowserForm(data=output_data, name=str(resource),
+                                    formats_choices=["Json", "Yaml", "Flat"], read_only=True, style="TREE",
+                                    index_prefix=resource + " ").run()
+            else:
+                sg.PopupScrolled(output, title=event + " : " + "aepctl " + command, size=(80, 30))
         logger.info("\nEvent : " + event + "\nCommand : " + command + "\nPayload : " + payload + "\nOutput : \n" + str(output))
 
     def hasWidget(self, widget):
@@ -447,7 +492,8 @@ class MainGUI(threading.Thread):
             return None
         sub = re.sub("^.*/", "", widget)
         if (sub == "Text") or (sub == "Output") or (sub == "Context"):
-            value = self.textToJsonText(value)
+            if (not value.startswith("( <")):
+                value = self.textToJsonText(value)
         self.window.Element(widget).Update(value)
         self.udata[widget] = value
         return value
@@ -464,30 +510,32 @@ class MainGUI(threading.Thread):
         else :
             self.setWidgetValue(self.Resources + "/Listing", ["-Empty-"])
         self.setWidgetValue("Text",   "( < Select "+self.Resource+")")
-        self.setWidgetValue("Input",  "( < Select "+self.Resource+")")
-        self.setWidgetValue("Rest",   "NO ACCESS")
-        self.setWidgetValue("Output", "NO ACCESS")
+        # self.setWidgetValue("Input",  "( < Select "+self.Resource+")")
+        # self.setWidgetValue("Rest",   "NO ACCESS")
+        # self.setWidgetValue("Output", "NO ACCESS")
 
-    def updateAepEntry(self, entry : str , what : str = None, version=True):
+    def updateAepEntry(self, entry : str , what : str = None):  # , version=True):
         if (what == None):
             self.current_element = self.getWidgetValue(self.Resources + "/Name")
         else:
             self.current_element = what
-        obj = ut.loadDataContent(entry)
-        if ((not obj) or ("id" not in obj)):
+        obj      = ut.loadDataContent(entry)
+        id_att   = aep.StoreManager.get_id_att(str(self.Resources))
+        name_att = aep.StoreManager.get_name_att(str(self.Resources))
+        desc_att = aep.StoreManager.get_desc_att(str(self.Resources))
+        if ((not obj) or (id_att not in obj)):
             ident = "(No identifier found)"
             self.setWidgetValue(self.Resources + "/Name",        str(what))
             self.setWidgetValue(self.Resources + "/Identifier",  str(ident))
-            self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            self.setWidgetValue(self.Resources + "/Output",      str(entry))
             self.setWidgetValue(self.Resources + "/Description", str(aep.StoreManager.get_description(str(self.Resources), str(ident))))
+            self.setWidgetValue(self.Resources + "/Text",        str(entry))
+            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
         else:
-            ident = obj["id"]
-            self.setWidgetValue(self.Resources + "/Name",        str(what))
-            self.setWidgetValue(self.Resources + "/Identifier",  str(ident))
+            self.setWidgetValue(self.Resources + "/Name",        str(obj[name_att]))
+            self.setWidgetValue(self.Resources + "/Identifier",  str(obj[id_att]))
+            self.setWidgetValue(self.Resources + "/Description", str(obj[desc_att]))
             self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            self.setWidgetValue(self.Resources + "/Output",      str(entry))
-            self.setWidgetValue(self.Resources + "/Description", str(aep.StoreManager.get_description(str(self.Resources), str(ident))))
+            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
         """
         self.restRequest(self.resources+"/" + self.current_element + "?VC=False")
         self.setWidgetValue("Tag",          "(Tag)")
@@ -503,7 +551,31 @@ class MainGUI(threading.Thread):
                 self.setWidgetValue("TimeStamp", self.reqServer.d_data["VersionControl/TimeStamp"])
         """
 
-    def updateWso2Entry(self, entry : str , what : str = None, version=True):
+    def newAepEntry(self):
+        self.setWidgetValue("Name", "")
+        self.setWidgetValue("Description", "Edit New Entry")
+        self.setWidgetValue("Identifier", "")
+        schema = aep.StoreManager.get_schema(self.Resource)
+        text = "No Schema for " + self.Resource
+        if (schema):
+            newObject = ut.ObjectReader().templateObjectForThisSchema(schema)
+            text = ut.to_json(newObject)
+        self.setWidgetValue("Text", text)
+
+    def clearAepEntry(self, output=True):
+        self.setWidgetValue("Name",         "")
+        self.setWidgetValue("Description",  "")
+        self.setWidgetValue("Identifier",   "")
+        self.setWidgetValue("Text",         "( < Select "+self.Resource+")")
+        # self.setWidgetValue("Input",        "( < Select "+self.Resource+")")
+        # self.setWidgetValue("Tag",          "")
+        # self.setWidgetValue("Version",      "")
+        # self.setWidgetValue("TimeStamp",    "")
+        # if (output):
+            # self.setWidgetValue("Output",       "")
+            # self.setWidgetValue("Rest",         "")
+
+    def updateWso2Entry(self, entry : str , what : str = None):  # , version=True):
         if (what == None):
             self.current_element = self.getWidgetValue(self.Resources + "/Name")
         else:
@@ -512,25 +584,27 @@ class MainGUI(threading.Thread):
         if ("role" in obj):  # WS Users
             self.setWidgetValue(self.Resources + "/Name",        str(obj["name"]))
             self.setWidgetValue(self.Resources + "/Identifier",  str(obj["name"]))
-            self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            self.setWidgetValue(self.Resources + "/Output",      str(entry))
             self.setWidgetValue(self.Resources + "/Description", str(obj["role"]))
+            self.setWidgetValue(self.Resources + "/Text",        str(entry))
+            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
             return
 
-        if ((not obj) or ("id" not in obj)):
+        id_att   = aep.StoreManager.get_id_att(str(self.Resources))
+        name_att = aep.StoreManager.get_name_att(str(self.Resources))
+        desc_att = aep.StoreManager.get_desc_att(str(self.Resources))
+        if ((not obj) or (id_att not in obj)):
             ident = "(No identifier found)"
             self.setWidgetValue(self.Resources + "/Name",        str(what))
             self.setWidgetValue(self.Resources + "/Identifier",  str(ident))
-            self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            self.setWidgetValue(self.Resources + "/Output",      str(entry))
             self.setWidgetValue(self.Resources + "/Description", str(aep.StoreManager.get_description(str(self.Resources), str(ident))))
+            self.setWidgetValue(self.Resources + "/Text",        str(entry))
+            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
         else:
-            ident = obj["id"]
-            self.setWidgetValue(self.Resources + "/Name",        str(what))
-            self.setWidgetValue(self.Resources + "/Identifier",  str(ident))
+            self.setWidgetValue(self.Resources + "/Name",        str(obj[name_att]))
+            self.setWidgetValue(self.Resources + "/Identifier",  str(obj[id_att]))
+            self.setWidgetValue(self.Resources + "/Description", str(obj[desc_att]))
             self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            self.setWidgetValue(self.Resources + "/Output",      str(entry))
-            self.setWidgetValue(self.Resources + "/Description", str(aep.StoreManager.get_description(str(self.Resources), str(ident))))
+            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
         """
         self.restRequest(self.resources+"/" + self.current_element + "?VC=False")
         self.setWidgetValue("Tag",          "(Tag)")
@@ -546,25 +620,13 @@ class MainGUI(threading.Thread):
                 self.setWidgetValue("TimeStamp", self.reqServer.d_data["VersionControl/TimeStamp"])
         """
 
-    def clearAepEntry(self, output=True):
-        self.setWidgetValue("Name",         "")
-        self.setWidgetValue("Text",         "( < Select "+self.Resource+")")
-        self.setWidgetValue("Input",        "( < Select "+self.Resource+")")
-        self.setWidgetValue("Tag",          "")
-        self.setWidgetValue("Description",  "")
-        self.setWidgetValue("Identifier",  "")
-        self.setWidgetValue("Version",      "")
-        self.setWidgetValue("TimeStamp",    "")
-        if (output):
-            self.setWidgetValue("Output",       "")
-            self.setWidgetValue("Rest",         "")
-
     ###
     ### System
     ###
 
     ###
     def handleSystemRequest(self, request) -> bool:
+        """
         try:
             self.restRequest(request)
             self.setWidgetValue("System/Output", self.reqServer.r_text)
@@ -573,10 +635,13 @@ class MainGUI(threading.Thread):
             self.setWidgetValue("System/Output", str(e))
             self.error(str(e))
             return False
+        """
+        return (self == request)  # Shutup Code Checker
 
     ###
-    def handleSystemEvent(self, event, values):
+    def handleSystemEvent(self, event):
 
+        # Not Implemented
         if (event == "System/SystemBt"):
             return self.handleSystemRequest("help/sys")
 
@@ -619,40 +684,51 @@ class MainGUI(threading.Thread):
             return self.handleSystemRequest("help/ANME_Triggering_OpenApi")
 
     ###
-    ### AEP FS Catalog
+    ### AEP CTL DataStores
     ###
 
     def eventResource(self, event) -> str:
+        self.aep_service = self.aep_service
         resource = event
         if ("/" in event):
             resource = re.sub("/.*$", "", resource)
         return resource
 
     def eventWidget(self, event) -> str:
-       if ("/" in event):
-           return re.sub("^.*/", "", self.current_event)
-       else:
-           return event
+        if ("/" in event):
+            return re.sub("^.*/", "", self.current_event)
+        else:
+            return event
 
-    def checkPayload(self, payload : str) -> bool :
-        self.error_text = None
+    def checkPayload(self, payload : str) -> Union[dict, None] :
+        self.error(None)
         try :
-            json.loads(payload)
+            payload = json.loads(payload)
         except Exception as err:
-            self.error(str(err))
-            return False
-        res = aep.StoreManager().check_schema(payload, self.aep_store)
+            self.error("checkPayload json error : " + str(err))
+            return None
+        if (self.aep_service.lower() == "ws"):
+            entity_name = "ws_"+self.aep_store
+        else:
+            entity_name = self.aep_store
+        res = aep.StoreManager().check_schema(payload, entity_name)
         if (res) :
-            self.error(str(res))
-            return False
-        return True
+            self.error("checkPayload schema error : " + str(res))
+            return None
+        return payload
 
     def aepctl(self, command, event="Unkown"):
+        global aep_debug
+        self.aepctl_last_command = ""
+        self.aepctl_last_result  = ""
         command = aep_debug + command
         logger.info("aepctl command : " + command)
+        self.aepctl_last_command = command
         self.error(None)
-        self.window.set_cursor("wait")
+        self.cursor("wait")
+        ut.Term.print_yellow("aepctl " +command)
         res = aep.main(command, interactive=False)
+        self.aepctl_last_result  = str(res)
         if (res == None) :
             self.error("aepctl : returned " + str(res))
             self.handleOutput(event=event, command=command, result="None - Error or Invalid Command")
@@ -672,15 +748,15 @@ class MainGUI(threading.Thread):
         if self.isError():
             return False
         self.updateAepList(res)
-        self.setWidgetValue("Output", res)
+        self.setWidgetValue("Text", res)
         return True
 
     def loadEntry(self, event, entry_id : str = None):
         resource = self.eventResource(event)
         if (not entry_id) :
-            if (len(self.current_values[resource +"/Listing"]) == 0):
+            if (len(self.current_values[resource + "/Listing"]) == 0):
                 return False
-            entry_id = self.current_values[resource +"/Listing"][0]
+            entry_id = self.current_values[resource + "/Listing"][0]
         cmd = resource + " get " + entry_id
         res = self.aepctl(cmd, event)
         if self.isError():
@@ -689,19 +765,19 @@ class MainGUI(threading.Thread):
             self.updateWso2Entry(res, entry_id)
         else:
             self.updateAepEntry(res, entry_id)
-        self.setWidgetValue("Output", res)
+        # self.setWidgetValue("Output", res)
         return True
 
     def deleteResource(self, event, entry_id : str = None):
         resource = self.eventResource(event)
         if (not entry_id) :
-            entry_id = self.current_values[resource +"/Listing"][0]
+            entry_id = self.current_values[resource + "/Listing"][0]
         cmd = resource + " delete " + entry_id
         res = self.aepctl(cmd, event)
         if self.isError():
             return False
         self.updateAepEntry(res, entry_id)
-        self.setWidgetValue("Output", res)
+        # self.setWidgetValue("Output", res)
         self.clearAepEntry(output=False)
         self.loadList(event)
         return True
@@ -709,7 +785,7 @@ class MainGUI(threading.Thread):
     def saveResource(self, event, entry_id : str = None):
         resource = self.eventResource(event)
         if (not entry_id) :
-            entry_id = self.current_values[resource +"/Listing"][0]
+            entry_id = self.current_values[resource + "/Listing"][0]
         payload  = self.getWidgetValue(self.Resources + "/Text")
         self.checkPayload(payload)
         if self.isError():
@@ -721,7 +797,7 @@ class MainGUI(threading.Thread):
         if self.isError():
             return False
         self.updateAepEntry(res, entry_id)
-        self.setWidgetValue("Output", res)
+        # self.setWidgetValue("Output", res)
         self.clearAepEntry(output=False)
         self.loadList(event)
         return True
@@ -729,18 +805,19 @@ class MainGUI(threading.Thread):
     def backupResource(self, resource):
         self.Resource = resource
         event = self.Resource + "/BackUp"
-        self.statusDoing("BackUp " + self.Resource + " ...")
+        self.statusDoing(event + " - BackUp " + self.Resource + " ...")
         bupdir = utg.directorySelectorForm(buttonName="BackUp", windowTitle="Select BackUp Directory")
         if (not bupdir): return False
         cmd = self.Resource + " backUp " + bupdir
         res = self.aepctl(cmd, self.Resource + "/backUp")
+        # self.setWidgetValue("Output", res)
         self.statusDone("BackedUp " + self.Resource + ".")
         return True
 
     def loadDataSet(self, resource):
         self.Resource = resource
         event = self.Resource + "/LoadDataSet"
-        self.statusDoing("Load DataSet " + self.Resource + " ...")
+        self.statusDoing(event + " - Load DataSet " + self.Resource + " ...")
         loadPath = utg.fileDirectorySelectorForm(buttonName="Load", windowTitle="Select Load Data Set")
         if (not loadPath): return False
         cmd = self.Resource + " load " + loadPath
@@ -749,17 +826,13 @@ class MainGUI(threading.Thread):
         self.statusDone("Loaded DataSet " + self.Resource + ".")
         return True
 
-    def handleAepEvent(self, event, values):
+    def handleAepEvent(self, event):
 
         widget   = self.eventWidget(event)
 
         if ("Tabs" in widget):  # Tab Focus
             self.loadList(self.current_value)
             return True
-
-        if (widget == "ListBt"):  # Load List
-            self.loadList(event)
-            return self.statusDone("Listed "+self.Resource+".")
 
         if (widget == "Listing"):  # Load List
             if (self.current_value[0] in ["(Click List)", "-Empty-"]):
@@ -769,33 +842,37 @@ class MainGUI(threading.Thread):
                 self.loadEntry(event)
                 return self.statusDone("Loaded " + self.Resource + " " + self.current_element + ".")
 
+        if (widget == "ListBt"):  # Load List
+            self.loadList(event)
+            return self.statusDone("Listed "+self.Resource+".")
+
         if (widget == "DeleteBt"):
-            self.checkPayload(self.getWidgetValue(self.Resources + "/Text"))
+            entity     = self.Resources
+            entry      = self.getWidgetValue(entity + "/Text")
+            dentry     = self.checkPayload(entry)
             if (self.isError()): return True
-            self.statusDoing("Deleting "+self.Resource+" ...")
-            entry    = self.getWidgetValue(self.Resources + "/Text")
-            dentry   = json.loads(entry)
-            name_att = aep.StoreManager().get_name_att(entity=self.Resources)
-            name     = dentry[name_att]
-            if (sg.PopupYesNo("Delete " + self.Resource + " [" + name + "] ?", title="Delete ?") != "Yes"): return True
-            self.deleteResource(self.Resources, name)
-            return self.statusDone("Deleted "+self.Resource+".")
+            name       = dentry[aep.StoreManager().get_name_att(entity=entity)]
+            self.statusDoing("Deleting " + entity + " [" + name + "] ...")
+            if (sg.PopupYesNo("Delete "  + entity + " [" + name + "] ?", title="Delete ?") != "Yes"): return True
+            self.deleteResource(entity, name)
+            return self.statusDone("Deleted "+entity+".")
 
         if (widget == "SaveBt"):
-            self.checkPayload(self.getWidgetValue(self.Resources + "/Text"))
+            entity     = self.Resources
+            entry      = self.getWidgetValue(entity + "/Text")
+            dentry     = self.checkPayload(entry)
             if (self.isError()): return True
-            self.statusDoing("Saving "+self.Resource+" ...")
-            entry    = self.getWidgetValue(self.Resources + "/Text")
-            dentry   = json.loads(entry)
-            name_att = aep.StoreManager().get_name_att(entity=self.Resources)
-            name = dentry[name_att]
-            if (sg.PopupYesNo("Save " + self.Resource + " as [" + name + "] ?", title="Save ?") != "Yes"): return True
-            self.saveResource(self.Resources, entry)
-            return self.statusDone("Saved "+self.Resource+" ["+name+"]")
+            name       = dentry[aep.StoreManager().get_name_att(entity=entity)]
+            self.statusDoing("Saving " + entity + " [" + name + "] ...")
+            if (sg.PopupYesNo("Save "  + entity + " as [" + name + "] ?", title="Save ?") != "Yes"): return True
+            self.saveResource(entity, entry)
+            return self.statusDone("Saved "+entity+" ["+name+"]")
 
         if (widget == "CheckBt"):
-            self.statusDoing("Check "+self.Resource+" ...")
-            self.checkPayload(self.getWidgetValue(self.Resources + "/Text"))
+            entity     = self.Resources
+            entry      = self.getWidgetValue(entity + "/Text")
+            self.checkPayload(entry)
+            self.statusDoing("Check " + entity + " ...")
             if (self.isError()):
                 sg.PopupScrolled(self.error_text, title="Check Error : ", size=(60, 20))
                 return self.statusError("Check Error")
@@ -808,17 +885,24 @@ class MainGUI(threading.Thread):
             self.loadList(event)
             return self.statusDone("Cleared "+self.Resource+".")
 
+        if (widget == "NewBt"):
+            self.statusDoing("New "+self.Resource+" ...")
+            self.newAepEntry()
+            return self.statusDone("Newed "+self.Resource+".")
+
         if (widget == "LoadBt") :
-            self.statusDoing("Load "+self.Resource+" ...")
+            entity     = self.Resources
+            self.statusDoing("Load "+entity+" ...")
             self.loadEntry(event, self.getWidgetValue("Name"))
-            return self.statusDone("Load "+self.Resource+".")
+            return self.statusDone("Loaded "+entity+".")
 
         if (widget == "SchemaBt"):
-            self.statusDoing("Schema "+self.Resource+" ...")
+            entity     = self.Resources
+            self.statusDoing("Schema "+entity+" ...")
             cmd = self.eventResource(event) + " schema "
             res = self.aepctl(cmd, event)
-            self.setWidgetValue(self.Resources + "/Text",        str(res))
-            return self.statusDone("Schema "+self.Resource+".")
+            self.setWidgetValue(entity + "/Text", str(res))
+            return self.statusDone("Schema "+entity+".")
 
         if (widget == "OpenAPIBt"):
             self.statusDoing("OpenAPI "+self.Resource+" ...")
@@ -827,7 +911,7 @@ class MainGUI(threading.Thread):
             self.setWidgetValue(self.Resources + "/Text",        str(res))
             return self.statusDone("OpenAPI "+self.Resource+".")
 
-        if (event == self.Resources + "/BackUpBt"):
+        if (widget == "BackUpBt"):
             self.statusDoing("BackUp "+self.Resource+" ...")
             if (sg.PopupYesNo("BackUp " + self.Resource + " ?", title="BackUp ?") != "Yes"): return True
             cmd = self.eventResource(event) + " backUp "
@@ -835,14 +919,22 @@ class MainGUI(threading.Thread):
             self.setWidgetValue(self.Resources + "/Text",        str(res))
             return self.statusDone("BackedUp "+self.Resource+".")
 
-        if (event == self.Resources + "/EditBt"):
+        if (widget == "EditBt"):
             self.statusDoing("Editing "+self.Resource+" ...")
-            self.loadEntry()
+            self.loadEntry(event=event)
             content = self.getWidgetValue("Text", "NO_TEXT")
             self.openFile(content, self.Resources, self.current_element)
             return self.statusDone("Edit "+self.Resource+".")
 
-    def handleWso2Event(self, event, values):
+        if (widget == "ProvisionBt"):
+            self.statusDoing("Provisioning "+self.Resource+" ...")
+            self.loadEntry(event=event)
+            cmd = self.eventResource(event) + " provision " + self.getWidgetValue("Name")
+            res = self.aepctl(cmd, event)
+            self.setWidgetValue(self.Resources + "/Text",        str(res))
+            return self.statusDone("Provisioned "+self.Resource+".")
+
+    def handleWso2Event(self, event):
 
         widget   = self.eventWidget(event)
 
@@ -854,7 +946,7 @@ class MainGUI(threading.Thread):
             self.loadList(event)
             return self.statusDone("Listed "+self.Resource+".")
 
-        if (widget == "Listing"):  # Load List
+        if (widget == "Listing"):  # Load Entry in List, or List if Empty
             if (self.current_value[0] in ["(Click List)", "-Empty-"]):
                 self.loadList(event)
                 return self.statusDone("Listed " + self.Resource + ".")
@@ -875,11 +967,17 @@ class MainGUI(threading.Thread):
             return self.statusDone("Deleted "+self.Resource+".")
 
         if (widget == "SaveBt"):
+            if (widget == "SaveBt"):
+                self.statusError("No Save for Wso2 : Use Provisionning instead.")
+                return True
             self.checkPayload(self.getWidgetValue(self.Resources + "/Text"))
             if (self.isError()): return True
             self.statusDoing("Saving "+self.Resource+" ...")
             entry    = self.getWidgetValue(self.Resources + "/Text")
             dentry   = json.loads(entry)
+            if ((dentry == None) or (not isinstance(dentry,dict))):
+                self.statusError("Invalid  Entry Selected")
+                return True
             name_att = aep.StoreManager().get_name_att(entity=self.Resources)
             name = dentry[name_att]
             if (sg.PopupYesNo("Save " + self.Resource + " as [" + name + "] ?", title="Save ?") != "Yes"): return True
@@ -889,6 +987,7 @@ class MainGUI(threading.Thread):
         if (widget == "CheckBt"):
             self.statusDoing("Check "+self.Resource+" ...")
             self.checkPayload(self.getWidgetValue(self.Resources + "/Text"))
+
             if (self.isError()):
                 sg.PopupScrolled(self.error_text, title="Check Error : ", size=(60, 20))
                 return self.statusError("Check Error")
@@ -902,25 +1001,30 @@ class MainGUI(threading.Thread):
             return self.statusDone("Cleared "+self.Resource+".")
 
         if (widget == "LoadBt") :
+            name = self.getWidgetValue("Name")
+            if ((name == None) or (name.strip() == "")):
+                self.statusError("Invalid  Entry Selected")
+                return True
             self.statusDoing("Load "+self.Resource+" ...")
             self.loadEntry(event, self.getWidgetValue("Name"))
             return self.statusDone("Load "+self.Resource+".")
 
         if (widget == "SchemaBt"):
-            self.statusDoing("Schema "+self.Resource+" ...")
-            cmd = self.eventResource(event) + " schema "
-            res = self.aepctl(cmd, event)
-            self.setWidgetValue(self.Resources + "/Text",        str(res))
-            return self.statusDone("Schema "+self.Resource+".")
+            self.statusError("No Schema for Wso2")
+            return True
 
         if (widget == "OpenAPIBt"):
+            name = self.getWidgetValue("Name")
+            if ((name == None) or (name.strip() == "")):
+                self.statusError("Invalid  Entry Selected")
+                return True
             self.statusDoing("OpenAPI "+self.Resource+" ...")
-            cmd = self.eventResource(event) + " openapi "
+            cmd = self.eventResource(event) + " openapi " + name
             res = self.aepctl(cmd, event)
             self.setWidgetValue(self.Resources + "/Text",        str(res))
             return self.statusDone("OpenAPI "+self.Resource+".")
 
-        if (event == self.Resources + "/BackUpBt"):
+        if (widget == "BackUpBt"):
             self.statusDoing("BackUp "+self.Resource+" ...")
             if (sg.PopupYesNo("BackUp " + self.Resource + " ?", title="BackUp ?") != "Yes"): return True
             cmd = self.eventResource(event) + " backUp "
@@ -928,12 +1032,38 @@ class MainGUI(threading.Thread):
             self.setWidgetValue(self.Resources + "/Text",        str(res))
             return self.statusDone("BackedUp "+self.Resource+".")
 
-        if (event == self.Resources + "/EditBt"):
+        if (widget == "EditBt"):
+            name = self.getWidgetValue("Name")
+            if ((name == None) or (name.strip() == "")):
+                self.statusError("Invalid  Entry Selected")
+                return True
             self.statusDoing("Editing "+self.Resource+" ...")
             self.loadEntry(event)
             content = self.getWidgetValue("Text", "NO_TEXT")
             self.openFile(content, self.Resources, self.current_element)
             return self.statusDone("Edit "+self.Resource+".")
+
+        if (widget == "DetailsBt"):
+            name = self.getWidgetValue("Name")
+            if ((name == None) or (name.strip() == "")):
+                self.statusError("Invalid  Entry Selected")
+                return True
+            self.statusDoing("Details "+self.Resource+" ...")
+            cmd = self.eventResource(event) + " details " + name
+            res = self.aepctl(cmd, event)
+            self.setWidgetValue(self.Resources + "/Text",        str(res))
+            return self.statusDone("Details "+self.Resource+".")
+
+        if (widget == "ThumbnailBt"):
+            name = self.getWidgetValue("Name")
+            if ((name == None) or (name.strip() == "")):
+                self.statusError("Invalid  Entry Selected")
+                return True
+            self.statusDoing("Thumbnail "+self.Resource+" ...")
+            cmd = self.eventResource(event) + " thumbnail " + name
+            res = self.aepctl(cmd, event)
+            self.setWidgetValue(self.Resources + "/Text",        str(res))
+            return self.statusDone("Thumbnail "+self.Resource+".")
 
     ###
     ### Main
@@ -962,6 +1092,11 @@ class MainGUI(threading.Thread):
         self.theme         = utg.settingsForm.getSettings(application=application_settings, item="Theme")
         self.editor        = utg.settingsForm.getSettings(application=application_settings, item="Editor")
         sg.theme(self.theme)
+
+    def cursor(self, cursor):
+        if (sys.platform != 'cygwin'):
+            self.window.set_cursor(cursor)
+        return
 
     def logEvent(self, what=None):
         if (what == None):
@@ -1031,7 +1166,7 @@ class MainGUI(threading.Thread):
             self.current_value = None
         self.error_text    = None
 
-    def refresh(self):
+    def refreshWidgets(self):
         if (self.no_refresh) : return
         if (self.current_tab == "Tabs"):
             self.current_tab = self.current_action
@@ -1039,16 +1174,15 @@ class MainGUI(threading.Thread):
             self.current_action  = "Focus"
         title = application
         if (self.current_event == None) : return
-        if (self.current_tab != None)     and (self.current_tab != "")     : title = "[" + self.current_event + "]"
-        # if (self.current_tab != None)     and (self.current_tab != "")     : title = self.current_tab
-        if (self.current_tab == "FileStores")                              : title =  title + " - " + self.current_fs
+        if (self.current_tab != None)     and (self.current_tab != "")     : title = self.current_tab
         if (self.current_element != None) and (self.current_element != "") : title =  title + " : [" + self.current_element + "]"
         if (self.current_action != None)  and (self.current_action != "")  : title =  title + " - " + self.current_action
-        self.udata[self.current_tab+"/Title"] = title
-        # self.window.Element("Title").Update(title)
+        if (self.aepctl_last_command != None)  and (self.aepctl_last_command != "")  : title =  "aepctl" + " " + self.aepctl_last_command
+        if (self.current_tab != "") :
+            self.udata[self.current_tab+"/Title"] = title
 
         # Refresh Widgets with Updated Values
-        # self.refreshFile()
+        self.refreshFile()
         fuData = ut.flatten(self.udata.getAsData(), "/")
         logger.info(fuData)
         for uKey in fuData.keys():
@@ -1078,8 +1212,17 @@ class MainGUI(threading.Thread):
                 self.window.Element(self.Resources+"/Rest").Update(self.reqServer.getLogs(reset=True))
         """
 
-    def run(self):
+    def run(self, debug : bool = False):
+        global aep_debug
 
+        if (debug):
+            aep_debug = "-v "
+            ut.Verbose.init_verbose(True)
+        else:
+            aep_debug = ""
+            ut.Verbose.init_verbose(False)
+
+        sg.theme(utg.settingsForm.getSettings(application=application_settings, item="Theme"))
         self.window = sg.Window(application, Layout.createMainLayout(), default_element_size=(80, 1), grab_anywhere=False, resizable=False)
 
         # Initial Inits
@@ -1087,13 +1230,13 @@ class MainGUI(threading.Thread):
 
         # The Event Loop
         while True:
-            self.refresh()
+            self.refreshWidgets()
             if (self.current_event != "System/Timeout"):
                 logger.info("Event   : " + str(self.current_event) + " - " + str("Done"))
-            if (initDone): self.window.set_cursor("arrow")
+            if (initDone): self.cursor("arrow")
             self.current_event, self.current_values = self.window.Read(timeout=refresh_timeout, timeout_key="System/Timeout")  # in ms
-            if (initDone): self.window.set_cursor("wait")
-            if self.current_event is None: break
+            if (initDone): self.cursor("circle")
+            if (self.current_event is None): break
             self.no_refresh = False
             self.logEvent()
 
@@ -1104,17 +1247,35 @@ class MainGUI(threading.Thread):
                 if (initDone == False):
                     # Initial Inits
                     initDone = True
-                # self.refreshFile()
+                self.refreshFile()
                 continue
 
+            # Exit
+            if ((self.current_event == "Exit") or ('M_EXIT' in self.current_event)):
+                self.status("Exit ...")
+                self.window.close()
+                return
+
+            # Ignore Some Tabs Events
+            if ("Tabs" in self.current_event):
+                tab = self.current_values["Tabs"]
+                logger.info("# Tab Focus Change : " + tab)
+                logger.info("Ignored Event : "+self.current_event)
+                # self.current_event  = "Tabs/"+tab
+                # self.status(text=self.current_event, color="grey")
+                # self.window.Element(widget).Update(values=self.current_relist)
+                continue
+
+            ###
+            ### Menu Events
+            ###
+
+            # About
             if (self.current_event == 'About ...') or ('M_ABOUT' in self.current_event):
-                self.current_event  = "System/About"
-                text = "      Amdocs Exposure Platform\n  Contact: bheuse@amdocs.com"
-                text = text + "\n\nConfiguration File:\n" + utg.settingsForm.getSettingsFile()
-                self.statusDone("About.")
-                sg.PopupScrolled(text, title="About ...", size=(35, 3))
+                utg.aboutPopup(configuration_file=utg.settingsForm.getSettingsFile())
                 continue
 
+            # Last Error
             if (self.current_event == "Error ...") or ('M_ERROR' in self.current_event):  # Show Last Error
                 self.current_event  = "System/Error"
                 self.status("Last Error", "red")
@@ -1122,6 +1283,44 @@ class MainGUI(threading.Thread):
                 sg.PopupScrolled(self.error_text, title="Last Error :", size=(60, 20))
                 continue
 
+            # Edit Settings
+            if (self.current_event == 'Theme, Editor ...') or ('M_SETTINGS' in self.current_event):
+                self.status("Edit Settings")
+                utg.settingsForm.editSettings(application=application_settings, no_server=True)
+                sg.theme(utg.settingsForm.getSettings(application=application_settings, item="Theme"))
+                continue
+
+            # Toggle Output Popup
+            if (self.current_event == 'Toggle Output') or ('M_TOGGLE_OUTPUT' in self.current_event):
+                self.output_popup = not self.output_popup
+                self.statusDone("Toggled Output")
+                continue
+
+            # Verbose ON/OFF
+            if (self.current_event == 'Toggle Debug') or ('M_DEBUG' in self.current_event):
+                if (aep_debug == ""):
+                    aep_debug = "-v "
+                    ut.Verbose.swap_verbose()
+                    self.statusDone("Verbose ON")
+                else:
+                    aep_debug = ""
+                    ut.Verbose.swap_verbose()
+                    self.statusDone("Verbose OFF")
+                continue
+
+            # How to / Help
+            if (self.current_event == 'Help ...') or ('M_HELP' in self.current_event):
+                res = self.aepctl("help")
+                sg.PopupScrolled(res, title="Help on aepctl", size=(40, 20))
+                continue
+
+            # Show Configuration
+            if (self.current_event == 'Configuration ...') or ('M_CONFIG' in self.current_event):
+                res = self.aepctl("help")
+                sg.PopupScrolled(res, title="aepctl Configuration", size=(40, 20))
+                continue
+
+            # Load / Save / Back Up / Restore
             if (self.current_event == 'BackUp FS Store') or ('M_BACKUP_FS_STORE' in self.current_event):
                 self.backupResource("FS providers")
                 continue
@@ -1138,61 +1337,6 @@ class MainGUI(threading.Thread):
                 self.loadDataSet("FS providers")
                 continue
 
-            ###
-            ### Menu Events
-            ###
-
-            # Edit Settings
-            if (self.current_event == 'Theme, Editor ...') or ('M_SETTINGS' in self.current_event):
-                self.status("Edit Settings")
-                utg.settingsForm.editSettings(application=application_settings, no_server = True)
-                sg.theme(utg.settingsForm.getSettings(application=application_settings, item="Theme"))
-                continue
-
-            # Verbose ON/OFF
-            if (self.current_event == 'Toggle Output') or ('M_TOGGLE_OUTPUT' in self.current_event):
-                self.output_popup = not self.output_popup
-                self.statusDone("Toggled Output")
-                continue
-
-            # Verbose ON/OFF
-            if (self.current_event == 'Toggle Debug') or ('M_DEBUG' in self.current_event):
-                global aep_debug
-                if (aep_debug == ""):
-                    aep_debug = "-v "
-                    ut.Verbose.swap_verbose()
-                    self.statusDone("Verbose ON")
-                else:
-                    aep_debug = ""
-                    ut.Verbose.swap_verbose()
-                    self.statusDone("Verbose OFF")
-                continue
-
-            # About
-            if (self.current_event == 'About ...') or ('M_ABOUT' in self.current_event):
-                utg.aboutPopup(configuration_file=utg.settingsForm.getSettingsFile())
-                continue
-
-            # How to / Help
-            if (self.current_event == 'How To ...') or ('M_HELP' in self.current_event):
-                sg.PopupScrolled("Coming Soon ...", title="Help on the Rule Editor", size=(40, 20))
-                continue
-
-            # Exit
-            if ((self.current_event == "Exit") or ('M_EXIT' in self.current_event)):
-                self.status("Exit ...")
-                return
-
-            # Ignore Some Tabs Events
-            if ("Tabs" in self.current_event):
-                tab = self.current_values["Tabs"]
-                logger.info("# Tab Focus Change : " + tab)
-                logger.info("Ignored Event : "+self.current_event)
-                # self.current_event  = "Tabs/"+tab
-                # self.status(text=self.current_event, color="grey")
-                # self.window.Element(widget).Update(values=self.current_relist)
-                continue
-
             #  Event Processing
             self.logEvent("Event")
             self.collectEvent(self.current_event, self.current_values)
@@ -1200,32 +1344,22 @@ class MainGUI(threading.Thread):
             self.logEvent("Details")
 
             if (self.current_event.startswith("WS")) :
-                if self.handleWso2Event(self.current_event, self.current_values):      continue
-            if self.handleAepEvent(self.current_event, self.current_values):           continue
-            if self.handleSystemEvent(self.current_event, self.current_values):        continue
-            self.error("Widget Event Not Implemented : "+self.current_event+" - "+str(self.current_value))
+                if self.handleWso2Event(self.current_event):      continue
+            if self.handleAepEvent(self.current_event):           continue
+            if self.handleSystemEvent(self.current_event):        continue
+            self.error("===> Widget Event Not Implemented : "+self.current_event+" - "+str(self.current_value))
 
 
-def aepctlui_thread():
-    MainGUI().run()
-
-
-def start_aepctlui():
-    global aep_debug
-    aep_debug = ""
-    ut.Verbose.init_verbose(False)
-    sg.theme(utg.settingsForm.getSettings(application=application_settings, item="Theme"))
-    Thread(target=aepctlui_thread).start()
+def start_aepctlui() -> str :
+    thread = Thread(target=MainGUI().run())
+    thread.setDaemon(True)
+    thread.start()
     return "aepctlui"
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
-    logger = logging.getLogger(__name__)
-    aep_debug = "-v "
-    ut.Verbose.init_verbose(True)
-    sg.theme(utg.settingsForm.getSettings(application=application_settings, item="Theme"))
-    MainGUI().run()
+    MainGUI().run(debug=True)
 
 
 '''

@@ -1,0 +1,9 @@
+{
+  "name": "${Name}",
+  "description": "${UseCase}",
+  "throttlingPolicy": "Unlimited",
+  "tokenType": "JWT",
+  "groups": [],
+  "attributes": {},
+  "subscriptionScopes": []
+}

@@ -1,0 +1,102 @@
+{
+  "name": "${API_Name}",
+  "description": "${API_Description}",
+  "context": "${API_Context}",
+  "version": "${API_Version}",
+  "provider": "${API_Provider_Name}",
+  "lifeCycleStatus": "CREATED",
+  "wsdlInfo": {
+    "type": "ZIP"
+  },
+  "responseCachingEnabled": false,
+  "cacheTimeout": 300,
+  "hasThumbnail": false,
+  "isDefaultVersion": false,
+  "isRevision": false,
+  "revisionId": 0,
+  "enableSchemaValidation": false,
+  "type": "HTTP",
+  "transport": [
+    "http",
+    "https"
+  ],
+  "tags": [
+  ],
+  "policies": [
+    "TestPolicy1"
+  ],
+  "apiThrottlingPolicy": "Unlimited",
+  "authorizationHeader": "Authorization",
+  "securityScheme": [
+    "oauth2",
+	"oauth_basic_auth_api_key_mandatory"
+  ],
+  "maxTps": {
+    "production": 1000,
+    "sandbox": 1000
+  },
+  "visibility": "PUBLIC",
+  "visibleRoles": [],
+  "visibleTenants": [],
+  "mediationPolicies": [
+  ],
+  "subscriptionAvailability": "CURRENT_TENANT",
+  "subscriptionAvailableTenants": [],
+  "additionalProperties": [
+  ],
+  "accessControl": "NONE",
+  "accessControlRoles": [],
+  "businessInformation": {
+  },
+  "corsConfiguration": {
+    "corsConfigurationEnabled": false,
+    "accessControlAllowOrigins": [
+      "*"
+    ],
+    "accessControlAllowCredentials": false,
+    "accessControlAllowHeaders": [
+      "authorization",
+	  "Access-Control-Allow-Origin",
+	  "Content-Type",
+	  "SOAPAction",
+	  "apikey",
+	  "Internal-Key"
+    ],
+    "accessControlAllowMethods": [
+      "GET",
+	  "PUT",
+	  "POST",
+	  "DELETE",
+	  "PATCH",
+	  "OPTIONS"
+    ]
+  },
+  "websubSubscriptionConfiguration": {
+    "enable": false,
+    "secret": "",
+    "signingAlgorithm": "SHA1",
+    "signatureHeader": "x-hub-signature"
+  },
+  "endpointConfig": {
+    "endpoint_type": "http",
+    "sandbox_endpoints": {
+      "url": "http://service-hostname:8080/${API_Name}/v1/"
+    },
+    "production_endpoints": {
+      "url": "http://service-hostname:8080/${API_Name}/v1/"
+    }
+  },
+  "endpointImplementationType": "ENDPOINT",
+  "scopes": [
+  ],
+  "categories": [
+      % for Category in API_Category:
+        "${Category}"
+      % endfor
+  ],
+  "advertiseInfo": {
+    "advertised": false,
+    "apiOwner": "${API_Provider_Name}",
+    "vendor": "WSO2"
+  }
+}

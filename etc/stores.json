@@ -128,19 +128,55 @@
   {
     "name"     : "WS_Users",
     "schema"   : null,
-    "entity"   : "ws_users",
+    "entity"   : "users",
     "id_att"   : "name",
     "name_att" : "name",
     "desc_att" : "role",
     "service"  : "wso2"
   },
   {
+    "name"     : "WS_Policies",
+    "schema"   : null,
+    "entity"   : "Policies",
+    "id_att"   : "idType",
+    "name_att" : "name",
+    "desc_att" : "description",
+    "service"  : "wso2"
+  },
+  {
+    "name"     : "WS_Apis",
+    "schema"   : null,
+    "entity"   : "Apis",
+    "id_att"   : "id",
+    "name_att" : "nameVersion",
+    "desc_att" : "description",
+    "service"  : "wso2"
+  },
+  {
+    "name"     : "WS_Settings",
+    "schema"   : null,
+    "entity"   : "Settings",
+    "id_att"   : "id",
+    "name_att" : "name",
+    "desc_att" : "description",
+    "service"  : "wso2"
+  },
+  {
+    "name"     : "WS_Applications",
+    "schema"   : null,
+    "entity"   : "Applications",
+    "id_att"   : "applicationId",
+    "name_att" : "name",
+    "desc_att" : "description",
+    "service"  : "wso2"
+  },
+  {
     "name"     : "WS_Categories",
     "schema"   : null,
-    "entity"   : "ws_categories",
-    "id_att"   : "name",
+    "entity"   : "categories",
+    "id_att"   : "id",
     "name_att" : "name",
-    "desc_att" : "role",
+    "desc_att" : "description",
     "service"  : "wso2"
   }
 

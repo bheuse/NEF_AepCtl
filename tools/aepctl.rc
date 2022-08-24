@@ -1,0 +1,17 @@
+echo $AEP_HOME
+
+alias cdaep='cd $AEP_HOME'
+
+AEP_NAMESPACE="pentest"
+alias aep_access="$AEP_HOME/tools/kubectl.exe get pods -n $AEP_NAMESPACE | grep wso2"
+alias aep_connect="$AEP_HOME/tools/aep_connect.sh"
+alias aepctl='python3 $AEP_HOME/aepctl.py'
+alias aepui='python3 $AEP_HOME/aepctlui.py'
+alias aepctlui='python3 $AEP_HOME/aepctlui.py'
+alias aepctlx='$AEP_HOME/build/dist/aepctl/aepctl.exe'
+alias aepctlsrc="source $AEP_HOME/tools/aepctl.rc"
+
+WSO2_APICTL_HOME=$AEP_HOME
+alias acl="$WSO2_APICTL_HOME/tools/apictl/apictl.exe login production -k -u admin -p admin"
+alias  ac="$WSO2_APICTL_HOME/tools/apictl/apictl.exe -k -e production "
+alias ach="$WSO2_APICTL_HOME/tools/apictl/apictl.exe "
