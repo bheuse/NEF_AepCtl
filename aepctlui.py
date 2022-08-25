@@ -60,9 +60,23 @@ class Layout :
     @staticmethod
     def createMenuDefinition():
         return [['&File',     ['&Exit::M_EXIT', '---',
-                               'BackUp &FS Store::M_BACKUP_FS_STORE',              'BackUp &DS Store::M_BACKUP_DS_STORE', '---',
-                               '&Load DataSet into DS Store::M_LOAD_DS_STORE',     'Load DataSet into FS &Store::M_LOAD_FS_STORE']],
-                # Layout.createMenuBrowse(),
+                               'BackUp &FS Store::M_BACKUP_FS_STORE',              'BackUp &DS Store::M_BACKUP_DS_STORE',
+                               'BackUp &WS Store::M_BACKUP_WS_STORE',               '---',
+                                '&Import FS Store into DS::M_IMPORT_DS_STORE',     'E&xport DS Store to FS::M_EXPORT_DS_STORE',
+                               '---',
+                               '&Load DataSet into FS Store::M_LOAD_FS_STORE',     'Load DataSet into DS &Store::M_LOAD_DS_STORE']],
+                ['&FS Store', ['&BackUp ...::M_FS_BACKUP',           '&Restore ...::M_FS_RESTORE',
+                               '&Delete All::M_FS_DELETE_ALL',       '&Load Data Set ...::M_FS_LOAD',
+                               '&Export to DS::M_FS_EXPORT_DS',      '&Import from DS::M_FS_IMPORT_DS',
+                               '&Provision to WS::M_FS_PROVISION_WS']],
+                ['&DS Store', ['&BackUp...::M_DS_BACKUP',            '&Restore ...::M_DS_RESTORE',
+                               '&Delete All::M_DS_DELETE_ALL',       '&Load Data Set ...::M_DS_LOAD',
+                               '&Export to FS::M_DS_EXPORT_FS',      '&Import from FS::M_DS_IMPORT_FS',
+                               '&Provision to WS::M_DS_PROVISION_WS']],
+                ['&WS Store', ['&BackUp::M_WS_BACKUP',
+                               '&Provision from FS::M_WS_PROVISION_FS', '&Provision from DS::M_WS_PROVISION_DS',
+                               '&Extract to FS::M_WS_EXTRACT_FS',       '&Extract to DS::M_WS_EXTRACT_DS']],
+        # Layout.createMenuBrowse(),
                 ['&Settings', ['Theme, &Editor ...::M_SETTINGS', 'Toggle &Output::M_TOGGLE_OUTPUT', 'Toggle &Debug::M_DEBUG']],
                 ['&Help',     [ '&Error ...::M_ERROR', '&Configuration ...::M_CONFIG', '&Help ...::M_HELP', '---', '&About ...::M_ABOUT']]]
 
@@ -551,16 +565,16 @@ class MainGUI(threading.Thread):
                 self.setWidgetValue("TimeStamp", self.reqServer.d_data["VersionControl/TimeStamp"])
         """
 
-    def newAepEntry(self):
+    def newAepEntry(self, entry):
         self.setWidgetValue("Name", "")
         self.setWidgetValue("Description", "Edit New Entry")
         self.setWidgetValue("Identifier", "")
-        schema = aep.StoreManager.get_schema(self.Resource)
-        text = "No Schema for " + self.Resource
-        if (schema):
-            newObject = ut.ObjectReader().templateObjectForThisSchema(schema)
+        newObject = aep.StoreManager.get_template(self.Resource)
+        if (not newObject):
+            text = "No Schema for " + self.Resource
+        else:
             text = ut.to_json(newObject)
-        self.setWidgetValue("Text", text)
+        self.setWidgetValue("Text", entry)
 
     def clearAepEntry(self, output=True):
         self.setWidgetValue("Name",         "")
@@ -826,6 +840,35 @@ class MainGUI(threading.Thread):
         self.statusDone("Loaded DataSet " + self.Resource + ".")
         return True
 
+    def deleteAll(self, service : str = "FS"):
+        self.statusError("deleteAll DataSet " + service + " : Not Implemented.")
+        return True
+
+    def copyResource(self, serviceFrom : str = "FS", serviceTo : str = "DS"):
+        self.statusError("copyResource From " + serviceFrom + " To " + serviceTo + " : Not Implemented.")
+        return True
+
+    def backupWS(self):
+        self.statusError("backupWS" + " : Not Implemented.")
+        return True
+
+    def provisionWS(self, serviceFrom : str = "FS"):
+        self.statusError("provisionWS From " + serviceFrom + " : Not Implemented.")
+        return True
+
+    def extractWS(self, serviceTo : str = "FS"):
+        self.statusError("extractWS To " + serviceTo + " : Not Implemented.")
+        return True
+
+    def templateResource(self, event):
+        resource = self.eventResource(event)
+        cmd = resource + " template json"
+        res = self.aepctl(cmd, event)
+        if self.isError():
+            return False
+        self.newAepEntry(res)
+        return True
+
     def handleAepEvent(self, event):
 
         widget   = self.eventWidget(event)
@@ -887,7 +930,7 @@ class MainGUI(threading.Thread):
 
         if (widget == "NewBt"):
             self.statusDoing("New "+self.Resource+" ...")
-            self.newAepEntry()
+            self.templateResource(event)
             return self.statusDone("Newed "+self.Resource+".")
 
         if (widget == "LoadBt") :
@@ -1320,22 +1363,87 @@ class MainGUI(threading.Thread):
                 sg.PopupScrolled(res, title="aepctl Configuration", size=(40, 20))
                 continue
 
-            # Load / Save / Back Up / Restore
-            if (self.current_event == 'BackUp FS Store') or ('M_BACKUP_FS_STORE' in self.current_event):
-                self.backupResource("FS providers")
-                continue
+            # Menu : FS Load / Save / Back Up / Restore
+            if ('M_FS' in self.current_event):
+                if ('M_FS_BACKUP' in self.current_event):
+                    self.backupResource("FS")
+                    continue
 
-            if (self.current_event == 'BackUp DS Store') or ('M_BACKUP_DS_STORE' in self.current_event):
-                self.backupResource("DS providers")
-                continue
+                if ('M_FS_RESTORE' in self.current_event):
+                    self.loadDataSet("FS")
+                    continue
 
-            if (self.current_event == 'Load DataSet into DS Store') or ('M_LOAD_DS_STORE' in self.current_event):
-                self.loadDataSet("DS providers")
-                continue
+                if ('M_FS_DELETE_ALL' in self.current_event):
+                    self.deleteAll("FS")
+                    continue
 
-            if (self.current_event == 'Load DataSet into FS Store') or ('M_LOAD_FS_STORE' in self.current_event):
-                self.loadDataSet("FS providers")
-                continue
+                if ('M_FS_LOAD' in self.current_event):
+                    self.loadDataSet("FS")
+                    continue
+
+                if ('M_FS_EXPORT_DS' in self.current_event):
+                    self.copyResource("FS","DS")
+                    continue
+
+                if ('M_FS_IMPORT_DS' in self.current_event):
+                    self.copyResource("DS","FS")
+                    continue
+
+                if ('M_FS_PROVISION_WS' in self.current_event):
+                    self.provisionWS("FS")
+                    continue
+
+            # Menu : DS Load / Save / Back Up / Restore / ...
+            if ('M_DS' in self.current_event):
+                if ('M_DS_BACKUP' in self.current_event):
+                    self.backupResource("DS")
+                    continue
+
+                if ('M_DS_RESTORE' in self.current_event):
+                    self.loadDataSet("DS")
+                    continue
+
+                if ('M_DS_DELETE_ALL' in self.current_event):
+                    self.deleteAll("DS")
+                    continue
+
+                if ('M_DS_LOAD' in self.current_event):
+                    self.loadDataSet("DS")
+                    continue
+
+                if ('M_DS_EXPORT_FS' in self.current_event):
+                    self.copyResource("DS","FS")
+                    continue
+
+                if ('M_DS_IMPORT_FS' in self.current_event):
+                    self.copyResource("FS","DS")
+                    continue
+
+                if ('M_DS_PROVISION_WS' in self.current_event):
+                    self.provisionWS("DS")
+                    continue
+
+            # Menu : WS Load / Save / Back Up / Restore / ...
+            if ('M_WS' in self.current_event):
+                if ('M_WS_BACKUP' in self.current_event):
+                    self.backupWS()
+                    continue
+
+                if ('M_WS_PROVISION_FS' in self.current_event):
+                    self.provisionWS("FS")
+                    continue
+
+                if ('M_WS_PROVISION_DS' in self.current_event):
+                    self.provisionWS("DS")
+                    continue
+
+                if ('M_WS_EXTRACT_FS' in self.current_event):
+                    self.extractWS("FS")
+                    continue
+
+                if ('M_WS_EXTRACT_DS' in self.current_event):
+                    self.extractWS("DS")
+                    continue
 
             #  Event Processing
             self.logEvent("Event")

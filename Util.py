@@ -3371,7 +3371,7 @@ class ObjectReader():
         self.object = SuperDict(object)
 
         object_type = self.schema["name"]
-        print("Reading Object : "+object_type)
+        logger.info("Reading Object : "+object_type)
 
         for property in self.schema["properties"]:
             prop = SuperDict(self.schema["properties"][property])
@@ -3493,7 +3493,7 @@ class ObjectReader():
         self.object = SuperDict(object)
 
         object_type = self.schema["name"]
-        print("Template Object : "+object_type)
+        logger.info("Template Object : "+object_type)
 
         for property in self.schema["properties"]:
             prop = SuperDict(self.schema["properties"][property])
