@@ -1,0 +1,15 @@
+{ "entries" :  [
+{
+  "entity"   : "providers",
+  "entry" :  {
+          "ProviderName" : "ProviderNameFactory1",
+          "ProviderDescription": "ProviderDescriptionFactory1",
+          "Contact": "Contact",
+          "WebSite": "WebSite",
+          "ProviderIcon": "@url:https://www.finsmes.com/wp-content/uploads/2020/09/amdocs-300x300.jpg",
+          "PoviderIcon": "@url:https://www.finsmes.com/wp-content/uploads/2020/09/amdocs-300x300.jpg",
+          "ProviderBigLogo": "ProviderBigLogo"
+          }
+}
+]
+}

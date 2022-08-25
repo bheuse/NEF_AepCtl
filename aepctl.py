@@ -353,9 +353,9 @@ class RestHandler:
             self.token_Type     = str(dict_response["token_type"])
             self.authentified   = True
         except Exception as ex:
-            logger.exception("Exception AUTH Operation : " + self.op)
             self.r_code = 400
             self.r_text = str(ex).replace("\\n", "\n")
+            logger.exception("Exception AUTH Operation : " + self.op + "/n" +self.r_text)
             self.completed()
             raise ex
 
@@ -364,9 +364,9 @@ class RestHandler:
             if (not self.authentified):
                 self.authentify()
         except Exception as ex:
-            logger.exception("Exception AUTH Operation : " + self.op)
             self.r_code = 400
             self.r_text = str(ex).replace("\\n", "\n")
+            logger.exception("Exception AUTH Operation : " + self.op + "/n" +self.r_text)
             self.completed()
             return None
         self.r_code     = 200
@@ -2529,8 +2529,9 @@ class StoreManager():
             name = name if (store_type.lower() not in ["ws","wso2"]) else "ws_"+name.lower()
         for store_key in self.stored :
             if (self.stored[store_key]["name"].lower()   == name.lower()): name = store_key
-        for store_key in self.stored:
-            if (self.stored[store_key]["entity"].lower() == name.lower()): name = store_key
+        if (name not in self.stored):
+            for store_key in self.stored:
+                if (self.stored[store_key]["entity"].lower() == name.lower()): name = store_key
         if (name not in self.stored): return None
         store = self.stored[name]
         if (store_type == "") :
@@ -2802,6 +2803,47 @@ class StoreManager():
         all_data["__details__"] = details
         ut.saveJsonFile(all_data, save_file)
         return ut.to_json(details)
+
+    @staticmethod
+    def store_delete(service: str="file", resource : str="all", operation="delete", backup : bool = False):
+        resources = list()
+        if (resource == "all"):
+            resources = StoreManager.list_store_entities(service=service)
+        elif (resource.lower() in StoreManager.list_store_entities(lower=True,service=service)):
+            resources.append(resource)
+        else:
+            logger.error("Delete : Unknown Resource : "+resource)
+            return None
+        all_data = dict()
+        for res in resources :
+            server = StoreManager().getStore(res, store_type=service)
+            all_data[res] = server.delete_all(backup=backup)
+        sys_data = ut.get_sys()
+        details = { "operation" : operation, "service" : service, "resources" : resources,
+                    "timestamp" : ut.timestamp(), "configuration": ut.getCurrentConfiguration().getAsData(),
+                    "status" : "success"   , "system" : sys_data}
+        all_data["__details__"] = details
+        return ut.to_json(all_data)
+
+    @staticmethod
+    def store_delete_all(service="file", operation : str ="delete_all"):
+        StoreManager.store_back_up(service=service, resource="all", operation=operation)
+        data = StoreManager.store_delete(service=service, resource="all", operation=operation, backup=False)
+        logger.info("Delete All Service : " + service)
+        return data
+
+    @staticmethod
+    def copy_store(serviceFrom : str, serviceTo : str, operation : str="copy_store", delete_all : bool = False):
+        logger.info("copy_store From : " + serviceFrom + " To : " + serviceTo)
+        StoreManager.store_back_up(service=serviceTo, resource="all", operation=operation)
+        data = StoreManager.store_back_up(service=serviceFrom, resource="all", operation=operation)
+        if (not data):
+            return None
+        if (delete_all):
+            StoreManager.store_delete(service=serviceTo, resource="all", operation=operation, backup=False)
+        filename = data["filename"]
+        FactoryLoader(service=serviceTo).factory_loader(filename,backup=False,delete_all=False)
+        return data
 
 
 LOCAL_SERVICE     = ["LOCAL", "FILES", "FS"]
@@ -3450,6 +3492,7 @@ class AepCtl:
         "provision"    : {"<id/name>", "<name/version>", "all", "help"},
         "import"       : {"<id/name>", "<name/version>", "all", "dir", "help"},
         "export"       : {"<id/name>", "<name/version>", "all", "help"},
+        "delete_all"   : None ,
     }
 
     @staticmethod
@@ -3465,7 +3508,7 @@ class AepCtl:
         }
         return aep_ressources
 
-    FS_COMMANDS = ["LOAD", "SAVE", "IMPORT", "EXPORT", "BACKUP", "RESTORE", "DELETE_ALL"]
+    FS_COMMANDS = ["LOAD", "SAVE", "IMPORT", "EXPORT", "BACKUP", "RESTORE", "DELETE_ALL", "PROVISION_WS"]
 
     def get_aep_completer(for_service : str = "ds"):  # pragma: no cover
         dcmd = dict()
@@ -3545,7 +3588,7 @@ class AepCtl:
             if (command == "GET"):      return AepCtl.print(resource, entry, idName)
             if (command == "DISPLAY"):  return AepCtl.display(resource, entry, idName)
         elif (command in ["DELETE"]):
-            if (idName.upper() == "ALL"):
+            if (idName.upper() == "ALL") :
                 entries = store.delete_all()
                 if (store.error()): return AepCtl.error(resource, command, store.error())
                 return AepCtl.print(resource, entries)
@@ -3613,6 +3656,18 @@ class AepCtl:
             logger.info("Extracting : " + str(idName))
             wsp = Wso2Provisioning()
             res = wsp.extractWso2Apis(idName, dataStore=service)
+            return AepCtl.print(resource, res)
+        elif (command in ["DELETE_ALL"]):
+            logger.info("Deleting All : " + str(service))
+            res = StoreManager.store_delete_all(service, operation="delete all")
+            return AepCtl.print(resource, res)
+        elif (command in ["EXPORT"]):
+            logger.info("Export : " + str(payload))
+            res = StoreManager.copy_store(serviceFrom=service, serviceTo=payload, operation="export " + payload)
+            return AepCtl.print(resource, res)
+        elif (command in ["IMPORT"]):
+            logger.info("Import : " + str(payload))
+            res = StoreManager.copy_store(serviceFrom=payload, serviceTo=service, operation="Import " + payload)
             return AepCtl.print(resource, res)
         elif (command in ["PROVISION"]):
             if (resource.upper() not in ["APIS", "CATEGORIES", "SERVICES", "CONTACTS"]):
@@ -3699,7 +3754,6 @@ class AepCtl:
             return AepCtl.handle_datastore_command(arguments)
         elif (resource.upper() in AEP_RESSOURCES):
             return AepCtl.handle_datastore_command(arguments)
-        elif (resource.upper() in WSO2_RESSOURCES):
             return AepCtl.handle_ws02_command(arguments)
         else:
             ut.Term.print_red("Unknown Command or Resource : " + command + " " + resource)
@@ -3809,7 +3863,7 @@ Payload   : <JSON>, JSON_FileName, YAML_FileName
     cl_args["COMMAND"]        = None
     cl_args["ID"]             = None
     cl_args["PAYLOAD"]        = None
-    cl_args["SERVICE"]        = "ds"
+    cl_args["SERVICE"]        = None
     cl_args["CONFIG_FILE"]    = None
     cl_args["VERBOSE"]        = False
 
@@ -3884,7 +3938,10 @@ Payload   : <JSON>, JSON_FileName, YAML_FileName
             return None
     for arg in args :
         if   (arg.upper() in SERVICES)  :
-            cl_args["SERVICE"]   = arg
+            if (not cl_args["SERVICE"]):
+                cl_args["SERVICE"] = arg
+            else:
+                cl_args["ID"] = arg
             continue
         if   (not cl_args["RESSOURCE"]) : cl_args["RESSOURCE"] = arg
         elif (not cl_args["COMMAND"])   : cl_args["COMMAND"]   = arg
@@ -3892,6 +3949,7 @@ Payload   : <JSON>, JSON_FileName, YAML_FileName
         elif (not cl_args["PAYLOAD"])   : cl_args["PAYLOAD"]   = arg
         else : cl_args["PAYLOAD"] = cl_args["PAYLOAD"] + " " + arg
         continue
+    if (not cl_args["SERVICE"]): cl_args["SERVICE"] = "ds"
     # logger.info("Command Line Args : \n" + json.dumps(cl_args, indent=3))
     return cl_args
 

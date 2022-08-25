@@ -1,0 +1,79 @@
+{ "entries" :
+[
+{
+  "entity"   : "providers",
+  "entry" :  {
+          "ProviderName" : "ProviderNameFactory01",
+          "ProviderDescription": "ProviderDescriptionFactory01",
+          "Contact": "Contact",
+          "WebSite": "WebSite",
+          "ProviderIcon": "ProviderIcon",
+          "PoviderIcon": "ProviderIcon",
+          "ProviderBigLogo": "ProviderBigLogo"
+          }
+},
+{
+  "entity"   : "providers",
+  "entry" :  {
+          "ProviderName" : "ProviderNameFactory02",
+          "ProviderDescription": "ProviderDescriptionFactory03",
+          "Contact": "Contact",
+          "WebSite": "WebSite",
+          "ProviderIcon": "ProviderIcon",
+          "PoviderIcon": "ProviderIcon",
+          "ProviderBigLogo": "ProviderBigLogo"
+          }
+},
+{
+  "entity"   : "providers",
+  "entry" :  {
+          "ProviderName" : "ProviderNameFactory03",
+          "ProviderDescription": "ProviderDescriptionFactory03",
+          "Contact": "Bernard Heuse",
+          "WebSite": "amdocs.com",
+          "PoviderIcon": "@b64file:pictures/ProviderLogo.png",
+          "ProviderIcon": "@b64file:pictures/ProviderLogo.png",
+          "ProviderBigLogo": "ProviderBigLogo"
+          }
+},
+{
+    "entity": "categories",
+    "entry": {
+      "CategoryName": "NEF",
+      "CategoryDescription": "NEF Native APIs",
+      "CategoryLogo": "@b64file:pictures/ProviderLogo.png"
+    }
+},
+{
+    "entity": "categories",
+    "entry": {
+          "CategoryName" : "Camara",
+          "CategoryDescription": "Camara APIs",
+          "CategoryLogo": "@b64file:pictures/ProviderLogo.png"
+    }
+},
+{
+    "entity": "categories",
+    "entry": {
+          "CategoryName" : "TMF",
+          "CategoryDescription": "TMF APIs",
+          "CategoryLogo": "@b64file:pictures/ProviderLogo.png"
+    }
+},
+{
+    "entity": "categories",
+    "entry": {
+          "CategoryName" : "Public",
+          "CategoryDescription": "Public APIs",
+          "CategoryLogo": "@b64file:pictures/ProviderLogo.png"
+    }
+}
+],
+  "include" :  [
+     "dataset1.json",
+     "data/dataset2.json",
+     "tmf-apis-dump/ac*/*/*_api.json",
+     "public-apis-dump/*/*_api.json",
+     "camara-apis-dump/*/*_api.json",
+     "nef-apis-dump/*/*_api.json"
+] }

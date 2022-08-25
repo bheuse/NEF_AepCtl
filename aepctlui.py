@@ -28,7 +28,7 @@ hint_text = "Select Data Store ... >"
 
 refresh_timeout = 200  # ms
 
-settings = {
+extensionsSettings = {
     "Extensions"   :
         {
             "Enrichers" : "json" ,
@@ -117,8 +117,8 @@ class Layout :
     def createWso2ButonsLayout(Resource: str):
         BtLayout = None
         if (Resource in ["WS Apis"]):
-            BtLayout = Layout.addButonsLayout(None, Resource, 'Details', color=('white', 'orange'))
-            BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'OpenAPI', color=('white', 'orange'))
+            BtLayout = Layout.addButonsLayout(None,     Resource, 'Details',   color=('white', 'orange'))
+            BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'OpenAPI',   color=('white', 'orange'))
             BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'Thumbnail', color=('white', 'orange'))
         return BtLayout
 
@@ -128,44 +128,16 @@ class Layout :
         return [pLayout[0] + [sg.Button(" "+Label+" ",   button_color=color, key=Resource+"/"+Label.strip()+"Bt")]]
 
     @staticmethod
-    def createRestLayout(Resource : str, InitialContext: str= "Context Input", withContext=False):
-        if (withContext):
-            return [sg.TabGroup([
-                 [sg.Tab(' Output ',  [[sg.Multiline(default_text='', font=("Courier", 8), size=(43, 32), key=Resource + "/Output")]]),
-                  sg.Tab('  Rest  ',  [[sg.Multiline(default_text='', font=("Courier", 8), size=(43, 32), key=Resource + "/Rest")]])]])]
-        else:
-            return [sg.TabGroup([
-                 [sg.Tab(' Input ',   [[sg.Multiline(default_text=InitialContext, font=("Courier", 8), size=(43, 32), key=Resource + "/Context")]]),
-                  sg.Tab(' Output ',  [[sg.Multiline(default_text='', font=("Courier", 8), size=(43, 32), key=Resource + "/Output")]]),
-                  sg.Tab('  Rest  ',  [[sg.Multiline(default_text='', font=("Courier", 8), size=(43, 32), key=Resource + "/Rest")]])]])]
-
-    @staticmethod
-    def createHeaderLayout(Resource : str, Version : bool = False):
-        if (Version):
-            return [[sg.Text(Resource + " Management", size=(34, 1), justification='left', font=("Courier", 15, 'bold'), key=Resource + "/Header"),
-                     sg.Text(Resource + " Operations", size=(50, 1), justification='left', font=("Courier",  9, 'bold'), key=Resource + "/Title"),
-                     ],
-                    [sg.Text('Name        : ', size=(15, 1)), sg.InputText(Resource + " Name", size=(40, 1), key=Resource + "/Name"),
-                     sg.Text('TimeStamp   : ', size=(15, 1)), sg.InputText('TimeStamp',      size=(30, 1),   key=Resource+"/TimeStamp", text_color='grey'),
-                     ],
-                    [
-                     sg.Text('Tag         : ', size=(15, 1)), sg.InputText('Backup Tag',     size=(40, 1),   key=Resource+"/Tag"),
-                     sg.Text('Version     : ', size=(15, 1)), sg.InputText('Version',        size=(30, 1),   key=Resource+"/Version", text_color='grey')
-                    ],
-                    [sg.Text('Description : ', size=(15, 1)), sg.InputText('Description', size=(91, 1),      key=Resource+"/Description"),
-                     ],
-                    [sg.Text('Identifier : ' , size=(15, 1)), sg.InputText('Identifier', size=(91, 1),       key=Resource + "/Identifier", readonly=True),
-                     ]]
-        else :
-            return [[sg.Text(Resource+" Management", size=(34, 1), justification='left', font=("Courier", 15, 'bold'),  key=Resource+"/Header"),
-                     sg.Text(Resource+" Operations", size=(50, 1), justification='left', font=("Courier", 9, 'bold'),   key=Resource+"/Title"),
-                     ],
-                    [sg.Text('Name       : ',  size=(15, 1)), sg.InputText(Resource+" Name", size=(40, 1),   key=Resource+"/Name"),
-                     sg.Text('Identifier : ',  size=(8, 1)), sg.InputText('Identifier', size=(38, 1),        key=Resource+"/Identifier",  readonly=True),
-                     ],
-                    [sg.Text('Description : ', size=(15, 1)), sg.InputText('Description', size=(91, 1),      key=Resource+"/Description", readonly=True),
-                     ],
-                    []]
+    def createHeaderLayout(Resource : str):
+        return [[sg.Text(Resource+" Management", size=(34, 1), justification='left', font=("Courier", 15, 'bold'),  key=Resource+"/Header"),
+                 sg.Text(Resource+" Operations", size=(50, 1), justification='left', font=("Courier", 9, 'bold'),   key=Resource+"/Title"),
+                 ],
+                [sg.Text('Name       : ',  size=(15, 1)), sg.InputText(Resource+" Name", size=(40, 1),   key=Resource+"/Name"),
+                 sg.Text('Identifier : ',  size=(8, 1)), sg.InputText('Identifier', size=(38, 1),        key=Resource+"/Identifier",  readonly=True),
+                 ],
+                [sg.Text('Description : ', size=(15, 1)), sg.InputText('Description', size=(91, 1),      key=Resource+"/Description", readonly=True),
+                 ],
+                []]
 
     @staticmethod
     def createButtonsLayout(Resource: str, buttonsList=None):
@@ -189,7 +161,6 @@ class Layout :
     def createBodyLayout(Resource : str) :  # , InitialText: str = "Text Input", withContext=False):
         return [[sg.Listbox(values=('(Click List)', ''), font=("Courier", 12), size=(20, 25), enable_events=True,  key=Resource+"/Listing"),
                  sg.Multiline(default_text="( < Select "+Resource+")", size=(55, 26), font=("Courier", 12), key=Resource+"/Text")]
-                 # + createRestLayout(Resource, InitialText, withContext=False)
                 ]
 
     @staticmethod
@@ -384,56 +355,6 @@ class MainGUI(threading.Thread):
             return False
 
     ###
-    def refreshFile(self):
-        if (self.Resources == None) or (self.Resources == "") or (self.current_element == None) or (self.current_element == ""):
-            return False
-        res  = self.current_tab
-        name = self.current_element
-        if (self.Resources in settings["Extensions"].keys()):
-            extension = settings["Extensions"][self.current_tab]
-        else:
-            extension = 'json'
-        filepath = tempfile.gettempdir() + os.sep + res + "_" + name + "." + extension
-        if (not ut.safeFileExist(filepath)): return False
-        tt = str(os.stat(filepath).st_mtime)
-        if (tt == self.runTime["TimeStamps/"+filepath]):
-            return False
-        # Reload File
-        text = ut.loadFileContent(filepath)
-        self.current_values[res+"/Text"] = text
-        if (res+"/"+name in self.current_values.keys()):
-            self.window.Element(res+"/"+name).Update(value=str(text))
-            return
-        if (res+"/Text" in self.current_values.keys()):
-            self.window.Element(res+"/Text").Update(value=str(text))
-        if (res+"/Input" in self.current_values.keys()):
-            self.window.Element(res+"/Input").Update(value=str(text))
-        self.runTime["TimeStamps/" + filepath] = tt
-        return True
-
-    ###
-    def openFile(self, text, res, name):
-        if ((not self.current_content_ext) or (self.current_content_ext == "")):
-            if (self.current_tab not in settings["Extensions"]) :
-                self.current_content_ext = 'json'
-            else:
-                logger.info("No Extension defined in settings for : " + self.Resources)
-                self.current_content_ext = settings["Extensions"][self.current_tab]
-        filepath = tempfile.gettempdir() + os.sep + res + "_" + name + "." + str(self.current_content_ext)
-        logger.info("Opening file : " + filepath)
-        ut.saveFileContent(text, filepath)
-        # os.remove(filepath)
-        if platform.system() == 'Darwin':  # macOS
-            subprocess.call(('open', filepath))
-        elif platform.system() == 'Windows':  # Windows
-            os.startfile(filepath)
-            # os.startfile(filepath,"edit")
-        else:  # linux variants
-            subprocess.call(('xdg-open', filepath))
-        self.runTime["TimeStamps/"+filepath] = str(os.stat(filepath).st_mtime)
-        return filepath
-
-    ###
     ### Common
     ###
 
@@ -461,7 +382,6 @@ class MainGUI(threading.Thread):
         output = self.last_output  # self.quotedTextToText(self.last_output)
         resource = re.sub("/.*$","",event)
         resource = re.sub("^.. ","",resource)
-        # self.setWidgetValue("Output", output)
         if (self.output_popup):
             output_data = ut.loadDataContent(output)
             if ((output_data) and isinstance(output_data, dict)):
@@ -524,9 +444,6 @@ class MainGUI(threading.Thread):
         else :
             self.setWidgetValue(self.Resources + "/Listing", ["-Empty-"])
         self.setWidgetValue("Text",   "( < Select "+self.Resource+")")
-        # self.setWidgetValue("Input",  "( < Select "+self.Resource+")")
-        # self.setWidgetValue("Rest",   "NO ACCESS")
-        # self.setWidgetValue("Output", "NO ACCESS")
 
     def updateAepEntry(self, entry : str , what : str = None):  # , version=True):
         if (what == None):
@@ -543,27 +460,11 @@ class MainGUI(threading.Thread):
             self.setWidgetValue(self.Resources + "/Identifier",  str(ident))
             self.setWidgetValue(self.Resources + "/Description", str(aep.StoreManager.get_description(str(self.Resources), str(ident))))
             self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
         else:
             self.setWidgetValue(self.Resources + "/Name",        str(obj[name_att]))
             self.setWidgetValue(self.Resources + "/Identifier",  str(obj[id_att]))
             self.setWidgetValue(self.Resources + "/Description", str(obj[desc_att]))
             self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
-        """
-        self.restRequest(self.resources+"/" + self.current_element + "?VC=False")
-        self.setWidgetValue("Tag",          "(Tag)")
-        self.setWidgetValue("Description",  "(Description)")
-        self.setWidgetValue("Version",      "(Version)")
-        self.setWidgetValue("TimeStamp",    "(TimeStamp)")
-        if (version == True):
-            self.restRequest(self.resources+"/" + self.current_element + "?versioncontrol")
-            if (self.reqServer.d_data):
-                self.setWidgetValue("Tag", self.reqServer.d_data["VersionControl/Tag"])
-                self.setWidgetValue("Description", self.reqServer.d_data["VersionControl/Comment"])
-                self.setWidgetValue("Version", self.reqServer.d_data["VersionControl/Version"])
-                self.setWidgetValue("TimeStamp", self.reqServer.d_data["VersionControl/TimeStamp"])
-        """
 
     def newAepEntry(self, entry):
         self.setWidgetValue("Name", "")
@@ -581,13 +482,6 @@ class MainGUI(threading.Thread):
         self.setWidgetValue("Description",  "")
         self.setWidgetValue("Identifier",   "")
         self.setWidgetValue("Text",         "( < Select "+self.Resource+")")
-        # self.setWidgetValue("Input",        "( < Select "+self.Resource+")")
-        # self.setWidgetValue("Tag",          "")
-        # self.setWidgetValue("Version",      "")
-        # self.setWidgetValue("TimeStamp",    "")
-        # if (output):
-            # self.setWidgetValue("Output",       "")
-            # self.setWidgetValue("Rest",         "")
 
     def updateWso2Entry(self, entry : str , what : str = None):  # , version=True):
         if (what == None):
@@ -600,7 +494,6 @@ class MainGUI(threading.Thread):
             self.setWidgetValue(self.Resources + "/Identifier",  str(obj["name"]))
             self.setWidgetValue(self.Resources + "/Description", str(obj["role"]))
             self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
             return
 
         id_att   = aep.StoreManager.get_id_att(str(self.Resources))
@@ -612,27 +505,11 @@ class MainGUI(threading.Thread):
             self.setWidgetValue(self.Resources + "/Identifier",  str(ident))
             self.setWidgetValue(self.Resources + "/Description", str(aep.StoreManager.get_description(str(self.Resources), str(ident))))
             self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
         else:
             self.setWidgetValue(self.Resources + "/Name",        str(obj[name_att]))
             self.setWidgetValue(self.Resources + "/Identifier",  str(obj[id_att]))
             self.setWidgetValue(self.Resources + "/Description", str(obj[desc_att]))
             self.setWidgetValue(self.Resources + "/Text",        str(entry))
-            # self.setWidgetValue(self.Resources + "/Output",      str(entry))
-        """
-        self.restRequest(self.resources+"/" + self.current_element + "?VC=False")
-        self.setWidgetValue("Tag",          "(Tag)")
-        self.setWidgetValue("Description",  "(Description)")
-        self.setWidgetValue("Version",      "(Version)")
-        self.setWidgetValue("TimeStamp",    "(TimeStamp)")
-        if (version == True):
-            self.restRequest(self.resources+"/" + self.current_element + "?versioncontrol")
-            if (self.reqServer.d_data):
-                self.setWidgetValue("Tag", self.reqServer.d_data["VersionControl/Tag"])
-                self.setWidgetValue("Description", self.reqServer.d_data["VersionControl/Comment"])
-                self.setWidgetValue("Version", self.reqServer.d_data["VersionControl/Version"])
-                self.setWidgetValue("TimeStamp", self.reqServer.d_data["VersionControl/TimeStamp"])
-        """
 
     ###
     ### System
@@ -791,7 +668,6 @@ class MainGUI(threading.Thread):
         if self.isError():
             return False
         self.updateAepEntry(res, entry_id)
-        # self.setWidgetValue("Output", res)
         self.clearAepEntry(output=False)
         self.loadList(event)
         return True
@@ -842,10 +718,27 @@ class MainGUI(threading.Thread):
 
     def deleteAll(self, service : str = "FS"):
         self.statusError("deleteAll DataSet " + service + " : Not Implemented.")
-        return True
+        self.statusDoing("Deleting All " + service )
+        if (sg.PopupYesNo("Delete All " + service + " ?", title="Delete All ?") != "Yes"): return True
+        cmd = service + " delete_all "
+        res = self.aepctl(cmd)
+        if self.isError():
+            return False
+        self.clearAepList()
+        self.setWidgetValue(self.Resources + "/Text", str(res))
+        return self.statusDone("Deleted All " + service + ".")
 
-    def copyResource(self, serviceFrom : str = "FS", serviceTo : str = "DS"):
-        self.statusError("copyResource From " + serviceFrom + " To " + serviceTo + " : Not Implemented.")
+    def copyStore(self, serviceFrom : str = "FS", serviceTo : str = "DS"):
+        self.statusError("copyStore From " + serviceFrom + " To " + serviceTo + " : Not Implemented.")
+        self.statusDoing("copyStore From " + serviceFrom + " To " + serviceTo + " ...")
+        if (sg.PopupYesNo("Copy Store " + serviceFrom + " to " + serviceTo + " ?", title="Delete All ?") != "Yes"): return True
+        cmd = serviceFrom + " export  " + serviceTo
+        res = self.aepctl(cmd)
+        if self.isError():
+            return False
+        self.clearAepList()
+        self.setWidgetValue(self.Resources + "/Text", str(res))
+        return self.statusDone("copied Store From " + serviceFrom + " To " + serviceTo + " ...")
         return True
 
     def backupWS(self):
@@ -1192,8 +1085,8 @@ class MainGUI(threading.Thread):
         else:
             self.current_content = None
         if (self.current_content_ext == None):
-            if (self.current_tab in settings["Extensions"].keys()):
-                self.current_content_ext = settings["Extensions"][self.current_tab]
+            if (self.current_tab in extensionsSettings["Extensions"].keys()):
+                self.current_content_ext = extensionsSettings["Extensions"][self.current_tab]
         self.setResource(self.current_tab)
         if (self.Resources) and (self.Resources + "/Name" in self.current_values.keys()):
             self.current_element = self.current_values[self.Resources + "/Name"]
@@ -1208,6 +1101,57 @@ class MainGUI(threading.Thread):
         else:
             self.current_value = None
         self.error_text    = None
+
+
+    ###
+    def refreshFile(self):
+        if (self.Resources == None) or (self.Resources == "") or (self.current_element == None) or (self.current_element == ""):
+            return False
+        res  = self.current_tab
+        name = self.current_element
+        if (self.Resources in extensionsSettings["Extensions"].keys()):
+            extension = extensionsSettings["Extensions"][self.current_tab]
+        else:
+            extension = 'json'
+        filepath = tempfile.gettempdir() + os.sep + res + "_" + name + "." + extension
+        if (not ut.safeFileExist(filepath)): return False
+        tt = str(os.stat(filepath).st_mtime)
+        if (tt == self.runTime["TimeStamps/"+filepath]):
+            return False
+        # Reload File
+        text = ut.loadFileContent(filepath)
+        self.current_values[res+"/Text"] = text
+        if (res+"/"+name in self.current_values.keys()):
+            self.window.Element(res+"/"+name).Update(value=str(text))
+            return
+        if (res+"/Text" in self.current_values.keys()):
+            self.window.Element(res+"/Text").Update(value=str(text))
+        if (res+"/Input" in self.current_values.keys()):
+            self.window.Element(res+"/Input").Update(value=str(text))
+        self.runTime["TimeStamps/" + filepath] = tt
+        return True
+
+    ###
+    def openFile(self, text, res, name):
+        if ((not self.current_content_ext) or (self.current_content_ext == "")):
+            if (self.current_tab not in extensionsSettings["Extensions"]) :
+                self.current_content_ext = 'json'
+            else:
+                logger.info("No Extension defined in extensionsSettings for : " + self.Resources)
+                self.current_content_ext = extensionsSettings["Extensions"][self.current_tab]
+        filepath = tempfile.gettempdir() + os.sep + res + "_" + name + "." + str(self.current_content_ext)
+        logger.info("Opening file : " + filepath)
+        ut.saveFileContent(text, filepath)
+        # os.remove(filepath)
+        if platform.system() == 'Darwin':  # macOS
+            subprocess.call(('open', filepath))
+        elif platform.system() == 'Windows':  # Windows
+            os.startfile(filepath)
+            # os.startfile(filepath,"edit")
+        else:  # linux variants
+            subprocess.call(('xdg-open', filepath))
+        self.runTime["TimeStamps/"+filepath] = str(os.stat(filepath).st_mtime)
+        return filepath
 
     def refreshWidgets(self):
         if (self.no_refresh) : return
@@ -1382,11 +1326,11 @@ class MainGUI(threading.Thread):
                     continue
 
                 if ('M_FS_EXPORT_DS' in self.current_event):
-                    self.copyResource("FS","DS")
+                    self.copyStore("FS","DS")
                     continue
 
                 if ('M_FS_IMPORT_DS' in self.current_event):
-                    self.copyResource("DS","FS")
+                    self.copyStore("DS","FS")
                     continue
 
                 if ('M_FS_PROVISION_WS' in self.current_event):
@@ -1412,11 +1356,11 @@ class MainGUI(threading.Thread):
                     continue
 
                 if ('M_DS_EXPORT_FS' in self.current_event):
-                    self.copyResource("DS","FS")
+                    self.copyStore("DS","FS")
                     continue
 
                 if ('M_DS_IMPORT_FS' in self.current_event):
-                    self.copyResource("FS","DS")
+                    self.copyStore("FS","DS")
                     continue
 
                 if ('M_DS_PROVISION_WS' in self.current_event):
@@ -1469,39 +1413,3 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
     MainGUI().run(debug=True)
 
-
-'''
-# ------ Column Definition ------ #
-column1 = [[sg.Text('Column 1', background_color='#F7F3EC', justification='center', size=(10, 1))],
-x           [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 1')],
-           [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 2')],
-           [sg.Spin(values=('Spin Box 1', '2', '3'), initial_value='Spin Box 3')]]
-
-layout = [
-    [sg.Menu(menu_def, tearoff=True)],
-    [sg.Text('All graphic widgets in one window!', size=(30, 1), justification='center', font=("Helvetica", 25),
-             relief=sg.RELIEF_RIDGE)],
-    [sg.Text('Here is some text.... and a place to enter text')],
-    [sg.InputText('This is my text')],
-    [sg.Frame(layout=[
-        [sg.Checkbox('Checkbox', size=(10, 1)), sg.Checkbox('My second checkbox!', default=True)],
-        [sg.Radio('My first Radio!     ', "RADIO1", default=True, size=(10, 1)),
-         sg.Radio('My second Radio!', "RADIO1")]], title='Options', title_color='red', relief=sg.RELIEF_SUNKEN,
-        tooltip='Use these to set flags')],
-    [sg.Multiline(default_text='This is the default Text should you decide not to type anything', size=(35, 3)),
-     sg.Multiline(default_text='A second multi-line', size=(35, 3))],
-    [sg.InputCombo(('Combobox 1', 'Combobox 2'), size=(20, 1)),
-     sg.Slider(range=(1, 100), orientation='h', size=(34, 20), default_value=85)],
-    [sg.InputOptionMenu(('Menu Option 1', 'Menu Option 2', 'Menu Option 3'))],
-    [sg.Listbox(values=('Listbox 1', 'Listbox 2', 'Listbox 3'), size=(30, 3)),
-     sg.Frame('Labelled Group', [[
-         sg.Slider(range=(1, 100), orientation='v', size=(5, 20), default_value=25),
-         sg.Slider(range=(1, 100), orientation='v', size=(5, 20), default_value=75),
-         sg.Slider(range=(1, 100), orientation='v', size=(5, 20), default_value=10),
-         sg.Column(column1, background_color='#F7F3EC')]])],
-    [sg.Text('_' * 80)],
-    [sg.Text('Choose A Folder', size=(35, 1))],
-    [sg.Text('Your Folder', size=(15, 1), auto_size_text=False, justification='right'),
-     sg.InputText('Default Folder'), sg.FolderBrowse()],
-    [sg.Submit(tooltip='Click to submit this window'), sg.Cancel()]
-'''

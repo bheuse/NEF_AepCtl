@@ -1,0 +1,16 @@
+{
+    "entity": "apis",
+    "entry": {
+        "API_Name": "Swagger_Petstore",
+        "API_Provider_Name": "admin",
+        "API_Description": "Swagger Petstore",
+        "Version": "1.0.6",
+        "Charging_Policies": "Gold",
+        "API_Documentation": "No Documentation",
+        "API_Category": [
+            "Public"
+        ],
+        "API_Use_Cases": "No Use Cases",
+        "YAML": "@b64file:swagger.json"
+    }
+}

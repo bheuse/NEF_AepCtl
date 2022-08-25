@@ -1,0 +1,15 @@
+{ "entries" :  [
+{
+  "entity"   : "providers",
+  "entry" :  {
+          "ProviderName" : "ProviderNameFactory2",
+          "ProviderDescription": "ProviderDescriptionFactory2",
+          "Contact": "Contact",
+          "WebSite": "WebSite",
+          "ProviderIcon": "@b64file:../pictures/ProviderLogo.png",
+          "PoviderIcon": "@b64file:../pictures/ProviderLogo.png",
+          "ProviderBigLogo": "ProviderBigLogo"
+          }
+}
+]
+}
