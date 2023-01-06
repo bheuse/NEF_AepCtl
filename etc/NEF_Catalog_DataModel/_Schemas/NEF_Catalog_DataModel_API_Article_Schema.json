@@ -63,6 +63,6 @@
       "ArticleLogo"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/API_Article.json",
+   "$id#": "https://amdocs.com/schemas/nef/API_Article.json",
    "title": "Schema for API_Article"
 }

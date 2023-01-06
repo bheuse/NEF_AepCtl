@@ -42,4 +42,12 @@ console-menu
 pyreadline
 prompt_toolkit
 pyinstaller
-shutil
+pydantic
+pylint
+pyinstaller
+pdoc3
+coverage
+fastapi
+uvicorn[standard]
+markdown
+# shutil

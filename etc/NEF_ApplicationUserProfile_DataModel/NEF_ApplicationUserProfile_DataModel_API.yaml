@@ -2,7 +2,7 @@ openapi: 3.0.2
 info:
   title: NEF Application User Profile Data Model
   version: 1.0.0
-  description: NEF Business Data Model.  This is generated, modify source architect
+  description: NEF Business Data Model. This is generated, modify source architect
     data model instead.
   contact:
     name: Bernard Heuse
@@ -64,13 +64,31 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `Account` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Account'
-          description: Successful response - returns an array of `Account` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Account'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
     post:
       operationId: createAccount
       summary: Create a Account
@@ -165,13 +183,31 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `Service` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Service'
-          description: Successful response - returns an array of `Service` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
     post:
       operationId: createService
       summary: Create a Service
@@ -238,6 +274,126 @@ paths:
       responses:
         '204':
           description: Successful response.
+  /catalog/subscriptions:
+    summary: Path used to manage the list of api_subscriptions.
+    description: The REST endpoint/path used to list and create zero or more `API_Subscription`.  This
+      path contains a `GET` and `POST` operation to perform the list and create tasks,
+      respectively.
+    get:
+      operationId: getAPI_Subscriptions
+      summary: List All API_Subscriptions
+      description: Gets a list of all `API_Subscription` entities.
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+        description: Pagination Limit
+      - in: query
+        name: offset
+        schema:
+          type: integer
+        description: Pagination Offset
+      - in: query
+        name: schema
+        schema:
+          type: boolean
+        allowEmptyValue: true
+        description: Return JSON Schema
+      responses:
+        '200':
+          description: Successful response - returns an array of `API_Subscription`
+            entities.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/API_Subscription'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
+    post:
+      operationId: createAPI_Subscription
+      summary: Create a API_Subscription
+      description: Creates a new instance of a `API_Subscription`.
+      requestBody:
+        description: A new `API_Subscription` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Subscription'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Subscription'
+  /catalog/subscriptions/{id}:
+    summary: Path used to manage a single API_Subscription.
+    description: The REST endpoint/path used to get, update, and delete single instances
+      of an `API_Subscription`.  This path contains `GET`, `PUT`, and `DELETE` operations
+      used to perform the get, update, and delete tasks, respectively.
+    parameters:
+    - name: id
+      description: A unique identifier for a `API_Subscription`.
+      schema:
+        type: string
+      in: path
+      required: true
+    get:
+      operationId: getAPI_Subscription
+      summary: Get a API_Subscription
+      description: Gets the details of a single instance of a `API_Subscription`.
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Subscription'
+          description: Successful response - returns a single `API_Subscription`.
+    put:
+      operationId: updateAPI_Subscription
+      summary: Update a API_Subscription
+      description: Updates an existing `API_Subscription`.
+      requestBody:
+        description: Updated `API_Subscription` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/API_Subscription'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/API_Subscription'
+    delete:
+      operationId: deleteAPI_Subscription
+      summary: Delete a API_Subscription
+      description: Deletes an existing `API_Subscription`.
+      responses:
+        '204':
+          description: Successful response.
   /datastore/contacts:
     summary: Path used to manage the list of contacts.
     description: The REST endpoint/path used to list and create zero or more `Contact`.  This
@@ -276,13 +432,31 @@ paths:
         description: Filter for UserPhoneNumber
       responses:
         '200':
+          description: Successful response - returns an array of `Contact` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Contact'
-          description: Successful response - returns an array of `Contact` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contact'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
     post:
       operationId: createContact
       summary: Create a Contact
@@ -387,13 +561,31 @@ paths:
         description: Filter for RoleValue
       responses:
         '200':
+          description: Successful response - returns an array of `Role` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Role'
-          description: Successful response - returns an array of `Role` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
   /datastore/roles/{id}:
     summary: Path used to manage a single Role.
     description: The REST endpoint/path used to get, update, and delete single instances
@@ -445,13 +637,31 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `Industry` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Industry'
-          description: Successful response - returns an array of `Industry` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Industry'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
   /datastore/industrys/{id}:
     summary: Path used to manage a single Industry.
     description: The REST endpoint/path used to get, update, and delete single instances
@@ -503,13 +713,31 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `UseCase` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UseCase'
-          description: Successful response - returns an array of `UseCase` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UseCase'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
   /datastore/usecases/{id}:
     summary: Path used to manage a single UseCase.
     description: The REST endpoint/path used to get, update, and delete single instances
@@ -549,43 +777,43 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         AccountName:
           description: Account Name
-          example: ''
+          example: AccountName
           pattern: ''
           type: string
           format: ''
         AccountDescription:
           description: Account Description
-          example: ''
+          example: AccountDescription
           pattern: ''
           type: string
           format: ''
         AccountState:
           description: Account State
-          example: noExampleValue
+          example: AccountState
           pattern: ''
           type: string
           format: ''
         AccountCreationDate:
           description: Account creation date.
-          example: ''
+          example: AccountCreationDate
           pattern: ''
           type: string
           format: ''
         CompanyName:
           description: Company Name
-          example: NXP
+          example: CompanyName
           pattern: ''
           type: string
           format: ''
         CompanySize:
           description: Company Size
-          example: 100-199
+          example: CompanySize
           pattern: ''
           type: string
           format: ''
@@ -602,7 +830,6 @@ components:
           description: Account_Contact
           type: string
       required:
-      - id
       - AccountName
       - AccountDescription
       - AccountState
@@ -617,19 +844,19 @@ components:
       properties:
         ConsumerName:
           description: No Description for ConsumerName
-          example: ''
+          example: ConsumerName
           pattern: ''
           type: string
           format: ''
         Contact_Details:
           description: No Description for Contact Details
-          example: ''
+          example: Contact_Details
           pattern: ''
           type: string
           format: ''
         NEF_Credentials:
           description: 'No Description for NEF Credentials '
-          example: NEF_Credentials_
+          example: NEF_Credentials
           pattern: ''
           type: string
           format: ''
@@ -644,42 +871,41 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         Name:
           description: No Description for Name
-          example: ''
+          example: Name
           pattern: ''
           type: string
           format: ''
         Industry:
           description: No Description for Industry
-          example: ''
+          example: Industry
           pattern: ''
           type: string
           format: ''
         UseCase:
           description: No Description for UseCase
-          example: ''
+          example: UseCase
           pattern: ''
           type: string
           format: ''
         VolumeOrg:
           description: No Description for VolumeOrg
-          example: Column_1_
+          example: VolumeOrg
           pattern: ''
           type: string
           format: ''
         API_Subscription:
-          description: 'Use '
+          description: Subscribe to Use
           $ref: '#/components/schemas/API_Subscription'
         API_Consumers:
           description: 'Provides Access to '
           $ref: '#/components/schemas/API_Consumers'
       required:
-      - id
       - Name
       - Industry
       - UseCase
@@ -688,14 +914,21 @@ components:
       description: API Subscription -
       example: API Subscription
       properties:
-        TBC:
-          description: No Description for TBC
-          example: ''
+        ApiID:
+          description: Enter Description Here
+          example: ApiID
+          pattern: ''
+          type: string
+          format: ''
+        AppID:
+          description: Enter Description Here
+          example: AppID
           pattern: ''
           type: string
           format: ''
       required:
-      - TBC
+      - ApiID
+      - AppID
     Contact:
       type: object
       description: Contact and Credential Details
@@ -703,79 +936,79 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         UserEmail:
           description: User Email
-          example: eva.kumar@nxp.com
+          example: UserEmail
           pattern: ''
           type: string
           format: ''
         UserName:
           description: User Name
-          example: Kumar
+          example: UserName
           pattern: ''
           type: string
           format: ''
         UserFirstName:
           description: User Firstname
-          example: Eva
+          example: UserFirstName
           pattern: ''
           type: string
           format: ''
         UserPicture:
           description: User Picture
-          example: noExampleValue
+          example: UserPicture
           pattern: ''
           type: string
           format: ''
         UserPhoneNumber:
           description: User Phone Number
-          example: eva.kumar@nxp.com
+          example: UserPhoneNumber
           pattern: ''
           type: string
           format: ''
         UserJobRole:
           description: User Job Role
-          example: ''
+          example: UserJobRole
           pattern: ''
           type: string
           format: ''
         UserPassword:
           description: User Password
-          example: eva.kumar@nxp.com
+          example: UserPassword
           pattern: ''
           type: string
           format: ''
         UserState:
           description: User State
-          example: noExampleValue
+          example: UserState
           pattern: ''
           type: string
           format: ''
         UserCreationDate:
           description: User creation date.
-          example: ''
+          example: UserCreationDate
           pattern: ''
           type: string
           format: ''
         UserModificationDate:
           description: User modification date.
-          example: ''
+          example: UserModificationDate
           pattern: ''
           type: string
           format: ''
         UserLastLoginDate:
           description: User last login date.
-          example: ''
+          example: UserLastLoginDate
           pattern: ''
           type: string
           format: ''
         UserTermOfUseDate:
           description: The date the user has agreed on Term of use.
-          example: noExampleValue
+          example: UserTermOfUseDate
           pattern: ''
           type: string
           format: ''
@@ -783,7 +1016,6 @@ components:
           description: 'Has role '
           type: string
       required:
-      - id
       - UserEmail
       - UserName
       - UserFirstName
@@ -803,30 +1035,29 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         RoleName:
           description: User Role
-          example: provider
+          example: RoleName
           pattern: ''
           type: string
           format: ''
         RoleValue:
           description: Role Value
-          example: provider
+          example: RoleValue
           pattern: ''
           type: string
           format: ''
         RoleDescription:
           description: Role Description
-          example: ''
+          example: RoleDescription
           pattern: ''
           type: string
           format: ''
       required:
-      - id
       - RoleName
       - RoleValue
       - RoleDescription
@@ -837,36 +1068,35 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         IndustryPopularity:
           description: Industry Popularity
-          example: noExampleValue
+          example: IndustryPopularity
           pattern: ''
           type: string
           format: ''
         IndustryInfo:
           description: Industry Info
-          example: noExampleValue
+          example: IndustryInfo
           pattern: ''
           type: string
           format: ''
         IndustryLogo:
           description: Industry Logo
-          example: noExampleValue
+          example: IndustryLogo
           pattern: ''
           type: string
           format: ''
         IndustryCategory:
           description: Industry Category
-          example: noExampleValue
+          example: IndustryCategory
           pattern: ''
           type: string
           format: ''
       required:
-      - id
       - IndustryPopularity
       - IndustryInfo
       - IndustryLogo
@@ -878,36 +1108,35 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         UseCasePopularity:
           description: UseCase Popularity
-          example: noExampleValue
+          example: UseCasePopularity
           pattern: ''
           type: string
           format: ''
         UseCaseInfo:
           description: Use Case Info
-          example: noExampleValue
+          example: UseCaseInfo
           pattern: ''
           type: string
           format: ''
         UseCaseLogo:
           description: Use Case Logo
-          example: noExampleValue
+          example: UseCaseLogo
           pattern: ''
           type: string
           format: ''
         UseCaseCategory:
           description: UseCase Category
-          example: noExampleValue
+          example: UseCaseCategory
           pattern: ''
           type: string
           format: ''
       required:
-      - id
       - UseCasePopularity
       - UseCaseInfo
       - UseCaseLogo

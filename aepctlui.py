@@ -13,8 +13,10 @@ import logging
 import Util as ut
 import Util_GUI as utg
 from threading import Thread
-import aepctl as aep
 import sys
+
+import aepctl
+import aepctl as aep
 
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -107,8 +109,8 @@ class Layout :
     def createOpenapiSchemaProvisionButonsLayout(Resource: str):
         BtLayout = Layout.addButonsLayout(None,     Resource, 'Schema', color=('springgreen4', 'white'))
         BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'OpenAPI', color=('springgreen4', 'white'))
-        if (Resource in ["FS Apis", "FS Categories", "FS Services", "FS Contacts",
-                         "DS Apis", "DS Categories", "DS Services", "FS Contacts"]):
+        if (Resource in ["FS Apis", "FS Categories", "FS Services", "FS Contacts", "FS Subscriptions", "FS Usagepolicies",
+                         "DS Apis", "DS Categories", "DS Services", "DS Contacts", "DS Subscriptions", "DS Usagepolicies"]):
             BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'Provision', color=('white', 'orange'))
         if (Resource in ["WS Apis"]):
             BtLayout = Layout.addButonsLayout(BtLayout, Resource, 'Details', color=('white', 'orange'))
@@ -618,7 +620,7 @@ class MainGUI(threading.Thread):
         self.error(None)
         self.cursor("wait")
         ut.Term.print_yellow("aepctl " +command)
-        res = aep.main(command, interactive=False)
+        res = aep.AepCtl.main(command, interactive=False)
         self.aepctl_last_result  = str(res)
         if (res == None) :
             self.error("aepctl : returned " + str(res))
@@ -1401,15 +1403,16 @@ class MainGUI(threading.Thread):
             if self.handleSystemEvent(self.current_event):        continue
             self.error("===> Widget Event Not Implemented : "+self.current_event+" - "+str(self.current_value))
 
-
-def start_aepctlui() -> str :
-    thread = Thread(target=MainGUI().run())
-    thread.setDaemon(True)
-    thread.start()
-    return "aepctlui"
+    @staticmethod
+    def start_aepctlui() -> str :
+        thread = Thread(target=MainGUI().run())
+        thread.setDaemon(True)
+        thread.start()
+        return "aepctlui"
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
+    aepctl.AepCtl.init()
     MainGUI().run(debug=True)
 

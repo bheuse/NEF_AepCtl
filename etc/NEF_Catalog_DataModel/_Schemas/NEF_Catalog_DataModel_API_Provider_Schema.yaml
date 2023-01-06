@@ -1,4 +1,4 @@
-$id: https://amdocs.com/schemas/nef/API_Provider.json
+$id#: https://amdocs.com/schemas/nef/API_Provider.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: API_Provider
 description: 'No Description for API Provider '

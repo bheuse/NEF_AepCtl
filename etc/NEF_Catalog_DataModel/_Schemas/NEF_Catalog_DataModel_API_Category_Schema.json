@@ -52,6 +52,6 @@
       "CategoryLogo"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/API_Category.json",
+   "$id#": "https://amdocs.com/schemas/nef/API_Category.json",
    "title": "Schema for API_Category"
 }

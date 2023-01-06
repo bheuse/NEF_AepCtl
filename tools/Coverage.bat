@@ -2,10 +2,14 @@
 @echo off
 
 SET CHROMEPATH="C:\Program Files\Google\Chrome\Application"
+SET PYTHON=%HOMEPATH%\AppData\Local\Programs\Python\Python39\python.exe
 SET PYTHONPATH=%HOMEPATH%\AppData\Local\Programs\Python\Python39\Scripts
 SET PROJECTPATH=%HOMEPATH%\PycharmProjects\NEF_AepCtl
 
-set FILE="C:%PROJECTPATH%\%1.py"
+set MODULE=aepctl
+set FUNCTION=TestDataStore.test_all_file
+set FILE="C:%PROJECTPATH%\%MODULE%.py"
+
 
 echo "================="
 echo %FILE%
@@ -29,11 +33,30 @@ REM dir %PYTHONPATH%\coverage.exe
 REM echo %PYTHONPATH%\coverage.exe run    -m %FILE%
 
 cd "C:%PROJECTPATH%"
+%PYTHON%                         -m pip install --upgrade pip
 %PYTHONPATH%\pip.exe install     -r requirements.txt
-%PYTHONPATH%\coverage.exe run    -m unittest %1.TestAll.test_all
-REM %PYTHONPATH%\coverage.exe run    -m unittest %1.TestWso2Manager.test_all
+
+REM %PYTHONPATH%\coverage.exe run    -m unittest %MODULE%.TestAll.test_all
+REM %PYTHONPATH%\coverage.exe run    -m unittest %MODULE%.TestWso2Manager.test_all
+
+REM %PYTHONPATH%\coverage.exe run    -m unittest %MODULE%.%FUNCTION%
+REM %PYTHONPATH%\coverage.exe report -m
+REM %PYTHONPATH%\coverage.exe html
+REM %CHROMEPATH%\chrome.exe %PROJECTPATH%\htmlcov\%MODULE%_py.html"
+
+set MODULE=aepds
+set FUNCTION=TestDataStore.test_all_file
+set FILE="C:%PROJECTPATH%\%MODULE%.py"
+
+
+REM %PYTHONPATH%\coverage.exe run    -m unittest %MODULE%.TestAll.test_all
+%PYTHONPATH%\coverage.exe run    -m unittest %MODULE%.%FUNCTION%
+REM %PYTHONPATH%\coverage.exe run    -m unittest %MODULE%.TestWso2Manager.test_all
 %PYTHONPATH%\coverage.exe report -m
 %PYTHONPATH%\coverage.exe html
-%CHROMEPATH%\chrome.exe %PROJECTPATH%\htmlcov\%1_py.html"
+%CHROMEPATH%\chrome.exe %PROJECTPATH%\htmlcov\%MODULE%_py.html"
+REM cd "C:%PROJECTPATH%\scripts"
+
+
 REM cd "C:%PROJECTPATH%\scripts"
 

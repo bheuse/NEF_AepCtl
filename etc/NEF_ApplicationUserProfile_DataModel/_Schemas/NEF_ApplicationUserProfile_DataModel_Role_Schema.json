@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "RoleName": {
          "name": "RoleName",
          "description": "User Role",
-         "example": "provider",
+         "example": "RoleName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "RoleValue": {
          "name": "RoleValue",
          "description": "Role Value",
-         "example": "provider",
+         "example": "RoleValue",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "RoleDescription": {
          "name": "RoleDescription",
          "description": "Role Description",
-         "example": "",
+         "example": "RoleDescription",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,12 +47,11 @@
    },
    "NAME": "Role",
    "required": [
-      "id",
       "RoleName",
       "RoleValue",
       "RoleDescription"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/Role.json",
+   "$id#": "https://amdocs.com/schemas/nef/Role.json",
    "title": "Schema for Role"
 }

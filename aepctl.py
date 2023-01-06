@@ -17,17 +17,22 @@ import urllib3
 import unittest
 import datetime
 import base64
+from enum import StrEnum
+from typing import List
+from pydantic import Field
+from pydantic import BaseModel
 from rich.console import Console
 from rich.markdown import Markdown
 import Util as ut
 import Util_GUI as utg
 from prompt_toolkit import PromptSession
 from prompt_toolkit import HTML
-from prompt_toolkit.history import FileHistory
+from prompt_toolkit.history    import FileHistory
 from prompt_toolkit.completion import NestedCompleter
 from prompt_toolkit.completion import PathCompleter
-from prompt_toolkit.contrib.completers.system import SystemCompleter
+# from prompt_toolkit.contrib.completers.system import SystemCompleter
 import aepctlui
+import eapctlms
 
 ###
 ### Logging
@@ -44,7 +49,13 @@ timestamp = datetime.datetime.now().strftime("%y%m%d-%H%M%S")
 logDir    = "."+os.sep+"logs"
 logFile   = logDir+os.sep+__name__+"-"+timestamp+".log"
 logging.basicConfig(filename=logFile, filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+logger    = logging.getLogger(__name__)
+
+class AepCtlError(Exception):
+    def __init__(self, message=''):
+        super().__init__(message)
+        logger.error(message)
+
 
 ###
 ### Globals
@@ -57,7 +68,7 @@ logger = logging.getLogger(__name__)
 AEPCTL_HOME_DIR      = os.path.expanduser('~') + os.sep + ".aepctl"  # HOME Directory
 AEPCTL_WORK_DIR      = os.getcwd()                                   # First Time Set Up
 AEPCTL_ROOT_DIR      = os.getcwd()                                   # First Time Set Up
-AEPCTL_DIRECTORY     = AEPCTL_ROOT_DIR                               # First Time Set Up
+AEPCTL_DIRECTORY     = AEPCTL_ROOT_DIR                               # Value from Configuration File
 
 if (not os.path.exists(AEPCTL_HOME_DIR)):  # pragma: no cover
     ut.safeCreateDir(AEPCTL_HOME_DIR)
@@ -79,25 +90,12 @@ CONFIG_FILE        = None
 STORE_DIRECTORY    = AEPCTL_WORK_DIR + os.sep + "store"
 
 
-def set_aepctl_dirs(P_AEPCTL_ROOT_DIR : str, P_AEPCTL_WORK_DIR : str):
-    global CONFIG_DIRECTORY, TMP_DIRECTORY, DATA_DIRECTORY, TEST_DIRECTORY
-    global LOGS_DIRECTORY, SCRIPTS_DIRECTORY, BACKUP_DIRECTORY, STORE_DIRECTORY
-    global STORES_FILE, CONFIG_FILE
-    if (not P_AEPCTL_ROOT_DIR): P_AEPCTL_ROOT_DIR = AEPCTL_ROOT_DIR
-    if (not P_AEPCTL_WORK_DIR): P_AEPCTL_WORK_DIR = AEPCTL_WORK_DIR
-    CONFIG_DIRECTORY   = P_AEPCTL_ROOT_DIR + os.sep + "etc"
-    DATA_DIRECTORY     = P_AEPCTL_ROOT_DIR + os.sep + "data"
-    TMP_DIRECTORY      = P_AEPCTL_ROOT_DIR + os.sep + "tmp"
-    TEST_DIRECTORY     = P_AEPCTL_ROOT_DIR + os.sep + "tests"
-    LOGS_DIRECTORY     = P_AEPCTL_ROOT_DIR + os.sep + "logs"
-    SCRIPTS_DIRECTORY  = P_AEPCTL_ROOT_DIR + os.sep + "scripts"
-    BACKUP_DIRECTORY   = P_AEPCTL_ROOT_DIR + os.sep + "backup"
-    STORE_DIRECTORY    = P_AEPCTL_WORK_DIR + os.sep + "store"
-    STORES_FILE        = P_AEPCTL_ROOT_DIR + os.sep + "etc" + os.sep + "stores.json"
-
 WSO2_SERVER     = "https://localhost:9443"
 CATALOG_SERVER  = "http://localhost:30106"
 USERS_SERVER    = "http://localhost:30107"
+ANME_SERVER     = "https://localhost:5000"    # "https://anme.pagekite.me"
+TMF_SERVER      = "https://localhost:8000"
+AEP_SERVER      = "localhost:6000"
 
 AEPCTL_PROMPT = "aepctl"
 
@@ -105,12 +103,15 @@ AEPCTL_PROMPT = "aepctl"
 ### Configuration
 ###
 
-def_AEPCTL_Configuration = ut.SuperDict(name="AEPCTL_DefaultConfiguration", data=
-{
+def_AEPCTL_Configuration = ut.SuperDict(name="AEPCTL_DefaultConfiguration", data={
     "Description"                  : "Default AEPCTL Configuration",
     "WSO2_SERVER"                  : WSO2_SERVER,
+    "WSO2_AUTHORIZATION"           : "YWRtaW46YWRtaW4=",
     "CATALOG_SERVER"               : CATALOG_SERVER,
     "USERS_SERVER"                 : USERS_SERVER,
+    "ANME_SERVER"                  : ANME_SERVER,
+    "TMF_SERVER"                   : TMF_SERVER,
+    "AEP_SERVER"                   : AEP_SERVER,
     "AEPCTL_HOME_DIR"              : AEPCTL_HOME_DIR,
     "AEPCTL_ROOT_DIR"              : AEPCTL_ROOT_DIR,
     "AEPCTL_WORK_DIR"              : AEPCTL_WORK_DIR,
@@ -118,6 +119,7 @@ def_AEPCTL_Configuration = ut.SuperDict(name="AEPCTL_DefaultConfiguration", data
     "STORE_DIRECTORY"              : STORE_DIRECTORY,
     "STORES_FILE"                  : STORES_FILE
 })
+
 AEPCTL_Configuration_FileName = AEPCTL_HOME_DIR + os.sep + 'AEPCTL_Configuration.json'
 AEPCTL_Configuration = ut.SuperDict()
 
@@ -184,7 +186,10 @@ class RestHandler:
         if (data):
             if (isinstance(data, dict)):         self.s_data = data
             if (isinstance(data, ut.SuperDict)): self.s_data = data.getAsData()
-            if (isinstance(data, str)):          self.s_text = data
+            if (isinstance(data, str)):
+                self.s_data = ut.loadDataContent(data)
+                if (not self.s_data):
+                    self.s_text = data
         if (self.s_data):
             self.s_text = json.dumps(self.s_data)
         try:
@@ -266,11 +271,8 @@ class RestHandler:
     def getContent(self):
         return self.r_text
 
-    def getSuperDict(self):
-        return self.d_data
-
-    def hasData(self, code : list=[200, 202, 204]):
-        if (self.r_code in code) and (self.d_data) :
+    def hasData(self, codes : list=[200, 202, 204]):
+        if (self.r_code in codes) and (self.d_data) :
             return self.d_data
         return None
 
@@ -300,10 +302,12 @@ class RestHandler:
 
     def url(self, endpoint : str = "apis", entry : str = None, service : str = "admin"):
         if (service == "applications") or (service == "userprofiles"):
+            endpoint = re.sub("ies$", "ys", endpoint)
             return AEPCTL_Configuration.get("USERS_SERVER") + "/nef-application-user-profile-service/22-03/" + "datastore" + "/" + re.sub("^/", "", endpoint) + ("/" + entry if (entry) else "")
         if (service == "datastore") or (service == "catalog"):
+            endpoint = re.sub("ies$", "ys", endpoint)
             return AEPCTL_Configuration.get("CATALOG_SERVER") + "/nef-services-catalog-service/22-03/" + "datastore" + "/" + re.sub("^/", "", endpoint) + ("/" + entry if (entry) else "")
-        if (service == "subscription"):
+        if (service == "subscription"):  # Typo subsciption => subscription
             return self.server + "/nef-api-subsciption-service/22-03/" + re.sub("^/", "", endpoint) + ("/" + entry if (entry) else "")
         if (service == "admin") or (service == "wso2"):
             return self.server + "/api/am/"+"admin"+"/v2/" + re.sub("^/", "", endpoint) + ("/" + entry if (entry) else "")
@@ -315,9 +319,12 @@ class RestHandler:
             self.authentified = True  # No auth on DataStores for now
             return
 
+        # WS02 REST Authentication
+        authorization = AEPCTL_Configuration.get("WSO2_AUTHORIZATION")
+
         try:
             headers = {
-                'Authorization' : 'Basic YWRtaW46YWRtaW4=',
+                'Authorization' : 'Basic ' + authorization,
                 'Content-Type'  : 'application/json',
             }
             data = {
@@ -355,7 +362,7 @@ class RestHandler:
         except Exception as ex:
             self.r_code = 400
             self.r_text = str(ex).replace("\\n", "\n")
-            logger.exception("Exception AUTH Operation : " + self.op + "/n" +self.r_text)
+            logger.exception("Exception AUTH Operation : " + self.op + "/n" + self.r_text)
             self.completed()
             raise ex
 
@@ -366,7 +373,7 @@ class RestHandler:
         except Exception as ex:
             self.r_code = 400
             self.r_text = str(ex).replace("\\n", "\n")
-            logger.exception("Exception AUTH Operation : " + self.op + "/n" +self.r_text)
+            logger.exception("Exception AUTH Operation : " + self.op + "/n" + self.r_text)
             self.completed()
             return None
         self.r_code     = 200
@@ -462,22 +469,23 @@ class RestHandler:
 
 
 class DataStoreInterface():
+    """ Abstract DataStore Class """
 
-    def __init__(self, entity_type="articles", name_att="ArticleName", desc_att="ArticleDesc", id_att="id", service="datastore", schema=None):
+    def __init__(self, entity_type="articles", name_att=None, desc_att=None, id_att=None, service=None, schema=None):
         self.errortxt    = None
-        self.store_type  = "file" if isinstance(self,FileDataStore) else "rest"
+        self.store_type  = "file" if isinstance(self, FileDataStore) else "rest"
         self.entity_type = entity_type
-        self.name_att    = name_att
-        self.desc_att    = desc_att
-        self.id_att      = id_att
-        self.service     = service
-        self.schema      = schema
-        self.cache       = None
+        self.name_att    = name_att if (name_att) else StoreManager().get_name_att(entity_type)
+        self.desc_att    = desc_att if (desc_att) else StoreManager().get_desc_att(entity_type)
+        self.id_att      = id_att   if (id_att)   else StoreManager().get_id_att(entity_type)
+        self.service     = service  if (service)  else StoreManager().store_get_service(entity_type)
+        self.schema      = schema   if (schema)   else StoreManager().store_get_schema(entity_type)
 
-    def error(self, error_text : Union [str, None] = "") -> Union [str, None]:
+    def error(self, error_text : Union [str, None] = "", log : bool = True) -> Union [str, None]:
+        """ Set or Reset error, returns error """
         if (error_text == ""): return self.errortxt
         if (not error_text): self.errortxt = None
-        if (error_text) : logger.error(error_text)
+        if ((error_text) and (log)): logger.error(error_text)
         self.errortxt = error_text
         return self.errortxt
 
@@ -487,161 +495,124 @@ class DataStoreInterface():
     def resetError(self):
         self.error(None)
 
-    def setError(self, error_text : str):
-        self.error(error_text)
+    def setError(self, error_text : str, log : bool = True):
+        self.error(error_text, log)
 
     def getError(self) -> str:
         return self.error()
 
     def check(self, entity : Union[str, dict]) -> Union [dict, None]:
+        """ Check is entity is compliant to schema
+        :returns None or Valid dict entity
+        """
         self.resetError()
-        pentity = entity
+        pEntity = entity
         if (isinstance(entity, str)) :
             entity = ut.loadDataContent(entity)
             if (not entity):
-                self.setError("Invalid JSON or YAML Format : "+str(pentity))
+                self.setError("Invalid JSON or YAML Format : "+str(pEntity))
                 return None
         if (not isinstance(entity, dict)) :
-            self.setError("Invalid Format : "+str(entity))
+            self.setError("Invalid Dict Format : "+str(entity))
             return None
         if (StoreManager.get_schema(self.entity_type)):
             self.setError(StoreManager.check_schema(entity, self.entity_type))
         return None if (self.error()) else entity
-
-    def create(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
-        self.resetError()
-        entity = self.check(entity=entity)
-        if (not entity): return None
-        if (self.id_att not in entity):
-            entity[self.id_att] = ut.uuid()
-        if (backup): StoreManager.store_back_up(service="file")
-        return entity
 
     def list(self, names : bool = False, ids : bool = False, count : bool = False) -> Union [list, None, int]:
         pass   # pragma: no cover
 
     def _list(self, entity_list : list, names: bool = False, ids: bool = False, count: bool = False) -> Union[list, None, int]:
         if (not entity_list): return list()
-        if ("list" in entity_list):
-            entity_list = entity_list["list"]
-        if (count):
-            return len(entity_list)
-        if (names):
-            entity_names = list()
-            for entity in entity_list:
-                entity_names.append(entity[self.name_att])
-            return entity_names
-        if (ids):
-            entity_ids = list()
-            for entity in entity_list:
-                entity_ids.append(entity[self.id_att])
-            return entity_ids
+        if ("list" in entity_list): entity_list = entity_list["list"]
+        if (count): return len(entity_list)
+        if (names): return [entity[self.name_att] for entity in entity_list]
+        if (ids):   return [entity[self.id_att]   for entity in entity_list]
         return entity_list
-    def id_by_name(self, idName : str) -> Union[None, dict]:
+
+    def entryByIdName(self, idName : str) -> Union[None, dict]:
         self.resetError()
-        entries = self.list()
-        if (not entries) : return None
-        for entry in entries:
-            if (entry[self.name_att] == idName): return entry[self.id_att]
-            if ((self.id_att in entry) and entry[self.id_att] == idName):   return entry[self.id_att]
+        for entry in self.list():
+            if ((self.id_att   in entry) and (entry[self.id_att]   == idName)): return entry
+            if ((self.name_att in entry) and (entry[self.name_att] == idName)): return entry
+        self.setError("No such entry : " + str(idName), log=False)
         return None
 
-    def name_by_id(self, idName : str) -> str:
-        self.resetError()
-        entries = self.list()
-        if (not entries): return None
-        for entry in entries:
-            if ((self.id_att in entry) and entry[self.id_att] == idName):  return entry[self.name_att]
-            if (entry[self.name_att] == idName): return entry[self.name_att]
-        return None
+    def idName(self, idName : str = None, name: str = None, identifier: str = None) -> str:
+        if (idName)     : value = idName
+        if (name)       : value = name
+        if (identifier) : value = identifier
+        return value
 
-    def desc_by_idname(self, idName : str) -> Union[str, None]:
-        self.resetError()
-        entries = self.list()
-        if (not entries): return None
-        for entry in entries:
-            if ((self.id_att in entry) and entry[self.id_att] == idName):  return entry[self.desc_att]
-            if (entry[self.name_att] == idName): return entry[self.desc_att]
-        return None
+    def idByName(self, idName : str) -> Union[None, dict]:
+        entry = self.entryByIdName(idName=idName)
+        return None if ((not entry) or (self.id_att not in entry)) else entry[self.id_att]
+
+    def nameById(self, idName : str) -> Union[str, None]:
+        entry = self.entryByIdName(idName=idName)
+        return None if ((not entry) or (self.name_att not in entry)) else entry[self.name_att]
+
+    def descByIdname(self, idName : str) -> Union[str, None]:
+        entry = self.entryByIdName(idName=idName)
+        return None if ((not entry) or (self.desc_att not in entry)) else entry[self.desc_att]
 
     def exist(self, idName : str) -> bool:
-        self.resetError()
-        entries = self.list()
-        if (not entries): return None
-        for entry in entries:
-            if ((self.name_att in entry) and (entry[self.name_att] == idName)): return True
-            if ((self.id_att in entry)   and (entry[self.id_att]   == idName)): return True
-        return False
+        return True if self.entryByIdName(idName=idName) else False
 
-    def get(self, idName : str = None , name : str = None, identifier : str = None) -> Union [dict, None, str]:
-        self.resetError()
-        entity_id = None
-        value = None
-        if (idName):
-            value = idName
-            entity_id = self.id_by_name(idName)
-        if (name):
-            value = name
-            entity_id = self.id_by_name(name)
-        if (identifier):
-            value = identifier
-            entity_id = identifier
-        if (not entity_id):
-            self.setError("No such entry : " + str(value))
-        return entity_id
+    def get(self, idName : str = None , name : str = None, identifier : str = None) -> Union [dict, None]:
+        """ Return entity by fetching all list
+        """
+        return self.entryByIdName(self.idName(idName, name, identifier))
 
-    def update(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
-        self.resetError()
+    def create(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
+        """ Checking Data Structure to be created vs schema
+        and allocating UUID Identifier, plus store backup
+        """
         entity = self.check(entity=entity)
         if (not entity): return None
-        if (backup): StoreManager.store_back_up(service="file")
+        if (self.id_att not in entity): entity[self.id_att] = ut.uuid()
+        if (backup): StoreManager.store_back_up(service=self.store_type)
+        return entity
+
+    def update(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
+        """ Checking Data Structure to be updated vs schema
+        and allocating UUID Identifier, plus store backup
+        """
+        entity = self.check(entity=entity)
+        if (not entity): return None
+        if (self.id_att not in entity): entity[self.id_att] = ut.uuid()
+        if (backup): StoreManager.store_back_up(service=self.store_type)
         return entity
 
     def save(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
-        self.resetError()
         if ((self.exist((entity[self.id_att]))) or (self.exist((entity[self.name_att])))):
             return self.update(entity=entity, backup=backup)
         else:
             return self.create(entity=entity, backup=backup)
 
     def delete(self, idName : str = None , name : str = None, identifier : str = None, backup : bool = True) -> Union [dict, None]:
-        self.resetError()
-        entity_id = None
-        value = None
-        if (idName):
-            value = idName
-            entity_id = self.id_by_name(idName)
-        if (name):
-            value = name
-            entity_id = self.id_by_name(name)
-        if (identifier):
-            value = identifier
-            entity_id = identifier
-        entry = self.get(idName=entity_id)
+        idName = self.idName(idName, name, identifier)
+        entry  = self.get(idName=idName)
         if (not entry) :
-            self.setError("No such entry : " + str(value))
+            self.setError("No such entry : " + str(idName))
             return None
-        if (backup):
-            StoreManager.store_back_up(service="file")
+        if (backup): StoreManager.store_back_up(service=self.store_type)
         return entry
 
-    def delete_all(self, backup : bool = True) -> Union [list, None]:
+    def deleteAll(self, backup : bool = True) -> Union [list, None]:
         self.resetError()
         all_errors  = ""
         del_entries = list()
-        if (backup):
-            StoreManager.store_back_up(service=self.store_type)
+        if (backup): StoreManager.store_back_up(service=self.store_type)
         for entry_id in self.list(ids=True) :
-            entry = self.delete(idName=entry_id, backup=False)
+            entry = self.delete(identifier=entry_id, backup=False)
             if (entry): del_entries.append(entry)
-            if (self.isError()):
-                all_errors = all_errors + "\n" + self.getError()
-        if (all_errors != "") :
-            self.setError(all_errors)
+            if (self.isError()): all_errors = all_errors + "\n" + self.getError()
+        if (all_errors != "") : self.setError(all_errors)
         logger.info(self.service + " Store Deleted all : ["+self.entity_type+"]")
         return del_entries
 
-    def dump_all(self, filename : str = None, directory : str = BACKUP_DIRECTORY) -> dict:
+    def dumpAll(self, filename : str = None, directory : str = BACKUP_DIRECTORY) -> dict:
         self.resetError()
         entries = self.list()
         store = dict()
@@ -656,25 +627,28 @@ class DataStoreInterface():
         if (not ut.safeDirExist(directory)):  # pragma: no cover
             logger.info("Creating Directory : " + directory)
             ut.safeCreateDir(directory)
+        logger.info("BackUp Dir : " + directory)
         if (not filename):
-            ut.safeCreateDir(directory)
-            logger.info("BackUp Dir : " + directory)
             filename = directory + os.sep + self.entity_type + "_dump.json"
         ut.saveJsonFile(store, filename)
         logger.info(str(self.service)+" [" + self.entity_type + "] Store saved in file : " + filename)
         return store
 
     def backup(self) -> dict:
-        store    = "file" if (isinstance(self,FileDataStore)) else "rest"
+        store    = "file" if (isinstance(self, FileDataStore)) else "rest"
         filename = BACKUP_DIRECTORY + os.sep + ut.timestamp() + "_" + store + "_" + self.service + "_" + self.entity_type + "_backup.json"
-        return self.dump_all(filename, BACKUP_DIRECTORY)
+        return self.dumpAll(filename, BACKUP_DIRECTORY)
 
-    def store_file(self, filename : str = None, directory : str = None) -> dict:
+    def storeFile(self, filename : str = None, directory : str = None) -> dict:
+        """ Dump Data Store Entries in File """
         global STORE_DIRECTORY
         if (not directory) : directory = STORE_DIRECTORY
-        return self.dump_all(filename, directory)
+        return self.dumpAll(filename, directory)
 
-    def load_file(self, filename : str = None, directory : str = None) -> list:
+    def loadFile(self, filename : str = None, directory : str = None, save : bool = True) -> list:
+        """ Load Entries from File
+        Optionally Save in Data Store
+        """
         global STORE_DIRECTORY
         self.resetError()
         if (not directory) : directory = STORE_DIRECTORY
@@ -686,7 +660,7 @@ class DataStoreInterface():
         if (not ut.safeFileExist(filename)):
             logger.info("File not found : " + str(filename))  # pragma: no cover
             logger.info("Creating File  : " + str(filename))  # pragma: no cover
-            self.store_file()                                 # pragma: no cover
+            self.storeFile()                                 # pragma: no cover
         logger.info("Loading File       : " + filename)
         data = ut.loadDataFile(filename)
         if (not data):
@@ -696,35 +670,27 @@ class DataStoreInterface():
         if (not data):
             logger.info("Invalid Data Format : " + filename)  # pragma: no cover
             return None                                       # pragma: no cover
-        self.backup()
-        self.entity_type = data["entity"]
-        self.name_att    = data["name_att"]
-        self.desc_att    = data["desc_att"]
-        self.service     = data["service"]
-        self.schema      = data["schema"] if ("schema" in data) else None
-        self.cache       = data["entries"]
-        self.cache       = sorted(self.cache, key=lambda d: d[self.name_att])
-        for entry in data["entries"]:
-            self.save(entity=entry, backup=False)
-        logger.info("Loaded File  : " + filename)
-        return self.cache
+        if (save) :
+            self.backup()
+            for entry in data["entries"]:
+                self.save(entity=entry, backup=False)
+        return data["entries"]
 
 
 class FileDataStore(DataStoreInterface):
 
-    def __init__(self, directory=None, entity_type="articles", name_att="ArticleName", desc_att="ArticleDesc", id_att="id", service="datastore", schema=True):
+    def __init__(self, directory=None, entity_type="articles", name_att=None, desc_att=None, id_att=None, service=None, schema=None):
         global STORE_DIRECTORY
         if (not directory) : directory = STORE_DIRECTORY
         DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=schema)
-        self.cache       = self.load_file(directory=directory)
+        self.cache       = self.loadFile(directory=directory, save=False)
 
     def create(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
         entry = super(FileDataStore, self).create(entity=entity, backup=backup)
-        if (self.isError()): return None
-        if (not entry): return None
+        if ((self.isError()) or (not entry)): return None
         self.cache.append(entry)
         self.cache = sorted(self.cache, key=lambda d: d[self.name_att])
-        self.store_file()
+        self.storeFile()
         return entry
 
     def list(self, names : bool = False, ids : bool = False, count : bool = False) -> Union [list, None, int]:
@@ -747,11 +713,10 @@ class FileDataStore(DataStoreInterface):
         return entries
 
     def get(self, idName : str = None , name : str = None, identifier : str = None) -> Union [dict, None, str]:
-        entity_id = super(FileDataStore, self).get(idName=idName, name=name, identifier=identifier)
-        if (not entity_id): return None
-        for entry in self.cache:
-            if ((self.id_att in entry) and entry[self.id_att] == str(entity_id)): return entry
-        self.setError("No such entry : " + str(entity_id))
+        idName = self.idName(idName, name, identifier)
+        entry = super(FileDataStore, self).get(idName=idName, name=name, identifier=identifier)
+        if (entry): return entry
+        self.setError("No such entry : " + str(idName))
         return None
 
     def update(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
@@ -764,7 +729,7 @@ class FileDataStore(DataStoreInterface):
             if (old_entity): new_entity = old_entity | entity
         self.cache.append(new_entity)
         self.cache = sorted(self.cache, key=lambda d: d[self.name_att])
-        self.store_file()
+        self.storeFile()
         return new_entity
 
     def delete(self, idName : str = None , name : str = None, identifier : str = None, backup : bool = True) -> Union [dict, None]:
@@ -775,14 +740,14 @@ class FileDataStore(DataStoreInterface):
         filtered_list = [d for d in self.cache if d[self.id_att] != entry[self.id_att]]
         self.cache = filtered_list
         self.cache = sorted(self.cache, key=lambda d: d[self.name_att])
-        self.store_file()
+        self.storeFile()
         return entry
 
     def copy_ds_to_fs(self, reset=False) -> list:
         self.resetError()
         server = RestDataStore(entity_type=self.entity_type, name_att=self.name_att, desc_att=self.desc_att, id_att=self.id_att, service=self.service)
         if (reset) :
-            self.delete_all(backup=True)
+            self.deleteAll(backup=True)
         for entry in server.list():
             self.update(entry)
         self.cache = sorted(self.cache, key=lambda d: d[self.name_att])
@@ -792,7 +757,7 @@ class FileDataStore(DataStoreInterface):
         self.resetError()
         server = RestDataStore(entity_type=self.entity_type, name_att=self.name_att, desc_att=self.desc_att, id_att=self.id_att, service=self.service)
         if (reset) :
-            server.delete_all(backup=True)
+            server.deleteAll(backup=True)
         for entry in self.cache:
             server.update(entry)
         return server.list()
@@ -800,7 +765,7 @@ class FileDataStore(DataStoreInterface):
 
 class RestDataStore(DataStoreInterface, RestHandler):
 
-    def __init__(self, server=CATALOG_SERVER, entity_type="articles", name_att="ArticleName", desc_att="ArticleDesc", id_att="id", service="datastore", schema=True):
+    def __init__(self, server=CATALOG_SERVER, entity_type="articles", name_att=None, desc_att=None, id_att=None, service=None, schema=None):
         DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=schema)
         RestHandler.__init__(self, server, service=service)
         self.authentify()
@@ -875,6 +840,116 @@ class RestDataStore(DataStoreInterface, RestHandler):
         logger.info("Rest Store Deleted : ["+self.entity_type+"/"+entry[self.id_att]+"]\n"+self.r_text)
         return entry
 
+
+class AnmeDataStore(DataStoreInterface, RestHandler):
+
+    def __init__(self, server=None, entity_type="articles", name_att=None, desc_att=None, id_att=None, service=None, schema=None):
+        if (not server): server = AEPCTL_Configuration.get("ANME_SERVER")
+        self.server_entity_type = entity_type.replace("ies", "ys")
+        DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=schema)
+        RestHandler.__init__(self, server, service=service)
+        # self.authentify()
+
+    def create(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
+        entity = super(AnmeDataStore, self).create(entity=entity, backup=backup)
+        if (self.isError()): return None
+        id = entity[self.id_att]
+        req = "filestore/" + self.server_entity_type + "/" + id
+        self.handle(req , "POST", data=ut.to_json(entity))
+        # self.handle_request("POST", self.server_entity_type, payload=ut.to_json(entity), service=self.service)
+        if (not self.hasData()) :
+            self.setError("POST ["+self.server_entity_type+"] : No Data from Server\n"+str(self._getError()))
+            return None
+        new_entity = self.get(identifier=id)
+        if ("VersionControl" in new_entity) : del new_entity["VersionControl"]
+        return new_entity
+
+    def list(self, names : bool = False, ids : bool = False, count : bool = False) -> Union [list, None, int]:
+        self.resetError()
+        req = "filestore/" + self.server_entity_type
+        self.handle(req , "GET")
+        # self.handle_request("LIST", self.server_entity_type, service=self.service)
+        if (self.isError()) :     return None
+        if (not self.hasData()) :
+            self.setError("LIST ["+self.server_entity_type+"] : No Data from Server\n"+str(self._getError()))
+            return list()
+        ids_list = self.d_data.getAsData()[self.server_entity_type]
+        if (ids)   : return ids_list
+        if (count) : return len(ids_list)
+        entry_list = list()
+        for entry_id in ids_list:
+            entry = self.get(identifier=entry_id)
+            entry_list.append(entry)
+        print(str(entry_list))
+        print(str(self.name_att))
+        entry_list = [o for o in entry_list if o]
+        entry_list = sorted(entry_list, key=lambda d: d[self.name_att])
+        if (names) :
+            names = []
+            for entry in entry_list:
+                names.append(entry[self.name_att])
+            return names
+        if (ids) :
+            ids = []
+            for entry in entry_list:
+                ids.append(entry[self.id_att])
+            return ids
+        if (count) :
+            return len(entry_list)
+        return entry_list
+
+    def get(self, idName : str = None , name : str = None, identifier : str = None) -> Union [dict, None]:
+        entity_id = super(AnmeDataStore, self).get(idName=idName, name=name, identifier=identifier)
+        if (not entity_id): return None
+        req = "filestore/" + self.server_entity_type + "/" + entity_id
+        self.handle(req , "GET")
+        # self.handle_request("GET", self.server_entity_type, entry=entity_id, service=self.service)
+        if (not self.hasData()) :
+            self.setError("GET ["+self.server_entity_type+"/"+entity_id+"] : No Data from Server\n"+str(self._getError()))
+            return None
+        logger.info("Rest Store Get : ["+self.server_entity_type+"/"+entity_id+"]\n"+self.r_text)
+        new_entity = ut.loadDataContent(self.r_text)
+        if ("VersionControl" in new_entity) : del new_entity["VersionControl"]
+        return new_entity
+
+    def update(self, entity : Union[str, dict], backup : bool = True) -> Union [dict, None]:
+        super(AnmeDataStore, self).update(entity=entity, backup=backup)
+        if (self.isError()): return None
+        entity_id  = entity[self.id_att]
+        if (not self.exist(entity_id)):
+            return self.create(entity=entity, backup=backup)
+        new_entity = entity
+        if (self.id_att in new_entity):
+            old_entity = self.get(identifier=entity[self.id_att])
+            if (old_entity): new_entity = old_entity | entity
+        req = "filestore/" + self.server_entity_type + "/" + new_entity[self.id_att]
+        # new_entity.pop(self.id_att)   # Else Schema validation fails
+        self.handle(req , "PUT", data=ut.to_json(new_entity))
+        # self.handle_request("PUT", self.server_entity_type, entry=entity_id, payload=new_entity, service=self.service)
+        if (not self.hasData()) :
+            self.setError("PUT ["+self.server_entity_type+"/"+entity_id+"] : No Data from Server\n"+str(self._getError()))
+            return None
+        logger.info("Rest Store Update : ["+self.server_entity_type+"/"+entity_id+"]\n"+self.r_text)
+        new_entity = self.get(identifier=entity_id)
+        if (not self.hasData()) :
+            self.setError("POST ["+self.server_entity_type+"] : No Data from Server\n"+str(self._getError()))
+            return None
+        if ("VersionControl" in new_entity) : del new_entity["VersionControl"]
+        return new_entity
+
+    def delete(self, idName : str = None , name : str = None, identifier : str = None, backup : bool = True) -> Union [dict, None]:
+        entry = super(AnmeDataStore, self).delete(idName=idName, name=name, identifier=identifier, backup=backup)
+        if (self.isError()): return None
+        if (not entry): return None
+        req = "filestore/" + self.server_entity_type + "/" + entry[self.id_att]
+        self.handle(req , "DELETE")
+        # self.handle_request("DELETE", self.server_entity_type, entry=entry[self.id_att], service=self.service)
+        if (self.r_code != 204) and (not self.hasData()) :
+            self.setError("DELETE ["+self.server_entity_type+"/"+entry[self.id_att]+"] : No Data from Server\n"+str(self._getError()))
+            return None
+        logger.info("Rest Store Deleted : ["+self.server_entity_type+"/"+entry[self.id_att]+"]\n"+self.r_text)
+        return entry
+
 ###
 ### Wso2
 ###
@@ -889,33 +964,76 @@ class RestDataStore(DataStoreInterface, RestHandler):
 """
 
 apiRoles         = [ "apiCreator", "apiConsumer", "apiAdmin", "apiMonitoring"]
-# apiCreatorRoles  = [ 'Internal/everyone', 'Internal/creator',   'Application/rest_api_publisher', 'Application/apim_publisher', 'Internal/publisher',]
+# apiCreatorRoles  = [ 'Internal/everyone', 'Internal/creator', 'Application/apim_publisher', 'Internal/publisher', 'Application/rest_api_publisher']
 apiCreatorRoles  = [ 'Internal/everyone', 'Internal/creator',  'Application/apim_publisher', 'Internal/publisher']
 apiConsumerRoles = [ 'Internal/everyone', 'Application/apim_devportal' ]
 apiAdminRoles    = [ 'Internal/everyone', 'admin', 'Internal/devops', 'Internal/analytics' ]
 apiMonitoring    = [ 'Internal/everyone', 'Internal/analytics']
 
 
-def wso2_browser(what : str = "publisher", w_server : str = None, open : bool = True):
-    if (not w_server):
-        w_server = AEPCTL_Configuration.get("WSO2_SERVER")
-    if (what.lower() in ["publisher", "apim"]):
-        if (open): ut.open_browser(w_server + "/publisher")
-        return "API Publisher Portal : " + w_server + "/publisher"
-    if (what.lower() in ["devportal", "dev", "portal"]):
-        if (open): ut.open_browser(w_server + "/devportal")
-        return "WSO2 API Developer Portal : " + w_server + "/devportal"
-    if (what.lower() in ["mgt", "console", "carbon"]):
-        if (open): ut.open_browser(w_server + "/carbon/")
-        return "WSO2 Mgt Console Portal : " + w_server + "/carbon/"
-    return
+class Wso2Manager(RestHandler):
+
+    def __init__(self, ws_server=None):
+        if (not ws_server) : ws_server = AEPCTL_Configuration.get("WSO2_SERVER")
+        super().__init__(ws_server)
+
+    @staticmethod
+    def browser(what: str = "publisher", w_server: str = None, openURL: bool = True):
+        if (not w_server):
+            w_server = AEPCTL_Configuration.get("WSO2_SERVER")
+        if (what.lower() in ["publisher", "apim"]):
+            if (openURL): ut.open_browser(w_server + "/publisher")
+            return "API Publisher Portal : " + w_server + "/publisher"
+        if (what.lower() in ["devportal", "dev", "portal"]):
+            if (openURL): ut.open_browser(w_server + "/devportal")
+            return "WSO2 API Developer Portal : " + w_server + "/devportal"
+        if (what.lower() in ["mgt", "console", "carbon"]):
+            if (openURL): ut.open_browser(w_server + "/carbon/")
+            return "WSO2 Mgt Console Portal : " + w_server + "/carbon/"
+        return
+
+    def getData(self, operation : str = "get", endpoint : str = "apis", service : str = None) -> dict:
+        self.handle_request(operation=operation, endpoint=endpoint, service=service)
+        return self.d_data if (self.d_data) else {}
+
+    def getSettings(self):
+        settings = ut.SuperDict()
+        settings["id"]   = "DEVELOPER_PORTAL"
+        settings["name"] = "dev"
+        settings["description"] = "Developer Portal Settings"
+
+        settings["settings"]       = self.getData("GET", "settings", "admin")
+        settings["alert-types"]    = self.getData("GET", "alert-types", "admin")
+        settings["key-managers"]   = self.getData("GET", "key-managers", "admin")
+        settings["environments"]   = self.getData("GET", "environments", "admin")
+        settings["api-categories"] = self.getData("GET", "api-categories", "admin")
+        settings["bot-detection-data"] = self.getData("GET", "bot-detection-data", "admin")
+
+        # Policy Types : application / custom / advanced / deny-policies / mediation / subscription
+        settings["throttling/policies/application"]   = self.getData("GET", "throttling/policies/application", "admin")
+        settings["throttling/policies/custom"]        = self.getData("GET", "throttling/policies/custom", "admin")
+        settings["throttling/policies/advanced"]      = self.getData("GET", "throttling/policies/advanced", "admin")
+        settings["throttling/policies/deny-policies"] = self.getData("GET", "throttling/policies/deny-policies", "admin")
+        settings["throttling/policies/subscription"]  = self.getData("GET", "throttling/policies/subscription", "admin")
+        settings["policies/mediation"]                = self.getData("GET", "policies/mediation", "admin")
+
+        settings["publisher/apis"]          = self.getData("LIST", "apis", "publisher")
+        settings["publisher/tenants"]       = self.getData("LIST", "tenants?state=active", "publisher")
+        settings["publisher/subscriptions"] = self.getData("LIST", "subscriptions", "publisher")
+        settings["publisher/api-products"]  = self.getData("LIST", "api-products", "publisher")
+        settings["publisher/settings"]      = self.getData("LIST", "settings", "publisher")
+        settings["publisher/mediation-policies"] = self.getData("LIST", "mediation-policies", "publisher")
+
+        return settings
 
 
 class Wso2UsersManager(DataStoreInterface):
+    """ User Management is via SOAP on WS02 4.0.0 """
 
-    def __init__(self, authorization="YWRtaW46YWRtaW4=", server=None, entity_type="ws_users", name_att="name", desc_att="role", id_att="name", service="wso2users"):
-        DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=False)
-        if (not server) : server = AEPCTL_Configuration.get("WSO2_SERVER")
+    def __init__(self, authorization=None, server=None, entity_type="WS_Users"):
+        DataStoreInterface.__init__(self, entity_type=entity_type)
+        if (not server)        : server        = AEPCTL_Configuration.get("WSO2_SERVER")
+        if (not authorization) : authorization = AEPCTL_Configuration.get("WSO2_AUTHORIZATION")
         self.server                  = server
         self.authorization           = authorization
         self.last_operation          = "Nope"
@@ -989,7 +1107,7 @@ class Wso2UsersManager(DataStoreInterface):
         settings = ut.SuperDict(name="ADMIN SETTINGS")
         settings["id"]   = "ADMIN"
         settings["name"] = "wso2"
-        settings["description"] = "Users Admin Settings"
+        settings["description"]   = "Users Admin Settings"
         settings["authorization"] = self.authorization
         settings["WSO2_SERVER"]   = self.server
         settings.clean()
@@ -1226,7 +1344,7 @@ class Wso2UsersManager(DataStoreInterface):
         self.resetError()
         users_list = self.list_users(names=False)
         if (self.isError()):  return None
-        return self._list(users_list,names=names,ids=ids,count=count)
+        return self._list(users_list, names=names, ids=ids, count=count)
 
     def get(self, idName: str = None, name: str = None, identifier: str = None) -> Union[dict, None]:
         entity_id = super().get(idName=idName, name=name, identifier=identifier)
@@ -1239,7 +1357,7 @@ class Wso2UsersManager(DataStoreInterface):
         if (backup): self.backup()
         self.delete_user(entity)
         if (self.isError()): return None
-        return self.add_user(entity, backup)
+        return self.add_user(entity)
 
     def delete(self, idName: str = None, name: str = None, identifier: str = None, backup: bool = True) -> Union[dict, None]:
         entry = super(DataStoreInterface, self).delete(idName=idName, name=name, identifier=identifier, backup=backup)
@@ -1247,11 +1365,12 @@ class Wso2UsersManager(DataStoreInterface):
         if (backup): self.backup()
         return self.delete_user(entry)
 
-class Wso2CategoryManager(DataStoreInterface, RestHandler):
 
-    def __init__(self, server=None, entity_type="ws_categories", name_att="name", desc_att="description", id_att="name", service="wso2"):
-        DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=False)
-        RestHandler.__init__(self, server, service=service)
+class Wso2CategoriesManager(DataStoreInterface, RestHandler):
+
+    def __init__(self, server=None, entity_type="WS_Categories"):
+        DataStoreInterface.__init__(self, entity_type=entity_type)
+        RestHandler.__init__(self, server, service=StoreManager().store_get_service(entity_type))
 
     def category_create(self, category : str, description : str = None):
         if (description):
@@ -1305,25 +1424,25 @@ class Wso2CategoryManager(DataStoreInterface, RestHandler):
     def create(self, entity: Union[str, dict], backup: bool = True) -> Union[dict, None]:
         entity = super().create(entity=entity, backup=backup)
         if (self.isError()): return None
-        if (isinstance(entity,str)):
+        if (isinstance(entity, str)):
             entity = ut.loadDataContent(entity)
         if ("name" in entity):
             name = entity["name"]
         else:
-            self.Error("name missing in category")
+            self.error("name missing in category")
             return None
         if ("description" in entity):
             desc = entity["description"]
         else:
-            self.Error("description missing in category")
+            self.error("description missing in category")
             return None
-        return self.category_create(name,desc)
+        return self.category_create(name, desc)
 
     def list(self, names: bool = False, ids: bool = False, count: bool = False) -> Union[list, None, int]:
         self.resetError()
         entity_list = self.category_list()
         if (self.isError()):  return None
-        return self._list(entity_list,names=names,ids=ids,count=count)
+        return self._list(entity_list, names=names, ids=ids, count=count)
 
     def get(self, idName: str = None, name: str = None, identifier: str = None) -> Union[dict, None]:
         entity_id = super().get(idName=idName, name=name, identifier=identifier)
@@ -1344,14 +1463,16 @@ class Wso2CategoryManager(DataStoreInterface, RestHandler):
         if (self.isError()): return None
         return entry
 
-class Wso2PolicyManager(DataStoreInterface, RestHandler):
 
-    def __init__(self, server=None, entity_type="ws_policies", name_att="name", desc_att="description", id_att="idType", service="wso2"):
-        DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=False)
-        RestHandler.__init__(self, server, service=service)
+class Wso2PoliciesManager(DataStoreInterface, RestHandler):
+
+    def __init__(self, server=None, entity_type="WS_Policies"):
+        DataStoreInterface.__init__(self, entity_type=entity_type)
+        RestHandler.__init__(self, server, service=StoreManager().store_get_service(entity_type))
 
     # policy_types = ["application", "custom", "advanced", "deny-policies", "subscription"]
     policy_types = ["application", "custom", "advanced", "deny-policies", "subscription", "mediation"]
+
     @staticmethod
     def policy_type(policyType : str = "advanced"):
         if   (policyType == "application"):   return "throttling/policies/application"
@@ -1368,9 +1489,9 @@ class Wso2PolicyManager(DataStoreInterface, RestHandler):
         return None
 
     def policy_list(self, policyType : str = None) -> list:
-        if ((not policyType) or (policyType not in Wso2PolicyManager.policy_types)):
+        if ((not policyType) or (policyType not in Wso2PoliciesManager.policy_types)):
             policyList = list()
-            for policy_type in Wso2PolicyManager.policy_types:
+            for policy_type in Wso2PoliciesManager.policy_types:
                 plist = self.policy_list(policy_type)
                 if (plist):
                     policyList = policyList + plist
@@ -1380,7 +1501,7 @@ class Wso2PolicyManager(DataStoreInterface, RestHandler):
             pdata = json.loads(self.r_text)
             if ("list" not in pdata): return list()
             for pol in pdata["list"]:
-                pol = Wso2PolicyManager.policy_entry(pol,policyType)
+                pol = Wso2PoliciesManager.policy_entry(pol, policyType)
             return pdata["list"]
         return None
 
@@ -1402,11 +1523,12 @@ class Wso2PolicyManager(DataStoreInterface, RestHandler):
         self.handle_request("GET", self.policy_type(policyType), entry=policyId)
         if (self.r_code == 200) and (self.r_text) :
             pol = json.loads(self.r_text)
-            pol = Wso2PolicyManager.policy_entry(pol,policyType)
+            pol = Wso2PoliciesManager.policy_entry(pol, policyType)
             return pol
         return None
 
     def policy_delete(self, policy_id, policyType : str = "advanced"):
+        deleted_policy = self.policy_get(policy_id=policy_id, policyType=policyType)
         if ("/" in policy_id):
             policyType = re.sub("^.*/", "", policy_id)
             policyId   = re.sub("/.*$", "", policy_id)
@@ -1415,28 +1537,29 @@ class Wso2PolicyManager(DataStoreInterface, RestHandler):
         self.handle_request("DELETE", self.policy_type(policyType), entry=policyId)
         if (self.r_code == 200) and (self.r_text) :
             pol = json.loads(self.r_text)
-            pol = Wso2PolicyManager.policy_entry(pol,policyType)
-            return pol
+            deleted_policy = Wso2PoliciesManager.policy_entry(deleted_policy, policyType)
+            return deleted_policy
         return None
 
     # Interface functions
     def create(self, entity: Union[str, dict], backup: bool = True) -> Union[dict, None]:
-        entity = super(DataStoreInterface, self).create(entity=entity, backup=backup)
+        entity = super().create(entity=entity, backup=backup)
         if (self.isError()): return None
-        if (isinstance(entity,str)):
+        if (isinstance(entity, str)):
             entity = ut.loadDataContent(entity)
-        if ("policyType" in entity):
-            policyType = entity["policyType"]
+        if ("type" in entity):
+            policyType = entity["type"]
         else:
-            self.Error("policyType missing in policy")
+            self.error("Policy type missing in policy")
             return None
-        return self.policy_create(ut.to_json(entity),policyType)
+        if ("idType" in entity): del entity["idType"]
+        return self.policy_create(ut.to_json(entity), "advanced")
 
     def list(self, names: bool = False, ids: bool = False, count: bool = False) -> Union[list, None, int]:
         self.resetError()
         entity_list = self.policy_list()
         if (self.isError()):  return None
-        return self._list(entity_list,names=names,ids=ids,count=count)
+        return self._list(entity_list, names=names, ids=ids, count=count)
 
     def get(self, idName: str = None, name: str = None, identifier: str = None) -> Union[dict, None]:
         entity_id = super().get(idName=idName, name=name, identifier=identifier)
@@ -1457,11 +1580,12 @@ class Wso2PolicyManager(DataStoreInterface, RestHandler):
         if (self.isError()): return None
         return entry
 
+
 class Wso2ApisManager(DataStoreInterface, RestHandler):
 
-    def __init__(self, server=None, entity_type="ws_apis", name_att="nameVersion", desc_att="description", id_att="id", service="wso2"):
-        DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=False)
-        RestHandler.__init__(self, server, service=service)
+    def __init__(self, server=None, entity_type="WS_Apis"):
+        DataStoreInterface.__init__(self, entity_type=entity_type)
+        RestHandler.__init__(self, server, service=StoreManager().store_get_service(entity_type))
 
     def api_list(self, details : bool = False):
         self.handle_request("LIST", "apis?limit=2000", service="publisher")
@@ -1555,7 +1679,7 @@ class Wso2ApisManager(DataStoreInterface, RestHandler):
         return None
 
     def api_get_policies(self, api_id):
-        api_id = self.id_by_name(api_id)
+        api_id = self.idByName(api_id)
         self.handle_request("GET", "apis", entry=api_id+"/subscription-policies", service="publisher")
         if (self.r_code == 200) and (self.r_text) :
             return json.loads(self.r_text)
@@ -1572,7 +1696,7 @@ class Wso2ApisManager(DataStoreInterface, RestHandler):
             return self.api_delete(api_id=self.api_id_by_name(name, version))
         return None
 
-    def api_details(self, api_id : str) -> dict:
+    def api_details(self, api_id : str) -> Union[dict, str, None]:
         if (not api_id) : return "No API idName specified"
         if (api_id.upper() in ["", "ALL"]) : return "Invalid API idName : " + api_id
         api_id = self.api_id_by_name(api_id)
@@ -1619,14 +1743,14 @@ class Wso2ApisManager(DataStoreInterface, RestHandler):
     def create(self, entity: Union[str, dict], backup: bool = True) -> Union[dict, None]:
         entity = super(DataStoreInterface, self).create(entity=entity, backup=backup)
         if (self.isError()): return None
-        if (isinstance(entity,str)): entity = ut.loadDataContent(entity)
+        if (isinstance(entity, str)): entity = ut.loadDataContent(entity)
         return self.api_create(ut.to_json(entity))
 
     def list(self, names: bool = False, ids: bool = False, count: bool = False) -> Union[list, None, int]:
         self.resetError()
         entity_list = self.api_list()
         if (self.isError()):  return None
-        return self._list(entity_list,names=names,ids=ids,count=count)
+        return self._list(entity_list, names=names, ids=ids, count=count)
 
     def get(self, idName: str = None, name: str = None, identifier: str = None) -> Union[dict, None]:
         entity_id = super().get(idName=idName, name=name, identifier=identifier)
@@ -1647,58 +1771,11 @@ class Wso2ApisManager(DataStoreInterface, RestHandler):
         if (self.isError()): return None
         return entry
 
-class Wso2ApiManager(RestHandler):
 
-    def __init__(self, ws_server=None):
-        if (not ws_server) : ws_server = AEPCTL_Configuration.get("WSO2_SERVER")
-        super().__init__(ws_server)
-
-    def settings_get(self):
-        settings = ut.SuperDict()
-        settings["id"]   = "DEVELOPER_PORTAL"
-        settings["name"] = "dev"
-        settings["description"] = "Developer Portal Settings"
-        self.handle_request("GET", "settings", service="admin")
-        settings["settings"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "alert-types", service="admin")
-        settings["alert-types"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "key-managers", service="admin")
-        settings["key-managers"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "environments", service="admin")
-        settings["environments"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "bot-detection-data", service="admin")
-        settings["bot-detection-data"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "api-categories", service="admin")
-        settings["api-categories"] = self.d_data if (self.d_data) else {}
-
-        # Policy Types : application / custom / advanced / deny-policies / mediation / subscription
-        self.handle_request("GET", "throttling/policies/application", service="admin")
-        settings["throttling/policies/application"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "throttling/policies/custom", service="admin")
-        settings["throttling/policies/custom"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "throttling/policies/advanced", service="admin")
-        settings["throttling/policies/advanced"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "throttling/policies/deny-policies", service="admin")
-        settings["throttling/policies/deny-policies"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "policies/mediation", service="admin")
-        settings["policies/mediation"] = self.d_data if (self.d_data) else {}
-        self.handle_request("GET", "throttling/policies/subscription", service="admin")
-        settings["throttling/policies/subscription"] = self.d_data if (self.d_data) else {}
-
-        self.handle_request("LIST", "apis", service="publisher")
-        settings["publisher/apis"] = self.d_data if (self.d_data) else {}
-        self.handle_request("LIST", "tenants?state=active", service="publisher")
-        settings["publisher/tenants"] = self.d_data if (self.d_data) else {}
-        self.handle_request("LIST", "subscriptions", service="publisher")
-        settings["publisher/subscriptions"] = self.d_data if (self.d_data) else {}
-        self.handle_request("LIST", "mediation-policies", service="publisher")
-        settings["publisher/mediation-policies"] = self.d_data if (self.d_data) else {}
-        self.handle_request("LIST", "api-products", service="publisher")
-        settings["publisher/api-products"] = self.d_data if (self.d_data) else {}
-        self.handle_request("LIST", "settings", service="publisher")
-        settings["publisher/settings"] = self.d_data if (self.d_data) else {}
-
-        return settings
+class Wso2ProductsManager(DataStoreInterface, RestHandler):
+    def __init__(self, server=None, entity_type="WS_Product"):
+        DataStoreInterface.__init__(self, entity_type=entity_type)
+        RestHandler.__init__(self, server, service=StoreManager().store_get_service(entity_type))
 
     def product_create(self, product : str):
         self.handle_request("POST", "api-products", payload=product, service="publisher")
@@ -1736,11 +1813,43 @@ class Wso2ApiManager(RestHandler):
         product_details["documents"] = self.d_data if (self.d_data) else {}
         self.handle_request("GET", "apis", entry=product_id+"/revisions?query=deployed:true", service="publisher")
         product_details["revisions"] = self.d_data if (self.d_data) else {}
-
         print(str(product_details))
         return product_details
 
-class Wso2ApiDevManager(RestHandler):
+    # Interface functions
+    def create(self, entity: Union[str, dict], backup: bool = True) -> Union[dict, None]:
+        entity = super(DataStoreInterface, self).create(entity=entity, backup=backup)
+        if (self.isError()): return None
+        if (isinstance(entity, str)): entity = ut.loadDataContent(entity)
+        return self.product_create(ut.to_json(entity))
+
+    def list(self, names: bool = False, ids: bool = False, count: bool = False) -> Union[list, None, int]:
+        self.resetError()
+        entity_list = self.product_list()
+        if (self.isError()):  return None
+        return self._list(entity_list, names=names, ids=ids, count=count)
+
+    def get(self, idName: str = None, name: str = None, identifier: str = None) -> Union[dict, None]:
+        entity_id = super().get(idName=idName, name=name, identifier=identifier)
+        if (not entity_id): return None
+        return self.product_get(entity_id)
+
+    def update(self, entity: Union[str, dict], backup: bool = True) -> Union[dict, None]:
+        entity = super(DataStoreInterface, self).update(entity=entity, backup=backup)
+        if (self.isError()): return None
+        self.product_delete(entity[self.id_att])
+        if (self.isError()): return None
+        return self.create(entity, backup=False)
+
+    def delete(self, idName: str = None, name: str = None, identifier: str = None, backup: bool = True) -> Union[dict, None]:
+        entry = super().delete(idName=idName, name=name, identifier=identifier, backup=backup)
+        if (self.isError()): return None
+        self.product_delete(entry[self.id_att])
+        if (self.isError()): return None
+        return entry
+
+
+class Wso2SubscriptionsManager(RestHandler):
 
     def __init__(self, ws_server=None):
         if (not ws_server) : ws_server = AEPCTL_Configuration.get("WSO2_SERVER")
@@ -1802,7 +1911,7 @@ class Wso2ApiDevManager(RestHandler):
                 return json.loads(self.r_text)
             return None
         elif (name) :
-            return self.application_delete(app_id=self.application_id_by_name(name))
+            return self.subscription_delete(app_id=self.subscription_id_by_name(name))
         return None
 
     def subscription_details(self, subs_id):
@@ -1842,28 +1951,32 @@ class Wso2ApiDevManager(RestHandler):
         if (not subscription_id) : return None
         return self.subscription_delete(subscription_id)
 
+
 class Wso2ApplicationsManager(DataStoreInterface, RestHandler):
 
-    def __init__(self, server=None, entity_type="ws_applications", name_att="name", desc_att="description", id_att="applicationId", service="wso2"):
-        DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=False)
-        RestHandler.__init__(self, server, service=service)
+    def __init__(self, server=None, entity_type="WS_Applications"):
+        DataStoreInterface.__init__(self, entity_type=entity_type)
+        RestHandler.__init__(self, server, service=StoreManager().store_get_service(entity_type))
 
     def application_create(self, application : str):
         self.handle_request("POST", "applications", payload=application, service="devportal")
         if (self.r_code == 201) and (self.r_text) :
             return json.loads(self.r_text)
+        self.error(json.loads(self.r_text))
         return None
 
     def application_list(self, names : bool = True):
         self.handle_request("LIST", "applications?limit=2000", service="devportal")
         if (self.r_code == 200) and (self.r_text) :
             return json.loads(self.r_text)
+        self.error(json.loads(self.r_text))
         return None
 
     def application_get(self, app_id):
         self.handle_request("GET", "applications", entry=app_id, service="devportal")
         if (self.r_code == 200) and (self.r_text) :
             return json.loads(self.r_text)
+        self.error(json.loads(self.r_text))
         return None
 
     def application_delete(self, app_id: str = None, name: str = None):
@@ -1871,6 +1984,7 @@ class Wso2ApplicationsManager(DataStoreInterface, RestHandler):
             self.handle_request("DELETE", "applications", entry=app_id, service="devportal")
             if (self.r_code == 200) and (self.r_text) :
                 return json.loads(self.r_text)
+            self.error(json.loads(self.r_text))
             return None
         elif (name) :
             return self.application_delete(app_id=self.application_id_by_name(name))
@@ -1890,6 +2004,7 @@ class Wso2ApplicationsManager(DataStoreInterface, RestHandler):
             for api in self.d_data.getAsData()["list"] :
                 if (api["name"] == name):
                     return api["applicationId"]
+        self.error(json.loads(self.r_text))
         return None
 
     def application_get_keys(self, appname_id : str = None):
@@ -1927,14 +2042,14 @@ class Wso2ApplicationsManager(DataStoreInterface, RestHandler):
     def create(self, entity: Union[str, dict], backup: bool = True) -> Union[dict, None]:
         entity = super(DataStoreInterface, self).create(entity=entity, backup=backup)
         if (self.isError()): return None
-        if (isinstance(entity,str)): entity = ut.loadDataContent(entity)
+        if (isinstance(entity, str)): entity = ut.loadDataContent(entity)
         return self.application_create(ut.to_json(entity))
 
     def list(self, names: bool = False, ids: bool = False, count: bool = False) -> Union[list, None, int]:
         self.resetError()
         entity_list = self.application_list()
         if (self.isError()):  return None
-        return self._list(entity_list,names=names,ids=ids,count=count)
+        return self._list(entity_list, names=names, ids=ids, count=count)
 
     def get(self, idName: str = None, name: str = None, identifier: str = None) -> Union[dict, None]:
         entity_id = super().get(idName=idName, name=name, identifier=identifier)
@@ -1955,6 +2070,7 @@ class Wso2ApplicationsManager(DataStoreInterface, RestHandler):
         if (self.isError()): return None
         return entry
 
+
 class Wso2Provisioning():
 
     def __init__(self, service : str = "file"):
@@ -1973,7 +2089,7 @@ class Wso2Provisioning():
                 rc = rc and self.provisionCategory(categoryName)
             return rc
         logger.info("Provisioning Category : "+categoryName)
-        cat_store = StoreManager().getStore(name="Categories", store_type=self.service)
+        cat_store = StoreManager().getStore(name="Categories", store_type=dataStore)
         category  = cat_store.get(categoryName)
         if (not category): return self.error("Category not found : "+categoryName)
         # Get Category Details
@@ -1988,9 +2104,41 @@ class Wso2Provisioning():
         cat_desc_json = ut.loadDataFile(cat_desc_file)
         logger.info("WSO2 Category Descriptor : "+ut.to_json(cat_desc_json))
         # Create Category in WSO2
-        catm = StoreManager().getStore(name="ws_categories", store_type="ws")
-        rc = catm.create(cat_desc_json)
-        if (rc == None) : return catm.Error()
+        catMgr = StoreManager().getStore(name="ws_categories", store_type="ws")
+        rc = catMgr.create(cat_desc_json)
+        if (rc == None) : return catMgr.getError()
+        return rc
+
+    def provisionPolicy(self, policyName : str, dataStore: str ="file") -> bool:
+        if (policyName.upper() == "ALL"):
+            pol_store = StoreManager().getStore(name="UsagePolicies", store_type=dataStore)
+            polList   = pol_store.list(names=True)
+            rc = True
+            for policyName in polList:
+                rc = rc and self.provisionPolicy(policyName)
+            return rc
+        logger.info("Provisioning Policy : "+policyName)
+        pol_store = StoreManager().getStore(name="UsagePolicies", store_type=dataStore)
+        policy  = pol_store.get(policyName)
+        if (not policy): return self.error("Policy not found : "+policyName)
+        # Get Policy Details
+        pol_name = policy[pol_store.name_att]
+        # Create Context / Maybe load other policies
+        rendering_context = policy
+        # Render Policy Descriptor for WS02
+        pol_dir     = CONFIG_DIRECTORY+os.sep+"templates"+os.sep+"policies"
+        desc_template = pol_dir+os.sep+"policy_create.json"
+        pol_desc_file = pol_dir+os.sep+pol_name+"_desc.json"
+        ut.Template.renderFile(desc_template, pol_desc_file, rendering_context)
+        pol_desc_json = ut.loadDataFile(pol_desc_file)
+        logger.info("WSO2 Policy Descriptor : "+ut.to_json(pol_desc_json))
+        # Create Policy in WSO2
+        ws_polMgr = StoreManager().getStore(name="ws_policies", store_type="ws")
+        rc = ws_polMgr.create(pol_desc_json)
+        if (rc == None) : return ws_polMgr.getError()
+        policy['ws_key']    = rc['policyId']
+        rc = pol_store.save(entity=policy)
+        if (rc == None) : return policy.getError()
         return rc
 
     def provisionAPI(self, apiName : str, model : str = "nef_template", publish : bool = True, dataStore: str ="file") -> bool:
@@ -2044,9 +2192,12 @@ class Wso2Provisioning():
         api_swagger = api_path+os.sep+api_name
         shutil.make_archive(api_swagger, 'zip', ut.get_directory(swg_path))
         # Create API in WSO2
-        apim = StoreManager().getStore(name="ws_apis", store_type="ws")
+        apim = StoreManager().getStore(name="apis", store_type="ws")
         rc = apim.api_create(api_desc_json, api_swagger+".zip", publish=publish)
         if (rc == None) : return apim.Error()
+        api['ws_key']    = rc['id']
+        rc = api_store.save(entity=api)
+        if (rc == None) : return api_store.getError()
         return rc
 
     def publishAPI(self, apiName: str) -> bool:
@@ -2072,9 +2223,9 @@ class Wso2Provisioning():
         user["name"] = contact[ctc_store.name_att]
         user["role"] = contact["Role"] if "Role" in contact else contact["role"]
         # Create User in WSO2
-        usrm = StoreManager().getStore(name="ws_users", store_type="ws")
-        rc = usrm.save(entity=user)
-        if (rc == None) : return usrm.getError()
+        usrMgr = StoreManager().getStore(name="ws_users", store_type="ws")
+        rc = usrMgr.save(entity=user)
+        if (rc == None) : return usrMgr.getError()
         return rc
 
     def provisionService(self, serviceName: str, dataStore: str ="file") -> bool:
@@ -2101,45 +2252,86 @@ class Wso2Provisioning():
         app_desc_json = ut.loadDataFile(app_desc_file)
         logger.info("WSO2 Application Descriptor : "+ut.to_json(app_desc_json))
         # Create Application in WSO2
-        appm = StoreManager().getStore(name="ws_applications", store_type="ws")
-        rc = appm.application_create(app_desc_json)
-        if (rc == None) : return appm.getError()
-        keys = appm.application_generate_keys(rc[appm.id_att])
-        if (rc == None) : return appm.getError()
+        appMgr = StoreManager().getStore(name="ws_applications", store_type="ws")
+        rc = appMgr.application_create(app_desc_json)
+        if (rc == None) : return appMgr.getError()
+        service['ws_id']    = rc['applicationId']
+        keys = appMgr.application_generate_keys(rc[appMgr.id_att])
+        if (rc == None) : return appMgr.getError()
         service['consumerKey']    = keys['consumerKey']
         service['consumerSecret'] = keys['consumerSecret']
-        # keys = appm.application_get_keys(rc[appm.id_att])
+        # keys = appMgr.application_get_keys(rc[appMgr.id_att])
         rc = svc_store.save(entity=service)
         if (rc == None) : return svc_store.getError()
         return rc
 
-    def subscribeServiceToApi(self, apiName: str) -> bool:
-        pass
+    def subscribeServiceToApi(self, subscriptionID : str, dataStore: str ="file") -> bool:
+        subscription_store = StoreManager().getStore(name="Subscriptions", store_type=dataStore)
+        subscription = subscription_store.get(subscriptionID)
+        if (not subscription): return self.error("subscription not found : " + subscriptionID)
+        serviceID   = subscription["AppID"]
+        apiID       = subscription["ApiID"]
+        policyID    = "TestPolicy1"  # subscription["TestPolicy1"]
+        logger.info("Subscription [" + subscriptionID + "]")
+        logger.info("Subscribe Service [" + serviceID + "] to Api [" + apiID + "]")
+        logger.info("Policy [" + policyID + "]")
+        service_store = StoreManager().getStore(name="Services", store_type=dataStore)
+        service = service_store.get(serviceID)
+        if (not service): return self.error("Service not found : " + serviceID)
+        ws_appID = service["ws_id"]
+        api_store = StoreManager().getStore(name="Apis", store_type=dataStore)
+        api = api_store.get(apiID)
+        if (not api): return self.error("Api not found : " + apiID)
+        ws_apiID = api["ws_key"]
+        # Get Subscription Details
+        subs_name = subscriptionID
+        # Create Context / Maybe load other policies
+        rendering_context = subscription
+        rendering_context["ws_apiID"] = ws_apiID
+        rendering_context["ws_appID"] = ws_appID
+        rendering_context["api"]      = api
+        rendering_context["service"]  = service
+        rendering_context["policy"]   = policyID
+        # Render Category Descriptor for WS02
+        app_dir        = CONFIG_DIRECTORY+os.sep+"templates"+os.sep+"subscribe"
+        desc_template  = app_dir+os.sep+"subscribe.json"
+        subs_desc_file = app_dir+os.sep+subs_name+"_desc.json"
+        ut.Template.renderFile(desc_template, subs_desc_file, rendering_context)
+        app_desc_json = ut.loadDataFile(subs_desc_file)
+        logger.info("WSO2 Subscription Descriptor : "+ut.to_json(subs_desc_file))
+        # Create Subscription in WSO2
+        devMgr = Wso2SubscriptionsManager()
+        rc = devMgr.subscribe(app_id=ws_appID, api_id=ws_apiID, policy=policyID)
+        if (rc == None) : return devMgr.getError()
+        subscription["ws_id"] = rc["subscriptionId"]
+        subscription_store.save(subscription)
+        if (rc == None) : return subscription_store.getError()
+        return rc
 
     def extractWso2Apis(self, idName : str = "all", dataStore : str = None) -> list:
-        wam  = Wso2ApiManager()
-        apil = wam.api_list()
+        wsMgr   = Wso2ApisManager()
+        apiList = wsMgr.api_list()
         dirname  = "data"+os.sep+"nef-apis-dump"
         ut.safeCreateDir(dirname)
         api_list = list()
-        for api in apil["list"] :
+        for api in apiList["list"] :
             if (idName.lower() != "all"):
                 if (idName != api["id"]): continue
                 if (idName != api["name"]+"-"+api["version"]): continue
                 if (idName != api["name"]+"/"+api["version"]): continue
                 if (idName != api["name"]): continue
-            id = api["id"]
+            apiId = api["id"]
             apiname = api["name"]+"-"+api["version"]
-            logger.info("extractWso2Apis : "+str(apiname)+" : "+id)
+            logger.info("extractWso2Apis : "+str(apiname)+" : "+apiId)
             api_dir = dirname+os.sep+apiname
             ut.safeCreateDir(api_dir)
-            res = wam.api_get(id)
+            res = wsMgr.api_get(apiId)
             ut.saveDataFile(res, api_dir+os.sep+"api_desc.json")
-            res = wam.api_get_swagger(id)
+            res = wsMgr.api_get_swagger(apiId)
             ut.saveDataFile(res, api_dir+os.sep+"swagger.json")
-            res = wam.api_get_thumbnail(id)
+            res = wsMgr.api_get_thumbnail(apiId)
             ut.saveDataFile(res, api_dir+os.sep+"thumbnail.json")
-            res = wam.api_get_policies(id)
+            res = wsMgr.api_get_policies(apiId)
             ut.saveDataFile(res, api_dir+os.sep+"policies.json")
 
             api_desc      = ut.loadDataFile(api_dir+os.sep+"api_desc.json")
@@ -2270,6 +2462,202 @@ class Wso2Provisioning():
 
 
 ###
+### TMF DataStore
+###
+
+
+class TmfApisManager(DataStoreInterface, RestHandler):
+
+    def __init__(self, server=None, entity_type="WS_Apis"):
+        DataStoreInterface.__init__(self, entity_type=entity_type)
+        RestHandler.__init__(self, server, service=StoreManager().store_get_service(entity_type))
+
+    def api_list(self, details : bool = False):
+        self.handle_request("LIST", "apis?limit=2000", service="publisher")
+        if (self.r_code == 200) and (self.r_text) :
+            pdata = json.loads(self.r_text)
+            if ("list" not in pdata): return list()
+            for api in pdata["list"]:
+                api["nameVersion"] = api["name"] + "/" + api["version"]
+                if (details): api["details"] = self.api_details(api["id"])
+            return pdata["list"]
+        return None
+
+    def api_id_by_name(self, name : str, version: str = None) -> Union[str, None]:
+        if ("/" in name):
+            version = re.sub(".*\/", "", name)
+            name    = re.sub("\/.*", "", name)
+        else :
+            if (not version) : return name
+        self.handle_request("LIST", "apis?limit=2000", service="publisher")
+        if (self.r_code == 200) and (self.r_text) :
+            for api in self.d_data.getAsData()["list"] :
+                if ((api["name"] == name) and (api["version"] == version)):
+                    return api["id"]
+        return None
+
+    def api_create(self, api : str, swagger_file : str = None, publish : bool = False) -> Union[str, None]:
+        self.handle_request("POST", "apis", payload=api, service="publisher")
+        if self.isError(): return None
+        if (not swagger_file):
+            if (self.r_code == 201) and (self.r_text) :
+                return json.loads(self.r_text)
+            return None
+        r_val  = json.loads(self.r_text)
+        api_id = r_val["id"]
+        files = {'file': open(swagger_file, 'rb')}
+        self.handle_request("PUT", "apis/"+api_id+"/swagger", files=files, service="publisher")
+        if self.isError(): return None
+        if (publish):
+            self.api_publish(api_id)
+            if self.isError(): return None
+        return r_val
+
+    def api_publish(self, api_id):
+        api_id = self.api_id_by_name(api_id)
+        self.handle_request("POST", "apis/change-lifecycle?apiId="+api_id+"&action=Publish", service="publisher")
+        if (self.r_code == 200) and (self.r_text) :
+            return json.loads(self.r_text)
+        return None
+
+    def api_lifecycle(self, api_id, state : str = "DEPRECATED"):
+        # CREATED, PROTOTYPED, PUBLISHED, BLOCKED, DEPRECATED, RETIRED
+        # "Publish" "Deploy as a Prototype" "Demote to Created" "Block" "Deprecate" "Re-Publish" "Retire"
+        # https://apim.docs.wso2.com/en/4.0.0/learn/design-api/lifecycle-management/api-lifecycle/
+        # https://apim.docs.wso2.com/en/3.2.0/learn/design-api/lifecycle-management/customize-api-life-cycle/
+        if (state in ["PUBLISH"])    : state = "Publish"
+        if (state in ["CREATED"])    : state = "Demote to Created"
+        if (state in ["PROTOTYPED"]) : state = "Deploy as a Prototype"
+        if (state in ["BLOCKED"])    : state = "Block"
+        if (state in ["DEPRECATED"]) : state = "Deprecate"
+        if (state in ["REPUBLISH"])  : state = "Re-Publish"
+        if (state in ["RETIRED"])    : state = "Retire"
+        api_id = self.api_id_by_name(api_id)
+        state  = state.capitalize()
+        self.handle_request("POST", "apis/change-lifecycle?apiId="+api_id+"&action="+state, service="publisher")
+        if (self.r_code == 200) and (self.r_text) :
+            return json.loads(self.r_text)
+        return ut.to_json(ut.loadDataContent(self.r_text))
+
+    def api_get(self, api_id, details : bool = False):
+        api_id = self.api_id_by_name(api_id)
+        self.handle_request("GET", "apis", entry=api_id, service="publisher")
+        if (self.r_code == 200) and (self.r_text) :
+            api = json.loads(self.r_text)
+            api["nameVersion"] = api["name"] + "/" + api["version"]
+            if (details): api["details"] = self.api_details(api_id)
+            return api
+        return None
+
+    def api_get_swagger(self, api_id):
+        api_id = self.api_id_by_name(api_id)
+        self.handle_request("GET", "apis", entry=api_id+"/swagger", service="publisher")
+        if (self.r_code == 200) and (self.r_text) :
+            return json.loads(self.r_text)
+        return None
+
+    def api_get_thumbnail(self, api_id):
+        api_id = self.api_id_by_name(api_id)
+        self.handle_request("GET", "apis", entry=api_id+"/thumbnail", service="publisher")
+        if (self.r_code == 200) and (self.r_text) :
+            return json.loads(self.r_text)
+        return None
+
+    def api_get_policies(self, api_id):
+        api_id = self.idByName(api_id)
+        self.handle_request("GET", "apis", entry=api_id+"/subscription-policies", service="publisher")
+        if (self.r_code == 200) and (self.r_text) :
+            return json.loads(self.r_text)
+        return None
+
+    def api_delete(self, api_id : str = None, name : str = None, version: str = None):
+        api_id = self.api_id_by_name(api_id)
+        if (api_id) :
+            self.handle_request("DELETE", "apis", entry=api_id, service="publisher")
+            if (self.r_code == 200) and (self.r_text) :
+                return json.loads(self.r_text)
+            return None
+        elif ((name) and (version)) :
+            return self.api_delete(api_id=self.api_id_by_name(name, version))
+        return None
+
+    def api_details(self, api_id : str) -> dict:
+        if (not api_id) : return "No API idName specified"
+        if (api_id.upper() in ["", "ALL"]) : return "Invalid API idName : " + api_id
+        api_id = self.api_id_by_name(api_id)
+        api_details = dict()
+        self.handle_request("GET", "apis", entry=api_id, service="publisher")
+        api_details["api"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/swagger", service="publisher")
+        api_details["swagger"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/thumbnail", service="publisher")
+        api_details["thumbnail"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/subscription-policies", service="publisher")
+        api_details["subscription-policies"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/resource-paths", service="publisher")
+        api_details["resource-paths"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/asyncapi", service="publisher")
+        api_details["asyncapi"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/lifecycle-history", service="publisher")
+        api_details["lifecycle-history"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/lifecycle-state", service="publisher")
+        api_details["lifecycle-state"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/revisions?query=deployed:true", service="publisher")
+
+        self.handle_request("GET", "apis", entry=api_id+"/deployments", service="publisher")
+        api_details["deployments"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/comments", service="publisher")
+        api_details["comments"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/monetize", service="publisher")
+        api_details["monetize"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/documents", service="publisher")
+        api_details["documents"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/mediation-policies", service="publisher")
+        api_details["mediation-policies"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/auditapi", service="publisher")
+        api_details["auditapi"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/external-stores", service="publisher")
+        api_details["external-stores"] = self.r_data
+        self.handle_request("GET", "apis", entry=api_id+"/client-certificates", service="publisher")  # ?alias=wso2carbon
+        api_details["client-certificates"] = self.r_data
+        self.handle_request("GET", "subscriptions?"+api_id, service="publisher")
+        api_details["external-stores"] = self.r_data
+        return api_details
+
+    # Interface functions
+    def create(self, entity: Union[str, dict], backup: bool = True) -> Union[dict, None]:
+        entity = super(DataStoreInterface, self).create(entity=entity, backup=backup)
+        if (self.isError()): return None
+        if (isinstance(entity, str)): entity = ut.loadDataContent(entity)
+        return self.api_create(ut.to_json(entity))
+
+    def list(self, names: bool = False, ids: bool = False, count: bool = False) -> Union[list, None, int]:
+        self.resetError()
+        entity_list = self.api_list()
+        if (self.isError()):  return None
+        return self._list(entity_list, names=names, ids=ids, count=count)
+
+    def get(self, idName: str = None, name: str = None, identifier: str = None) -> Union[dict, None]:
+        entity_id = super().get(idName=idName, name=name, identifier=identifier)
+        if (not entity_id): return None
+        return self.api_get(entity_id)
+
+    def update(self, entity: Union[str, dict], backup: bool = True) -> Union[dict, None]:
+        entity = super(DataStoreInterface, self).update(entity=entity, backup=backup)
+        if (self.isError()): return None
+        self.api_delete(entity[self.id_att])
+        if (self.isError()): return None
+        return self.create(entity, backup=False)
+
+    def delete(self, idName: str = None, name: str = None, identifier: str = None, backup: bool = True) -> Union[dict, None]:
+        entry = super().delete(idName=idName, name=name, identifier=identifier, backup=backup)
+        if (self.isError()): return None
+        self.api_delete(entry[self.id_att])
+        if (self.isError()): return None
+        return entry
+
+
+###
 ### Factory Settings
 ###
 
@@ -2279,10 +2667,6 @@ class FactoryLoader:
     def __init__(self, service):
         self.service  = service
         self.path_dir = None
-
-    def raise_error(self, text):
-        logger.error(text)
-        raise Exception(text)
 
     def backup(self, entity : Union[str, list, None] = None, backup : bool = True, delete_all : bool = False) -> bool:
         if (not entity or entity.lower() == "all"):
@@ -2307,7 +2691,7 @@ class FactoryLoader:
             backup = False
         if (delete_all):
             logger.info("Delete All for entity : [" + str(entity) + "] service : [" + str(self.service) + "]")
-            server.delete_all(backup=backup)
+            server.deleteAll(backup=backup)
         return True
 
     def delete_all(self, entity : Union[str, list, None] = None, backup : bool = False, delete_all : bool = True) -> bool:
@@ -2318,6 +2702,7 @@ class FactoryLoader:
             pathname = ut.get_cwd_directory()
         for key in entry:
             val = entry[key]
+            # Handle 64 encoded string @b64file:<filenanme>:<b64 payload>
             if isinstance(val, str) and val.startswith("@b64file:"):
                 b64data  = re.sub("@b64file:.*:", "", val)
                 no_data = True if (b64data == "") else False
@@ -2327,12 +2712,13 @@ class FactoryLoader:
                 logger.info("Loading b64file : "+filepathname)
                 if (not ut.safeFileExist(filepathname)):
                     if (no_data):
-                        self.raise_error("File not found : " + filepathname)
+                        raise AepCtlError("File not found : " + filepathname)
                     else:
                         logger.error("File not found : " + filepathname)
                         entry[key] = val
                 else:
                     entry[key] = "@b64file:" + filename + ":" + ut.to_file_2_b64(filepathname)
+            # Handle in sub-objects
             if isinstance(val, dict):
                 entry[key] = self.b64file_handler(val, pathname)
         return entry
@@ -2343,14 +2729,11 @@ class FactoryLoader:
             entity_type = entry["entity"]
         if (not entity_type):
             # No entity type Specified
-            text = "No entity type specified for entry in ["+str(pathname)+"]: \n" + ut.to_json(entry)
-            logger.error(text)
-            raise Exception(text)
+            raise AepCtlError("No entity type specified for entry in ["+str(pathname)+"]: \n" + ut.to_json(entry))
         if ((only_entity and only_entity.lower() == "all")):
             pass
         elif ((only_entity) and (str(only_entity).lower() != str(entity_type).lower())):
-            text = "Not loading entity type ["+str(entity_type)+"]: \n" + ut.to_json(entry)
-            logger.info(text)
+            logger.error("Not loading entity type ["+str(entity_type)+"]: \n" + ut.to_json(entry))
             return None
         server = StoreManager().getStore(entity_type, self.service)
         if ("entry" in entry):
@@ -2359,7 +2742,7 @@ class FactoryLoader:
             entry[StoreManager.get_id_att(entity_type)] = "id"
         entry = self.b64file_handler(entry, dir_path)
         if ((server.exist(entry[StoreManager.get_id_att(entity_type)])) or
-            (server.exist(entry[StoreManager.get_name_att(entity_type)]))):
+                (server.exist(entry[StoreManager.get_name_att(entity_type)]))):
             logger.info("Entry update : " + entry["id"])
             loaded = server.update(entry, backup=False)
         else:
@@ -2368,18 +2751,16 @@ class FactoryLoader:
         logger.info("Entry Loaded : " + ut.to_json(loaded))
         return loaded
 
-    def get_server(self, data : dict, pathname : str, entity : str = None):
+    def getDataStore(self, data : dict, pathname : str, entity : str = None):
         if (not data):
             # Invalid json or yaml
-            logger.error("Invalid json or yaml Content : "  + pathname)
-            raise Exception("Invalid json or yaml Content : " + pathname)
+            raise AepCtlError("Invalid json or yaml Content : " + pathname)
         if (not self.service):
             # No Service Specified
             text = "No service specified for entry : " + str(pathname) + \
                    "\n Service : " + str(self.service) + \
                    "\n" + ut.to_json(data)
-            logger.error(text)
-            raise Exception(text)
+            raise AepCtlError(text)
         if (not entity and "entity" in data) :
             entity   = data["entity"]
         if (not entity):
@@ -2387,8 +2768,7 @@ class FactoryLoader:
             text = "No entity specified for entry : " + str(pathname) + \
                    "\n entity : " + str(entity) + \
                    "\n" + ut.to_json(data)
-            logger.error(text)
-            raise Exception(text)
+            raise AepCtlError(text)
         server = StoreManager().getStore(entity, self.service)
         if (not server):
             # No StoreManager found
@@ -2396,23 +2776,19 @@ class FactoryLoader:
                    "\n- entity  : " + str(entity) + \
                    "\n- service : " + str(self.service) + \
                    "\n" + ut.to_json(data)
-            logger.error(text)
-            raise Exception(text)
+            raise AepCtlError(text)
         return server
 
     def factory_loader(self, pathname, backup : bool=False, delete_all : bool=False, no_dir : bool=False, only_entity : str=None):
-        if (backup):
-            self.backup(entity=only_entity)
-        if (delete_all):
-            self.delete_all(entity=only_entity)
+        if (backup):      self.backup(entity=only_entity)
+        if (delete_all):  self.delete_all(entity=only_entity)
         abs_path = ut.get_abs_path(pathname)
         dir_path = ut.get_directory(abs_path)
         logger.info("Loading Path : " + abs_path)
         added_data = list()
-        # Directory
+        # Load a Directory
         if (ut.safeDirExist(pathname)):
-            if (no_dir):
-                return self.raise_error("Cannot Load Directory (only files) : " + pathname)
+            if (no_dir): raise AepCtlError("Cannot Load Directory (only files) : " + pathname)
             logger.info("Loading Directory : "  + pathname)
             # All json Files in directory
             logger.info("Scanning JSON Files in : "  + pathname)
@@ -2422,31 +2798,32 @@ class FactoryLoader:
             logger.info("Scanning YAML Files in : "  + pathname)
             for file in ut.safeListFiles(pdir=pathname, file_ext=".yaml", keepExt=True):
                 added_data = added_data + self.factory_loader(file)
-            return
-        # Specific File
+            return added_data
+        # Load a Specific File
         if (not ut.safeFileExist(pathname)):
-            self.raise_error("File not found : "  + pathname)
+            raise AepCtlError("File not found : "  + pathname)
         if (ut.get_extension(pathname).lower() not in [".json", ".yaml"]):
-            return self.raise_error("Cannot Load File (only json or yaml files) : " + pathname)
+            raise AepCtlError("Cannot Load File (only json or yaml files) : " + pathname)
         data = ut.loadFileData(pathname)
         if (not data):
             # Invalid json or yaml
-            self.raise_error("Invalid json or yaml Content : "  + pathname)
-        logger.info("Loading : " + ut.to_json(data))
-        if ("entity" in data) :
-            # Single Entry to store
+            raise AepCtlError("Invalid json or yaml Content : "  + pathname)
+        logger.debug("Loading : " + ut.to_json(data))
+        # What's in the File ?
+        if ("entity" in data) :  # This is the Entity Type
+            # Single Entry of this type to store
             if ("entry" in data):
                 rd = self.entry_loader(data["entry"], entity_type=data["entity"], dir_path=dir_path, only_entity=only_entity)
                 if (rd) : added_data.append(rd)
-            # All Entries to same store
+            # Multiples Entries of same type to store
             elif ("entries" in data):
                 for entry in data["entries"]:
                     rd = self.entry_loader(entry, entity_type=data["entity"], dir_path=dir_path, only_entity=only_entity)
                     if (rd): added_data.append(rd)
             else:
-                self.raise_error("No \"entries\" in data : "+str(pathname)+"\n" + ut.to_json(data))
+                raise AepCtlError("No \"entries\" in data : "+str(pathname)+"\n" + ut.to_json(data))
         elif ("entries" in data) :
-            # Multiples Entries to different stores
+            # Multiples Entries of different types to different stores
             for entry in data["entries"]:
                 rd = self.entry_loader(entry, dir_path=dir_path, only_entity=only_entity)
                 if (rd) : added_data.append(rd)
@@ -2470,17 +2847,19 @@ class FactoryLoader:
                 abs_file_path = dir_path + os.sep + include_file
                 files = glob.glob(abs_file_path)  # Supporting Dir patterns like *.json
                 for file in files:
-                    if (not ut.safeFileExist(file)):
-                        self.raise_error("File Not Found : " + file)
+                    if (not ut.safeFileExist(file)): raise AepCtlError("File Not Found : " + file)
                     logger.info("Including File : " + file)
                     added_data = added_data + self.factory_loader(file)
+        # No Data
         if (len(added_data) == 0):
-            self.raise_error("Invalid File Content (not entry found): " + pathname)
+            raise AepCtlError("Invalid File Content (no entry found): " + pathname)
+        # Data ))
         return added_data
 
 FileStoreCache = dict()
 RestStoreCache = dict()
 Wso2StoreCache = dict()
+TmfStoreCache  = dict()
 
 ###
 ### Data Stores
@@ -2501,7 +2880,7 @@ class StoreManager():
         self.stored    = None
         self.loadStores()
 
-    def loadStores(self, storefile : str = None) -> Union[dict,None]:
+    def loadStores(self, storefile : str = None) -> Union[dict, None]:
         global StoresCache, StoredDict
         if (not storefile) : storefile = self.storefile
         if (StoresCache):
@@ -2524,9 +2903,11 @@ class StoreManager():
 
     def getStore(self, name : str, file : Union[bool, str] = False, store_type : str = "") -> Union[DataStoreInterface, None]:
         if (isinstance(file, str)):
+            store_type = file
             file = True if (file.lower() in ["file", "fs", "filestore"]) else False
-        if (isinstance(file,str)):
-            name = name if (store_type.lower() not in ["ws","wso2"]) else "ws_"+name.lower()
+        if (isinstance(store_type, str)):
+            if not (name.lower().startswith("ws")) :
+                name = name if (store_type.lower() not in ["ws", "wso2"]) else "ws_"+name.lower()
         for store_key in self.stored :
             if (self.stored[store_key]["name"].lower()   == name.lower()): name = store_key
         if (name not in self.stored):
@@ -2535,9 +2916,11 @@ class StoreManager():
         if (name not in self.stored): return None
         store = self.stored[name]
         if (store_type == "") :
-            if (file): store_type = "file"
-            else :     store_type = "rest"
-        if (store_type.lower() not in ["file" , "rest" , "wso2", "fs" , "ds" , "ws"]):
+            if (not file): store_type = "rest"
+            else :
+                store_type = "file"
+                if (file.lower() in ["anme", "kite", "pagekite"]): store_type = "anme"
+        if (store_type.lower() not in ["file" , "rest" , "wso2", "fs" , "ds" , "ws", "anme", "kite"]):
             logger.error("getStore : invalid store type : "+str(store_type))
             return None
         if (store_type.lower() in ["file", "fs"]):
@@ -2546,10 +2929,18 @@ class StoreManager():
             filestore = FileDataStore(entity_type=store["entity"], name_att=store["name_att"], desc_att=store["desc_att"], service=store["service"], schema=store["schema"])
             FileStoreCache[store["entity"]] = filestore
             return filestore
-        elif (store_type.lower() in ["rest", "ds"]) :
-            if (store["entity"] in RestStoreCache) :
+        elif (store_type.lower() in ["anme", "kite", "rest", "ds"]):  # ["anme", "kite"]
+            if (store["entity"] in RestStoreCache):
                 return RestStoreCache[store["entity"]]
-            reststore = RestDataStore(entity_type=store["entity"], name_att=store["name_att"], desc_att=store["desc_att"], service=store["service"], schema=store["schema"])
+            reststore = AnmeDataStore(entity_type=store["entity"], name_att=store["name_att"],
+                                      desc_att=store["desc_att"], service=store["service"], schema=store["schema"])
+            RestStoreCache[store["entity"]] = reststore
+            return reststore
+        elif (store_type.lower() in ["rest", "ds"]):
+            if (store["entity"] in RestStoreCache):
+                return RestStoreCache[store["entity"]]
+            reststore = RestDataStore(entity_type=store["entity"], name_att=store["name_att"],
+                                      desc_att=store["desc_att"], service=store["service"], schema=store["schema"])
             RestStoreCache[store["entity"]] = reststore
             return reststore
         elif (store_type.lower() in ["wso2", "ws"]) :
@@ -2559,8 +2950,8 @@ class StoreManager():
             if (key in Wso2StoreCache) :
                 return Wso2StoreCache[key]
             elif (name.lower() in ["users",        "ws_users"]):        wso2store = Wso2UsersManager()
-            elif (name.lower() in ["categories",   "ws_categories"]):   wso2store = Wso2CategoryManager()
-            elif (name.lower() in ["policies",     "ws_policies"]):     wso2store = Wso2PolicyManager()
+            elif (name.lower() in ["categories",   "ws_categories"]):   wso2store = Wso2CategoriesManager()
+            elif (name.lower() in ["policies",     "ws_policies"]):     wso2store = Wso2PoliciesManager()
             elif (name.lower() in ["apis",         "ws_apis"]):         wso2store = Wso2ApisManager()
             elif (name.lower() in ["applications", "ws_applications"]): wso2store = Wso2ApplicationsManager()
             else:
@@ -2604,7 +2995,9 @@ class StoreManager():
         stores = StoreManager.check_stores(store_file)
         entity_list = list()
         for store in stores["stores"]:
-            if ((service.lower() in ["ws", "wso2"]) and (not store.lower().startswith("ws_"))):
+            if ((service.lower() in ["ws", "wso2"]) and (not store["service"].lower().startswith("wso2"))):
+                continue
+            if ((service.lower() not in ["ws", "wso2"]) and (store["service"].lower().startswith("wso2"))):
                 continue
             entity_list.append(store["entity"].lower() if lower else store["entity"])
         return entity_list
@@ -2626,42 +3019,58 @@ class StoreManager():
             raise Exception("File not found : " + store_file)                             # pragma: no cover
         stores    = ut.loadFileData(store_file)
         if (not stores):
-            logger.error("Invalid json or yaml content : "    + store_file)               # pragma: no cover
-            raise Exception("Invalid json or yaml content : " + store_file)               # pragma: no cover
+            raise AepCtlError("Invalid json or yaml content : " + store_file)             # pragma: no cover
         if (("stores" not in stores)):
-            logger.error("No \"stores\" in : " + store_file)                              # pragma: no cover
-            raise Exception("No \"stores\" in : " + store_file)                           # pragma: no cover
+            raise AepCtlError("No \"stores\" in : " + store_file)                         # pragma: no cover
         for store in stores["stores"]:
             StoreManager.check_store_file(entry=store, factory=False)
         return stores
 
     @staticmethod
     def check_store_file(entry: dict, factory : bool = False):
+        class Service(StrEnum):
+            FILE = "file"
+            REST = "rest"
+            WSO2 = "wso2"
+            TMF  = "tmf"
+            ANME = "anme"
+            CATALOG  = "catalog"
+            PROFILES = "userprofiles"
+
+        class Store(BaseModel):
+            name     : str
+            entity   : str
+            entity_schema: str | None = Field(alias="schema")
+            id_att   : str
+            name_att : str
+            desc_att : str | None = None
+            service  : Service
+
+        try :
+            pass
+            # store = Store(**entry)
+        except Exception as e:
+            raise e
+
         if (("service" not in entry)):
-            logger.error("No \"service\" in entry : " + json.dumps(entry, indent=2))      # pragma: no cover
-            raise Exception("No \"service\" in entry : " + json.dumps(entry, indent=2))   # pragma: no cover
-        if (entry["service"].lower() not in StoreManager.serviceList):
-            logger.error("Unknown \"service\" in entry : " + entry["service"])            # pragma: no cover
-            raise Exception("Unknown \"service\" in entry : " + entry["service"])         # pragma: no cover
+            raise AepCtlError("No \"service\" in entry : " + json.dumps(entry, indent=2))    # pragma: no cover
         if (("entity" not in entry)):
-            logger.error("No \"entity\" in entry : " + json.dumps(entry, indent=2))        # pragma: no cover
-            raise Exception("No \"entity\" in entry : " + json.dumps(entry, indent=2))     # pragma: no cover
+            raise AepCtlError("No \"entity\" in entry : " + json.dumps(entry, indent=2))     # pragma: no cover
         if (("name_att" not in entry)):
-            logger.error("No \"name_att\" in entry : " + json.dumps(entry, indent=2))      # pragma: no cover
-            raise Exception("No \"name_att\" in entry : " + json.dumps(entry, indent=2))   # pragma: no cover
-        if (("schema" not in entry)):
-            logger.error("No \"schema\" in entry : " + json.dumps(entry, indent=2))        # pragma: no cover
-            # raise Exception("No \"schema\" in entry : " + json.dumps(entry, indent=2))     # pragma: no cover
+            raise AepCtlError("No \"name_att\" in entry : " + json.dumps(entry, indent=2))   # pragma: no cover
         if (("desc_att" not in entry)):
-            logger.error("No \"desc_att\" in entry : " + json.dumps(entry, indent=2))      # pragma: no cover
-            raise Exception("No \"desc_att\" in entry : " + json.dumps(entry, indent=2))   # pragma: no cover
+            raise AepCtlError("No \"desc_att\" in entry : " + json.dumps(entry, indent=2))   # pragma: no cover
+        if (("schema" not in entry)):
+            logger.error("No \"schema\" in entry : " + json.dumps(entry, indent=2))          # pragma: no cover
+            # raise Exception("No \"schema\" in entry : " + json.dumps(entry, indent=2))     # pragma: no cover
+
+        if (entry["service"].lower() not in StoreManager.serviceList):
+            raise AepCtlError("Unknown \"service\" in entry : " + entry["service"])          # pragma: no cover
         if (factory):
             if (entry["entity"].lower() not in StoreManager.list_store_entities(lower=True)):
-                logger.error("Unknown \"entity\" in entry : " + entry["entity"])           # pragma: no cover
-                raise Exception("Unknown \"entity\" in entry : " + entry["entity"])        # pragma: no cover
+                raise AepCtlError("Unknown \"entity\" in entry : " + entry["entity"])        # pragma: no cover
             if (("entry" not in entry) and ("entries" not in entry)):
-                logger.error("No \"entry\" or \"entries\" in entry : " + json.dumps(entry, indent=2))     # pragma: no cover
-                raise Exception("No \"entry\" or \"entries\" in entry : " + json.dumps(entry, indent=2))  # pragma: no cover
+                raise AepCtlError("No \"entry\" or \"entries\" in entry : " + json.dumps(entry, indent=2))  # pragma: no cover
         return entry
 
     @staticmethod
@@ -2754,7 +3163,7 @@ class StoreManager():
         service  = re.sub(" .*$", "", str(entity))
         store = StoreManager().getStore(name=resource, store_type=service)
         if (not store) : return "No Store / Description"
-        return store.desc_by_idname(idName)
+        return store.descByIdname(idName)
 
     @staticmethod
     def get_identifier(entity: str, idName : str):
@@ -2763,7 +3172,7 @@ class StoreManager():
         file_service = True if (service.lower() == "fs") else False
         store = StoreManager().getStore(name=resource, file=file_service)
         if (not store) : return "No Store / Identifier"
-        return store.id_by_name(idName)
+        return store.idByName(idName)
 
     @staticmethod
     def get_name(entity: str, idName : str):
@@ -2772,7 +3181,18 @@ class StoreManager():
         file_service = True if (service.lower() == "fs") else False
         store = StoreManager().getStore(name=resource, file=file_service)
         if (not store) : return "No Store / Name"
-        return store.name_by_id(idName)
+        return store.nameById(idName)
+
+    @staticmethod
+    def get_ressources(service: str) -> list:
+        global STORES_FILE
+        store_file = STORES_FILE
+        stores = StoreManager.check_stores(store_file)
+        entity_list = list()
+        for store in stores["stores"]:
+            if (service.lower() == store["service"].lower()):
+                entity_list.append(store["entity"].replace("WS_", "").replace("ws_", ""))
+        return entity_list
 
     @staticmethod
     def store_back_up(service: str="file", resource : str="all", operation="unknown", directory : str = None):
@@ -2787,7 +3207,7 @@ class StoreManager():
         resources = list()
         if (resource == "all"):
             resources = StoreManager.list_store_entities(service=service)
-        elif (resource.lower() in StoreManager.list_store_entities(lower=True,service=service)):
+        elif (resource.lower() in StoreManager.list_store_entities(lower=True, service=service)):
             resources.append(resource)
         else:
             logger.error("Save : Unknown Resource : "+resource)
@@ -2809,7 +3229,7 @@ class StoreManager():
         resources = list()
         if (resource == "all"):
             resources = StoreManager.list_store_entities(service=service)
-        elif (resource.lower() in StoreManager.list_store_entities(lower=True,service=service)):
+        elif (resource.lower() in StoreManager.list_store_entities(lower=True, service=service)):
             resources.append(resource)
         else:
             logger.error("Delete : Unknown Resource : "+resource)
@@ -2817,7 +3237,7 @@ class StoreManager():
         all_data = dict()
         for res in resources :
             server = StoreManager().getStore(res, store_type=service)
-            all_data[res] = server.delete_all(backup=backup)
+            all_data[res] = server.deleteAll(backup=backup)
         sys_data = ut.get_sys()
         details = { "operation" : operation, "service" : service, "resources" : resources,
                     "timestamp" : ut.timestamp(), "configuration": ut.getCurrentConfiguration().getAsData(),
@@ -2837,12 +3257,13 @@ class StoreManager():
         logger.info("copy_store From : " + serviceFrom + " To : " + serviceTo)
         StoreManager.store_back_up(service=serviceTo, resource="all", operation=operation)
         data = StoreManager.store_back_up(service=serviceFrom, resource="all", operation=operation)
+        if (isinstance(data, str)) : data = ut.loadDataContent(data)
         if (not data):
             return None
         if (delete_all):
             StoreManager.store_delete(service=serviceTo, resource="all", operation=operation, backup=False)
         filename = data["filename"]
-        FactoryLoader(service=serviceTo).factory_loader(filename,backup=False,delete_all=False)
+        FactoryLoader(service=serviceTo).factory_loader(filename, backup=False, delete_all=False)
         return data
 
 
@@ -2851,17 +3272,28 @@ DATASTORE_SERVICE = ["AEP", "REST", "DS"]
 WSO2_SERVICE      = ["WSO2", "APIG", "WS", "APIM"]
 SERVICES          = LOCAL_SERVICE + DATASTORE_SERVICE + WSO2_SERVICE
 
-AEP_CATALOG_RESSOURCES = ["PROVIDERS", "ARTICLES", "CATEGORIES", "COLLECTIONS", "APIS", "API_BUNDLES"]
-AEP_SUBSCRIPTION_RESSOURCES = ["SUBSCRIPTIONS", "API_CONSUMERS"]
-AEP_APPLICATION_USER_PROFILES_RESSOURCES = ["ACCOUNTS", "SERVICES", "CONTACTS", "ROLES", "INDUSTRIES", "USECASES"]
-AEP_RESSOURCES = AEP_CATALOG_RESSOURCES + AEP_APPLICATION_USER_PROFILES_RESSOURCES + AEP_SUBSCRIPTION_RESSOURCES
+#                          Providers    Articles    Categories    Collections    APIs    ApiBundles    UsagePolicies
+AEP_CATALOG_RESSOURCES = ["PROVIDERS", "ARTICLES", "CATEGORIES", "COLLECTIONS", "APIS", "APIBUNDLES", "USAGEPOLICIES"]
+AEP_CATALOG_RESSOURCES = StoreManager().get_ressources("catalog")
+#                                            Accounts    Services    Contacts    Roles    Industries    UseCases    Subscriptions
+AEP_APPLICATION_USER_PROFILES_RESSOURCES = ["ACCOUNTS", "SERVICES", "CONTACTS", "ROLES", "INDUSTRIES", "USECASES", "SUBSCRIPTIONS"]
+AEP_APPLICATION_USER_PROFILES_RESSOURCES = StoreManager().get_ressources("userprofiles")
 
+AEP_RESSOURCES = AEP_CATALOG_RESSOURCES + AEP_APPLICATION_USER_PROFILES_RESSOURCES
+
+#                WS_Apis WS_Policies WS_Categories  ### to do: PRODUCTS
 APIM_RESSOURCES = ["APIS", "POLICIES", "CATEGORIES", "PRODUCTS"]
+#                WS_Applications  ### to do: SUBSCRIPTIONS
 DEVM_RESSOURCES = ["APPLICATIONS", "SUBSCRIPTIONS"]
+#                WS_Users WS_Settings
 ADM_RESSOURCES  = ["USERS", "SETTINGS"]
 WSO2_RESSOURCES = APIM_RESSOURCES + DEVM_RESSOURCES + ADM_RESSOURCES
+WSO2_RESSOURCES = StoreManager().get_ressources("wso2")
 
-AEPCTL_COMMANDS = ["HELP", "H", "CONFIG", "CFG", "C", "VERBOSE", "V", "DS", "FS", "WS", "EXIT", "UI", "U", "BROWSER", "BR"]
+AEPCTL_COMMANDS_DISPLAY   = [ "HELP",      "VERBOSE",      "DS", "FS", "WS", "EXIT", "UI",      "BROWSER",       "COMMANDS"        , "BATCH" ]
+AEPCTL_COMMANDS           = [ "HELP", "H", "VERBOSE", "V", "DS", "FS", "WS", "EXIT", "UI", "U", "BROWSER", "BR", "COMMANDS", "CMDS", "BATCH", "B"  ]
+AEPCTL_RESSOURCES_DISPLAY = [ "CONFIG"]
+AEPCTL_RESSOURCES         = [ "CONFIG", "CFG", "C" ]
 
 """
 
@@ -2873,7 +3305,7 @@ AEPCTL_COMMANDS = ["HELP", "H", "CONFIG", "CFG", "C", "VERBOSE", "V", "DS", "FS"
  is_user(self, userName: str):
  get_user_roles(self, userName: str):
 
-# Publisher Wso2ApiManager
+# Publisher Wso2Manager
 
  settings_get(self):
 
@@ -2903,7 +3335,7 @@ AEPCTL_COMMANDS = ["HELP", "H", "CONFIG", "CFG", "C", "VERBOSE", "V", "DS", "FS"
  product_create(self, api : str):
 
 
-# Dev  Wso2ApiDevManager
+# Dev  Wso2SubscriptionsManager
 
  settings_get(self):
 
@@ -2949,8 +3381,17 @@ class AepCtl:
         return error_text
 
     @staticmethod
+    def init() -> None:
+        global AEPCTL_Configuration
+        AEPCTL_Configuration = ut.init_Configuration(cfg_filename=AEPCTL_Configuration_FileName,  # Default File Name
+                                                     cmd_line_arg=CONFIG_FILE,  # Command Line Arg. FileName
+                                                     env_cfg_var="AEPCTL_CONFIGURATION",  # Env Var with the FileName
+                                                     default_cfg=def_AEPCTL_Configuration,  # Default Configuration
+                                                     tag="AEPCTL Configuration")
+
+    @staticmethod
     def help(resource: str, commands, options=None) -> str:
-        if ((resource == None) or(resource == "")):
+        if ((resource == None) or (resource == "")):
             resource_text = ""
             sep = ""
             for command in commands:
@@ -2993,6 +3434,22 @@ class AepCtl:
         logger.info(help_text)
         ut.Term.print_blue(help_text)
         return help_text
+
+    @staticmethod
+    def list_commands(commands : dict, prefix : str = "") -> str:
+        cmdlist = ""
+        if (isinstance(commands, NestedCompleter)):
+            commands = commands.options
+        for command in commands:
+            if (commands[command] == None):
+                cmdlist = cmdlist + "\n" + prefix + " " + command
+            if (isinstance(commands[command], dict)):
+                cmdlist = cmdlist + "" + AepCtl.list_commands(commands[command], prefix + " " + command)
+            if (isinstance(commands[command], NestedCompleter)):
+                cmdlist = cmdlist + "" + AepCtl.list_commands(commands[command], prefix + " " + command)
+            if (isinstance(commands[command], PathCompleter)):
+                cmdlist = cmdlist + "\n" + prefix + " " + command + " " + "<PathCompleter>"
+        return cmdlist
 
     @staticmethod
     def print(resource: str, data: Union[dict, str, list], idName: str = None) -> str:
@@ -3054,7 +3511,7 @@ class AepCtl:
             ut.Term.print_green(json_text)
             return json_text
             # ut.saveYamlFile(entry, idName)
-            # AepCtl.print(resource, "Yaml saved in : " + idName)
+            # AepCtl.print (resource, "Yaml saved in : " + idName)
             # return yaml_text
         return yaml_text
 
@@ -3073,7 +3530,7 @@ class AepCtl:
         console = Console()
         with open("aepctl.md", "r+") as help_file:
             text = Markdown(help_file.read())
-            console.print(text)
+            console.print(str(text.markup))
             return str(text.markup)
 
     @staticmethod
@@ -3083,11 +3540,35 @@ class AepCtl:
         return config
 
     @staticmethod
+    def edit_config() -> str:
+        config = str(ut.getCurrentConfiguration())
+        new_config = ut.ObjectReader.readSimpleObject(config)
+        ut.save_Configuration(None, new_config)
+        ut.Term.print_green(ut.to_json(new_config))
+        return new_config
+
+    @staticmethod
     def prompt_list_to_dict(elist: list, append: dict = None) -> dict:
-        ldc = append if (append) else dict()
+        ldc = copy.deepcopy(append) if (append) else dict()
         for elem in elist:
             ldc[elem.lower()] = None
         return ldc
+
+    @staticmethod
+    def batch(fileName):
+        if (not ut.safeFileExist(fileName)):
+            AepCtl.error("Batch - no such file : "+fileName)
+            return None
+        file  = open(fileName, 'r')
+        lines = file.readlines()
+        count = 0
+        for line in lines:
+            count += 1
+            line = line.strip()
+            if (line.startswith("#")) : continue
+            logger.info(str(count)+" - "+line)
+            AepCtl.main(line)
+        return None
 
     policy_type = {"application", "custom", "advanced", "deny-policies", "subscription", "mediation"}
 
@@ -3105,13 +3586,13 @@ class AepCtl:
             "get"     :  {"<id>", "<name/version>", "help"},
             "display" :  {"<id>", "<name/version>", "help"},
             "delete"  :  {"<id>", "<name/version>", "help"},
-          "lifecycle" :  { "created"    : { "<id>" , "<name/version>", "help"},
+            "lifecycle" : { "created"    : { "<id>" , "<name/version>", "help"},
                            "publish"    : { "<id>" , "<name/version>", "help"},
                            "prototyped" : { "<id>" , "<name/version>", "help"},
                            "deprecated" : { "<id>" , "<name/version>", "help"},
                            "blocked"    : { "<id>" , "<name/version>", "help"},
                            "retired"    : { "<id>" , "<name/version>", "help"}
-                           },
+                          },
             "details" :  {"<id>", "all", "help"},
             "backup"  :  None,
         },
@@ -3228,9 +3709,9 @@ class AepCtl:
         idName   = arguments["ID"]
         payload  = arguments["PAYLOAD"]
 
-        usrm = Wso2UsersManager()
-        apim = Wso2ApiManager()
-        devm = Wso2ApiDevManager()
+        usrMgr = Wso2UsersManager()
+        apiMgr = Wso2Manager()
+        devMgr = Wso2SubscriptionsManager()
 
         # All Help Levels
         if (command in ["HELP"]):  # <command>  help
@@ -3247,11 +3728,11 @@ class AepCtl:
             if (resource in ["HELP", "H", ""]):  # <browser>  help
                 return AepCtl.help("browser", AepCtl.wso2_commands)
             if (idName.upper() in ["URL"]):  # <resource> <command> help
-                res = wso2_browser(resource, open=False)
+                res = Wso2Manager.browser(resource, openURL=False)
             elif (idName.upper() in ["OPEN", "BROWSE"]):  # <resource> <command> help
-                res = wso2_browser(resource, open=True)
+                res = Wso2Manager.browser(resource, openURL=True)
             else:  # <resource> <command> help
-                res = wso2_browser(resource, open=True)
+                res = Wso2Manager.browser(resource, openURL=True)
             return AepCtl.print("BROWSER", res, idName)
 
         # Settings
@@ -3261,14 +3742,14 @@ class AepCtl:
                 return AepCtl.print(resource, settings_List)
             if (command in ["GET", "DISPLAY"]):  # settings get|display
                 if (idName.upper() in ["APIM", "PUBLISHER_PORTAL"]):
-                    entry = apim.settings_get()
-                    if (apim.isError()):  entry["error"] = apim.getError()
+                    entry = apiMgr.getSettings()
+                    if (apiMgr.isError()):  entry["error"] = apiMgr.getError()
                 elif (idName.upper() in ["ADMIN", "WSO2"]):
-                    entry = usrm.settings_get()
-                    if (usrm.isError()):  entry["error"] = usrm.getError()
+                    entry = usrMgr.settings_get()
+                    if (usrMgr.isError()):  entry["error"] = usrMgr.getError()
                 elif (idName.upper() in ["DEV", "DEVELOPER_PORTAL"]):
-                    entry = devm.settings_get()
-                    if (devm.isError()):  entry["error"] = devm.getError()
+                    entry = devMgr.settings_get()
+                    if (devMgr.isError()):  entry["error"] = devMgr.getError()
                 else:
                     return AepCtl.error(resource, command, "Unkown Settings : " + idName)
                 if (command == "GET"):  # settings get
@@ -3278,9 +3759,9 @@ class AepCtl:
             else:
                 return AepCtl.error(resource, command, "Unkown command : " + command)
 
-        # Publisher Wso2ApiManager
+        # Publisher Wso2Manager
         if (resource == "APIS"):
-            apim = StoreManager().getStore(name="ws_apis", store_type="ws")
+            apiMgr = StoreManager().getStore(name="ws_apis", store_type="ws")
             # api_list(self, names: bool = False, names_versions: bool = False, ids: bool = False, versions: bool = False):
             # api_get(self, api_id):
             # api_details(self, api_id):
@@ -3289,51 +3770,51 @@ class AepCtl:
             # api_publish(self, api_id):
             # api_delete(self, api_id: str = None, name: str = None, version: str = None):
             if (command in ["DETAILS", "BROWSE"]):  # apis details/browse id|all
-                details = apim.api_details(api_id=idName)
-                if (apim.isError()): return AepCtl.error(resource, command, apim.getError())
+                details = apiMgr.api_details(api_id=idName)
+                if (apiMgr.isError()): return AepCtl.error(resource, command, apiMgr.getError())
                 return AepCtl.print(resource, details)
             if (command == "OPENAPI"):  # apis swagger
-                swagger = apim.api_get_swagger(api_id=idName)
-                if (apim.isError()): return AepCtl.error(resource, command, apim.getError())
+                swagger = apiMgr.api_get_swagger(api_id=idName)
+                if (apiMgr.isError()): return AepCtl.error(resource, command, apiMgr.getError())
                 return AepCtl.print(resource, swagger)
             if (command == "THUMBNAIL"):  # apis thumbnail
-                thumbnail = apim.api_get_thumbnail(api_id=idName)
-                if (apim.isError()): return AepCtl.error(resource, command, apim.getError())
+                thumbnail = apiMgr.api_get_thumbnail(api_id=idName)
+                if (apiMgr.isError()): return AepCtl.error(resource, command, apiMgr.getError())
                 return AepCtl.print(resource, thumbnail)
             if (command == "LIFECYCLE"):  # apis lifecycle
                 state  = idName
                 idName = payload
-                res    = apim.api_lifecycle(idName,state)
-                if (apim.isError()): return AepCtl.error(resource, command, apim.getError())
+                res    = apiMgr.api_lifecycle(idName, state)
+                if (apiMgr.isError()): return AepCtl.error(resource, command, apiMgr.getError())
                 return AepCtl.print(resource, res)
-            return AepCtl.handle_ws02_generic_command(apim, arguments)
+            return AepCtl.handle_ws02_generic_command(apiMgr, arguments)
         if (resource == "POLICIES"):
-            polm = StoreManager().getStore(name="ws_policies", store_type="ws")
+            polMgr = StoreManager().getStore(name="ws_policies", store_type="ws")
             # "application", "custom", "advanced", "deny-policies", "subscription", "mediation"
             # policy_type(self, policy_type: str = "advanced"):
             # policy_list(self, policy_type: str = "advanced"):
             # policy_get(self, policy_id, policy_type: str = "advanced"):
             # policy_create(self, policy: str, policy_type: str = "advanced"):
             # policy_delete(self, policy_id, policy_type: str = "advanced"):
-            return AepCtl.handle_ws02_generic_command(polm, arguments)
+            return AepCtl.handle_ws02_generic_command(polMgr, arguments)
             if (command in ["LIST", "BROWSE"]):  # apis list
-                elist = polm.list()
-                if (apim.isError()):
-                    AepCtl.error(resource, command, polm.getError())
+                elist = polMgr.list()
+                if (apiMgr.isError()):
+                    AepCtl.error(resource, command, polMgr.getError())
                 elif (command == "LIST"):  # policies list
                     AepCtl.print(resource, elist)
                 elif (command == "BROWSE"):  # policies browse
                     AepCtl.browse(resource, elist)
                 return None
             if (command == "GET" or command == "DISPLAY"):  # policies get|display id|name
-                entry = polm.get(policy_id=idName)
+                entry = polMgr.get(policy_id=idName)
                 if (command == "GET"):  # policies display
                     AepCtl.print(resource, entry, idName)
                 elif (command == "DISPLAY"):  # policies display
                     AepCtl.display(resource, entry, idName)
                 return None
         if (resource == "CATEGORIES"):
-            catm = StoreManager().getStore(name="ws_categories", store_type="ws")
+            catMgr = StoreManager().getStore(name="ws_categories", store_type="ws")
             # category_get(self, category_id):
             # category_list(self, service="admin"):
             # category_create(self, category: str):
@@ -3346,9 +3827,9 @@ class AepCtl:
                     entry["name"]        = idName
                     entry["description"] = payload
                 if (not entry): return AepCtl.error(resource.lower(), command, "Invalid JSON or YAML Entry : " + str(entry))
-                entry = catm.save(entity=entry, backup=True)
+                entry = catMgr.save(entity=entry, backup=True)
                 return AepCtl.print(resource.lower(), entry)
-            return AepCtl.handle_ws02_generic_command(catm, arguments)
+            return AepCtl.handle_ws02_generic_command(catMgr, arguments)
 
         if (resource == "PRODUCTS"):
             # product_list(self):
@@ -3357,25 +3838,25 @@ class AepCtl:
             # product_delete(self, product_id):
             # product_create(self, api: str):
             if (command in ["LIST", "BROWSE"]):  # products list
-                elist = apim.product_list()
-                if (apim.isError()):
-                    AepCtl.error(resource, command, apim.getError())
+                elist = apiMgr.product_list()
+                if (apiMgr.isError()):
+                    AepCtl.error(resource, command, apiMgr.getError())
                 elif (command == "LIST"):  # products list
                     AepCtl.print(resource, elist)
                 elif (command == "BROWSE"):  # products browse
                     AepCtl.browse(resource, elist)
                 return None
             if (command == "GET" or command == "DISPLAY"):  # products get|display id|name
-                entry = apim.product_get(product_id=idName)
+                entry = apiMgr.product_get(product_id=idName)
                 if (command == "GET"):  # products display
                     AepCtl.print(resource, entry, idName)
                 elif (command == "DISPLAY"):  # products display
                     AepCtl.display(resource, entry, idName)
                 return None
 
-        # Dev Wso2ApiDevManager
+        # Dev Wso2SubscriptionsManager
         if (resource == "APPLICATIONS"):
-            appm = StoreManager().getStore(name="ws_applications", store_type="ws")
+            appMgr = StoreManager().getStore(name="ws_applications", store_type="ws")
             # application_create(self, application: str):
             # application_list(self, names: bool = True):
             # application_get(self, app_id):
@@ -3385,12 +3866,12 @@ class AepCtl:
             # application_get_keys(self, app_id: str = None, app_name: str = None):
             # application_generate_keys(self, app_id: str = None, app_name: str = None):
             if (command == "KEYS" ):  # products get|display id|name
-                keys = appm.application_get_keys(idName)
+                keys = appMgr.application_get_keys(idName)
                 AepCtl.print(resource, keys, idName)
             if (command == "GENKEYS" ):  # products get|display id|name
-                keys = appm.application_generate_keys(idName)
+                keys = appMgr.application_generate_keys(idName)
                 AepCtl.print(resource, keys, idName)
-            return AepCtl.handle_ws02_generic_command(appm, arguments)
+            return AepCtl.handle_ws02_generic_command(appMgr, arguments)
         if (resource == "SUBSCRIPTIONS"):
             # subscription_create(self, subscription: str):
             # subscription_list(self, applicationId: str = None, apiId: str = None):
@@ -3400,7 +3881,7 @@ class AepCtl:
             # subscription_id(self, app_id: str, api_id: str) -> str:
             # subscribe(self,  app_id: str = None, app_name: str = None, api_id: str = None, api_name: str = None, api_version: str = None, policy: str = "Unlimited"):
             # unsubscribe(self, app_id: str = None, app_name: str = None, api_id: str = None, api_name: str = None, api_version: str = None):
-            elist = devm.subscription_list()
+            elist = devMgr.subscription_list()
             ut.Term.print_green(json.dumps(elist, indent=2))
             return None
 
@@ -3432,9 +3913,9 @@ class AepCtl:
                     entry["name"] = payload
                     entry["role"] = idName
                 if (not entry): return AepCtl.error(resource.lower(), command, "Invalid JSON or YAML Entry : " + str(entry))
-                entry = usrm.save(entity=entry, backup=True)
+                entry = usrMgr.save(entity=entry, backup=True)
                 return AepCtl.print(resource.lower(), entry)
-            return AepCtl.handle_ws02_generic_command(usrm, arguments)
+            return AepCtl.handle_ws02_generic_command(usrMgr, arguments)
         if (resource.upper() in ["ROLES", "ROLE"]):  # users roles
             return AepCtl.print("roles", apiRoles)
 
@@ -3496,31 +3977,40 @@ class AepCtl:
     }
 
     @staticmethod
-    def get_aep_commands():
-        aep_ressources = AepCtl.prompt_list_to_dict(AEP_RESSOURCES)
-        for aep_ressource in aep_ressources:
-            aep_ressources[aep_ressource] = AepCtl.ds_commands
-        aep_ressources["help"]   = None
-        aep_ressources["stores"] = None
-        aep_ressources["load"] = {
+    def get_datastore_commands():
+        ds_ressources = AepCtl.prompt_list_to_dict(AEP_RESSOURCES)
+        for ds_ressource in ds_ressources:
+            ds_ressources[ds_ressource] = AepCtl.ds_commands
+        ds_ressources["help"]   = None
+        ds_ressources["stores"] = None
+        ds_ressources["load"] = {
             "delete_all" : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
             "merge"      : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
         }
-        return aep_ressources
+        return ds_ressources
+
+    @staticmethod
+    def get_aep_commands():
+        dcmd = AepCtl.prompt_list_to_dict(AEPCTL_COMMANDS_DISPLAY)
+        dcmd["config"] = {"edit": None, "set": {"<param> <value>": None}, "get": {"<param>": None}}
+        dcmd["batch"] = PathCompleter(expanduser=True)
+        return dcmd
 
     FS_COMMANDS = ["LOAD", "SAVE", "IMPORT", "EXPORT", "BACKUP", "RESTORE", "DELETE_ALL", "PROVISION_WS"]
 
-    def get_aep_completer(for_service : str = "ds"):  # pragma: no cover
+    @staticmethod
+    def get_aep_completer(for_service : str = "all"):  # pragma: no cover
         dcmd = dict()
-        if (for_service.lower() == "fs") : dcmd = AepCtl.get_aep_commands()
-        if (for_service.lower() == "ds") : dcmd = AepCtl.get_aep_commands()
-        if (for_service.lower() == "ws") : dcmd = copy.deepcopy(AepCtl.wso2_commands)
-        dcmd = AepCtl.prompt_list_to_dict(AEPCTL_COMMANDS, dcmd)
-        dcmd["ws"] = copy.deepcopy(AepCtl.wso2_commands)
-        dcmd["fs"] = AepCtl.get_aep_commands()
-        dcmd["ds"] = AepCtl.get_aep_commands()
-        compl =  NestedCompleter.from_nested_dict(dcmd)
-        return  compl
+        if (for_service.lower() == "fs")  : dcmd = AepCtl.get_datastore_commands()
+        if (for_service.lower() == "ds")  : dcmd = AepCtl.get_datastore_commands()
+        if (for_service.lower() == "ws")  : dcmd = copy.deepcopy(AepCtl.wso2_commands)
+        if (for_service.lower() == "aep") : dcmd = AepCtl.get_aep_commands()
+        if (for_service.lower() == "all") :
+            dcmd = AepCtl.get_aep_commands()
+            dcmd["ws"] = copy.deepcopy(AepCtl.wso2_commands)
+            dcmd["fs"] = AepCtl.get_datastore_commands()
+            dcmd["ds"] = AepCtl.get_datastore_commands()
+        return NestedCompleter.from_nested_dict(dcmd)
 
     @staticmethod
     def handle_datastore_command(arguments):
@@ -3535,13 +4025,13 @@ class AepCtl:
         service  = "file" if (service in LOCAL_SERVICE) else "rest"
 
         if (command in ["HELP"]):  # <resource>  help
-            return AepCtl.help(resource, AepCtl.get_aep_commands())
+            return AepCtl.help(resource, AepCtl.get_datastore_commands())
         if (resource in ["HELP"]):  # <command> help
-            return AepCtl.help(resource, AepCtl.get_aep_commands())
+            return AepCtl.help(resource, AepCtl.get_datastore_commands())
         if (resource == "STORES"):
             return AepCtl.print(resource, str(StoreManager.list_store_entities()))
         if ((command == "") and (resource == "")):
-            return AepCtl.error(resource, command, "No command nor resource specified.", AepCtl.help(resource, AepCtl.get_aep_commands()))
+            return AepCtl.error(resource, command, "No command nor resource specified.", AepCtl.help(resource, AepCtl.get_datastore_commands()))
         store = None
         if (resource != "all"):
             try:
@@ -3589,7 +4079,7 @@ class AepCtl:
             if (command == "DISPLAY"):  return AepCtl.display(resource, entry, idName)
         elif (command in ["DELETE"]):
             if (idName.upper() == "ALL") :
-                entries = store.delete_all()
+                entries = store.deleteAll()
                 if (store.error()): return AepCtl.error(resource, command, store.error())
                 return AepCtl.print(resource, entries)
             else:
@@ -3618,7 +4108,7 @@ class AepCtl:
             if (not isinstance(payload, dict)):
                 return AepCtl.error(resource, command, "Cannot JSON/YAML Decode : " + filename)
             logger.info("Entry : \n" + json.dumps(payload, indent=2))
-            if ((store.id_att in payload) and(store.exist(payload[store.id_att]))):
+            if ((store.id_att in payload) and (store.exist(payload[store.id_att]))):
                 command = "UPDATE"
             else:
                 command = "CREATE"
@@ -3670,8 +4160,8 @@ class AepCtl:
             res = StoreManager.copy_store(serviceFrom=payload, serviceTo=service, operation="Import " + payload)
             return AepCtl.print(resource, res)
         elif (command in ["PROVISION"]):
-            if (resource.upper() not in ["APIS", "CATEGORIES", "SERVICES", "CONTACTS"]):
-                return AepCtl.error(resource, command, "Invalid Resource to Provision : "+resource, AepCtl.help(resource, AepCtl.get_aep_commands()))
+            if (resource.upper() not in ["APIS", "CATEGORIES", "SERVICES", "CONTACTS", "USECASES", "SUBSCRIPTIONS", "USAGEPOLICIES"]):
+                return AepCtl.error(resource, command, "Invalid Resource to Provision : " + resource, AepCtl.help(resource, AepCtl.get_datastore_commands()))
             wsp = Wso2Provisioning()
             logger.info("Provisioning " + resource + " : " + str(idName))
             if (resource.upper() == "APIS"):
@@ -3686,8 +4176,14 @@ class AepCtl:
             if (resource.upper() == "CONTACTS"):
                 res = wsp.provisionContact(idName, dataStore=service)
                 return AepCtl.print(resource, res)
+            if (resource.upper() in ["USECASES", "SUBSCRIPTIONS" ]):
+                res = wsp.subscribeServiceToApi(idName, dataStore=service)
+                return AepCtl.print(resource, res)
+            if (resource.upper() in ["POLICIES", "USAGEPOLICIES"]):
+                res = wsp.provisionPolicy(idName, dataStore=service)
+                return AepCtl.print(resource, res)
         else:
-            return AepCtl.error(resource, command, "Invalid Command.", AepCtl.help(resource, AepCtl.get_aep_commands()))
+            return AepCtl.error(resource, command, "Invalid Command.", AepCtl.help(resource, AepCtl.get_datastore_commands()))
         return None
 
     @staticmethod
@@ -3700,12 +4196,13 @@ class AepCtl:
         entry    = arguments["PAYLOAD"]           if (("PAYLOAD" in arguments)   and (arguments["PAYLOAD"]))   else idName
         entry    = re.sub("\\\"", '"', entry)
         arguments["PAYLOAD"] = entry
-        if ((resource.upper() in AEPCTL_COMMANDS) or
-            (command.upper()  in AEP_RESSOURCES) or
-            (command.upper()  in WSO2_RESSOURCES)):
+        if (    (resource.upper() in AEPCTL_COMMANDS) or
+                (command.upper()  in AEP_RESSOURCES) or
+                (command.upper()  in WSO2_RESSOURCES)):
             tmp_res  = command
             command  = resource.upper()
             resource = tmp_res.upper()
+            logger.info("Swapped Resource=" + str(resource) + " Command=" + str(command))
         resource = resource.strip()
         command  = command.strip()
 
@@ -3731,21 +4228,30 @@ class AepCtl:
         logger.info("IDNAME    = " + str(idName))
         logger.info("PAYLOAD   = " + str(entry))
 
-        """
-        if (arguments["VERBOSE"]):
-            ut.Verbose.set_verbose(True)
-        else:
-            ut.Verbose.set_verbose(False)
-        """
-
-        if (command.upper() in ["CONFIG", "CFG", "C"]):
-            return AepCtl.display_config()
-        elif((command.upper() in ["HELP", "H"]) and (resource.upper() =="")):
-                return AepCtl.display_help()
+        if (resource.upper() in ["CONFIG", "CFG", "C"]):
+            if (command.upper() in [""]):
+                return AepCtl.display_config()
+            elif (command.upper() in ["SET"]):
+                return ut.set_Configuration(None, p_key=idName, p_value=entry)
+            elif (command.upper() in ["GET", "PARAM"]):
+                return ut.get_Configuration(None, p_key=idName)
+            elif (command.upper() in ["EDIT", "CFG", "C"]):
+                return AepCtl.edit_config()
+            else:
+                return AepCtl.edit_config()
+        elif((command.upper() in ["HELP", "H"]) and (resource.upper() == "")):
+            return AepCtl.display_help()
+        elif (command.upper() in ["COMMANDS", "COMMAND", "CMD", "CMDS"]):
+            cmdlist = AepCtl.list_commands(AepCtl.get_aep_completer((service if (resource == "") else resource).upper()))
+            ut.Term.print_blue(cmdlist)
+            return cmdlist
         elif (command.upper() in ["VERBOSE", "V"]):
             return ut.Verbose.swap_verbose()
         elif (command.upper() in ["UI", "U"]):
             return Thread(target=AepCtl.aepctlui).start()
+        elif (command.upper() in ["BATCH", "B"]):
+            return AepCtl.batch(resource)
+
         elif (service.upper() in WSO2_SERVICE):
             return AepCtl.handle_ws02_command(arguments)
         elif (service.upper() in LOCAL_SERVICE):
@@ -3754,248 +4260,266 @@ class AepCtl:
             return AepCtl.handle_datastore_command(arguments)
         elif (resource.upper() in AEP_RESSOURCES):
             return AepCtl.handle_datastore_command(arguments)
+        elif (resource.upper() in WSO2_RESSOURCES):
             return AepCtl.handle_ws02_command(arguments)
         else:
             ut.Term.print_red("Unknown Command or Resource : " + command + " " + resource)
-            ut.Term.print_green(read_command_line_args(None, p_usage=True))
+            ut.Term.print_green(AepCtl.read_command_line_args(None, p_usage=True))
             return None
 
+    ###
+    ### Prompt Completion
+    ###
 
-###
-### Prompt Completion
-###
-
-
-def interactive_prompt():  # pragma: no cover
-    ut.Verbose.set_verbose(False, silent=True)
-    current_context = "ds"
-    try:
-        history = FileHistory(filename=AEPCTL_HOME_DIR + os.sep + "history")
-        session = PromptSession(history=history)
-    except Exception as e:
-        # No proper terminal support
-        print(str(e))
-        session = None
-    command = ""
-    ctrl_c  = False
-    while command != "exit":
-        if (session):
-            if (current_context == "fs"): text = AEPCTL_PROMPT + colored("fs", "red") + " > "  # Not compatible with prompt ?
-            if (current_context == "fs"): text = HTML(AEPCTL_PROMPT + " <IndianRed>"      + current_context + "</IndianRed>" + " > ")
-            if (current_context == "ds"): text = HTML(AEPCTL_PROMPT + " <MediumSeaGreen>" + current_context + "</MediumSeaGreen>" + " > ")
-            if (current_context == "ws"): text = HTML(AEPCTL_PROMPT + " <DeepSkyBlue>"    + current_context + "</DeepSkyBlue>" + " > ")
-            try:
-                command = session.prompt(text, completer=AepCtl.get_aep_completer(current_context), complete_while_typing=True)
-                ctrl_c  = False
-            except KeyboardInterrupt :   # Capture CTRL-C Reset Line
-                if (ctrl_c) : return     # Double CTRL-C Exit
-                ctrl_c = True
-                continue
-        else:
-            if (current_context == "fs"): text = AEPCTL_PROMPT + colored(current_context, "red")   + " > "  # Not compatible with prompt ?
-            if (current_context == "ds"): text = AEPCTL_PROMPT + colored(current_context, "green") + " > "  # Not compatible with prompt ?
-            if (current_context == "ws"): text = AEPCTL_PROMPT + colored(current_context, "blue")  + " > "  # Not compatible with prompt ?
-            command = input(AEPCTL_PROMPT + " " + current_context + " > ")
-        logger.info("Prompt command : " + command)
-        command = command.strip()
-        if (command in ["", " "]):
-            continue
-        if (command.upper() in ["EXIT", "X", "QUIT", "Q", "BYE", "B"]):
-            return None
-        if (command.upper() in ["VERBOSE", "V", "DEBUG", "D"]):
-            ut.Verbose.swap_verbose()
-            continue
-        if (command.upper() == "DS"):
-            ut.Term.print_green("On Remote Rest DataStore")
-            current_context = "ds"
-            continue
-        if (command.upper() == "FS"):
-            ut.Term.print_red("On Local File DataStore")
-            current_context = "fs"
-            continue
-        if (command.upper() == "WS"):
-            ut.Term.print_blue("On WSO2 API Manager")
-            current_context = "ws"
-            continue
-        command = current_context + " " + command
-        res = main(command, interactive=True)
-        logger.debug(res)
-        # print(str(res))
-
-
-###
-### Main
-###
-
-
-def read_command_line_args(argv, p_usage : bool = False) -> Union[str, dict, None]:
-    global CONFIG_FILE
-
-    usage = """
-Usage: -h -v -i -c <ConfigurationFile.json> [<service>] [<resource>] [<command>] [<identifier>] [<payload>] -p <PayloadFile.json>
-       -h --help        : Usage help 
-       -u --ui          : User Interface     
-       -v --verbose     : Verbose     
-       -c --cfile <ConfigurationFile.json> : Use Configuration File 
-       -s --service     : Service      
-       -c --command     : Command 
-       -f --filestore   : local filestore  service (default is rest datastore service)     
-       -w --apim --wso2 : wso2 api manager service (default is rest datastore service)     
-       -p --payload     : Payload     
-Services  : """ + str(SERVICES) + """   
-Resources :
-  - AEP   : """ + str(AEP_RESSOURCES) + """ 
-  - APIM  : """ + str(WSO2_RESSOURCES) + """ 
-Commands  : """ + str(AEPCTL_COMMANDS) + """  
-Payload   : <JSON>, JSON_FileName, YAML_FileName  
-"""
-
-    if (p_usage) :
-        return usage
-
-    if isinstance(argv, str):
-        argv = argv.split()
-
-    # logger.info("Command Line Arguments : " + str(argv))
-
-    cl_args = dict()
-    cl_args["RESSOURCE"]      = None
-    cl_args["COMMAND"]        = None
-    cl_args["ID"]             = None
-    cl_args["PAYLOAD"]        = None
-    cl_args["SERVICE"]        = None
-    cl_args["CONFIG_FILE"]    = None
-    cl_args["VERBOSE"]        = False
-
-    try:
-        opts, args = getopt.getopt(argv, "huvdc:p:s:fw", ["help", "verbose", "ui", "debug",  "config=", "payload=", "service=", "filestore", "wso2"])
-    except getopt.GetoptError as e:
-        ut.Term.print_yellow("Command Line Arguments : " + str(argv))
-        ut.Term.print_red("GetoptError : " + str(e))
-        ut.Term.print_blue(usage)
-        return None
-    for opt, arg in opts:
-        if opt.lower() in ("-h", "--help"):
-            ut.Term.print_blue(usage)
-            return None
-        elif opt.lower() in ("-c", "--cfile", "--config"):
-            CONFIG_FILE = arg
-            cl_args["CONFIG_FILE"] = CONFIG_FILE
-            if (not ut.safeFileExist(CONFIG_FILE)):
-                ut.Term.print_red("File not found : " + CONFIG_FILE)
-                ut.Term.print_blue(usage)
-                return None
-            continue
-        elif opt.lower() in ("-u", "--ui"):
-            aepctlui.MainGUI().run()
-            return None
-        elif opt.lower() in ("-p", "--payload", "--entry"):
-            filename = arg
-            if (not ut.safeFileExist(filename)):
-                ut.Term.print_red("File not found : " + filename)
-                ut.Term.print_blue(usage)
-                return None
-            PAYLOAD = ut.loadFileContent(filename)
-            if (not PAYLOAD):
-                ut.Term.print_red("Cannot JSON Decode : " + PAYLOAD)
-                ut.Term.print_blue(usage)
-                return None
-            cl_args["PAYLOAD"] = PAYLOAD
-            continue
-        elif opt.lower() in ("-f", "-fs", "--filestore"):
-            cl_args["SERVICE"] = "fs"
-            ut.Term.setVerbose(True)
-            continue
-        elif opt.lower() in ("-w", "-ws", "-wso2", "-apim"):
-            cl_args["SERVICE"] = "ws"
-            ut.Term.setVerbose(True)
-            continue
-        elif opt.lower() in ("-s", "-service", "-svc"):
-            service = arg
-            if (service.upper() not in SERVICES):
-                ut.Term.print_red  ("Invalid Service : " + str(service))
-                ut.Term.print_green("Known Services  : " + str(SERVICES))
-                ut.Term.print_blue(usage)
-                return None
-            cl_args["SERVICE"] = service.upper()
-            continue
-        elif opt.lower() in ("-c", "-command", "-cmd"):
-            command = arg
-            if (command.upper() not in AEPCTL_COMMANDS):
-                ut.Term.print_red("Invalid Command : "   + str(service))
-                ut.Term.print_green("Known Commands  : " + str(AEPCTL_COMMANDS))
-                ut.Term.print_blue(usage)
-                return None
-            cl_args["COMMAND"] = command.upper()
-            continue
-        elif opt.lower() in ("-v", "-verbose"):
-            cl_args["VERBOSE"] = True
-            ut.Term.setVerbose(True)
-            continue
-        else :
-            ut.Term.print_red("Invalid Command Line Option : " + opt)
-            ut.Term.print_blue(usage)
-            return None
-    for arg in args :
-        if   (arg.upper() in SERVICES)  :
-            if (not cl_args["SERVICE"]):
-                cl_args["SERVICE"] = arg
+    @staticmethod
+    def interactive_prompt():  # pragma: no cover
+        ut.Verbose.set_verbose(False, silent=True)
+        current_context = "ds"
+        try:
+            history = FileHistory(filename=AEPCTL_HOME_DIR + os.sep + "history")
+            session = PromptSession(history=history)
+        except Exception as e:
+            # No proper terminal support
+            print(str(e))
+            session = None
+        command = ""
+        ctrl_c  = False
+        while command != "exit":
+            if (session):
+                if (current_context == "fs"): text = AEPCTL_PROMPT + colored("fs", "red") + " > "  # Not compatible with prompt ?
+                if (current_context == "fs"): text = HTML(AEPCTL_PROMPT + " <IndianRed>"      + current_context + "</IndianRed>" + " > ")
+                if (current_context == "ds"): text = HTML(AEPCTL_PROMPT + " <MediumSeaGreen>" + current_context + "</MediumSeaGreen>" + " > ")
+                if (current_context == "ws"): text = HTML(AEPCTL_PROMPT + " <DeepSkyBlue>"    + current_context + "</DeepSkyBlue>" + " > ")
+                try:
+                    command = session.prompt(text, completer=AepCtl.get_aep_completer(current_context), complete_while_typing=True)
+                    ctrl_c  = False
+                except KeyboardInterrupt :   # Capture CTRL-C Reset Line
+                    if (ctrl_c) : return     # Double CTRL-C Exit
+                    ctrl_c = True
+                    continue
             else:
-                cl_args["ID"] = arg
+                if (current_context == "fs"): text = AEPCTL_PROMPT + colored(current_context, "red")   + " > "  # Not compatible with prompt ?
+                if (current_context == "ds"): text = AEPCTL_PROMPT + colored(current_context, "green") + " > "  # Not compatible with prompt ?
+                if (current_context == "ws"): text = AEPCTL_PROMPT + colored(current_context, "blue")  + " > "  # Not compatible with prompt ?
+                command = input(AEPCTL_PROMPT + " " + current_context + " > ")
+            logger.info("Prompt command : " + command)
+            command = command.strip()
+            if (command in ["", " "]):
+                continue
+            if (command.upper() in ["EXIT", "X", "QUIT", "Q", "BYE", "B"]):
+                return None
+            if (command.upper() in ["VERBOSE", "V", "DEBUG", "D"]):
+                ut.Verbose.swap_verbose()
+                continue
+            if (command.upper() == "DS"):
+                ut.Term.print_green("On Remote Rest DataStore")
+                current_context = "ds"
+                continue
+            if (command.upper() == "FS"):
+                ut.Term.print_red("On Local File DataStore")
+                current_context = "fs"
+                continue
+            if (command.upper() == "WS"):
+                ut.Term.print_blue("On WSO2 API Manager")
+                current_context = "ws"
+                continue
+            command = current_context + " " + command
+            res = AepCtl.main(command, interactive=True)
+            logger.debug(res)
+            # print(str(res))
+
+
+    ###
+    ### Main
+    ###
+
+    @staticmethod
+    def read_command_line_args(argv, p_usage : bool = False) -> Union[str, dict, None]:
+        global CONFIG_FILE
+
+        usage = """
+    Usage: -h -v -u -c <ConfigurationFile.json> [<service>] [<resource>] [<command>] [<identifier>] [<payload>] [-p <PayloadFile.json>] 
+           -h --help        : Usage help 
+           -v --verbose     : Verbose     
+           -u --ui          : User Interface     
+           -c --cfile <ConfigurationFile.json> : Use Configuration File 
+           -s --service     : Service      
+           -c --command     : Command 
+           -f --filestore   : local filestore  service (default is rest datastore service)     
+           -w --apim --wso2 : wso2 api manager service (default is rest datastore service)     
+           -p --payload     : Payload     
+    Services  : """ + str(SERVICES) + """   
+    Resources :
+      - AEP   : """ + str(AEP_RESSOURCES) + """ 
+      - APIM  : """ + str(WSO2_RESSOURCES) + """ 
+    Commands  : """ + str(AEPCTL_COMMANDS_DISPLAY) + """  
+    Payload   : <JSON>, JSON_FileName, YAML_FileName  
+    """
+
+        if (p_usage) :
+            return usage
+
+        if isinstance(argv, str):
+            argv = argv.split()
+
+        # logger.info("Command Line Arguments : " + str(argv))
+
+        cl_args = dict()
+        cl_args["RESSOURCE"]      = None
+        cl_args["COMMAND"]        = None
+        cl_args["ID"]             = None
+        cl_args["PAYLOAD"]        = None
+        cl_args["SERVICE"]        = None
+        cl_args["CONFIG_FILE"]    = None
+        cl_args["VERBOSE"]        = False
+
+        try:
+            opts, args = getopt.getopt(argv, "hvuc:p:s:fw", ["help", "verbose", "ui", "debug",  "config=", "payload=", "service=", "filestore", "wso2"])
+        except getopt.GetoptError as e:
+            ut.Term.print_yellow("Command Line Arguments : " + str(argv))
+            ut.Term.print_red("GetoptError : " + str(e))
+            ut.Term.print_blue(usage)
+            return None
+        for opt, arg in opts:
+            if opt.lower() in ("-h", "--help"):
+                ut.Term.print_blue(usage)
+                return None
+            elif opt.lower() in ("-v", "-verbose"):
+                cl_args["VERBOSE"] = True
+                ut.Term.setVerbose(True)
+                continue
+            elif opt.lower() in ("-u", "--ui"):
+                aepctlui.MainGUI().run()
+                return None
+            elif opt.lower() in ("-c", "--cfile", "--config"):
+                CONFIG_FILE = arg
+                cl_args["CONFIG_FILE"] = CONFIG_FILE
+                if (not ut.safeFileExist(CONFIG_FILE)):
+                    ut.Term.print_red("File not found : " + CONFIG_FILE)
+                    ut.Term.print_blue(usage)
+                    return None
+                continue
+            elif opt.lower() in ("-p", "--payload", "--entry"):
+                filename = arg
+                if (not ut.safeFileExist(filename)):
+                    ut.Term.print_red("File not found : " + filename)
+                    ut.Term.print_blue(usage)
+                    return None
+                PAYLOAD = ut.loadFileContent(filename)
+                if (not PAYLOAD):
+                    ut.Term.print_red("Cannot JSON Decode : " + PAYLOAD)
+                    ut.Term.print_blue(usage)
+                    return None
+                cl_args["PAYLOAD"] = PAYLOAD
+                continue
+            elif opt.lower() in ("-f", "-fs", "--filestore"):
+                cl_args["SERVICE"] = "fs"
+                ut.Term.setVerbose(True)
+                continue
+            elif opt.lower() in ("-w", "-ws", "-wso2", "-apim"):
+                cl_args["SERVICE"] = "ws"
+                ut.Term.setVerbose(True)
+                continue
+            elif opt.lower() in ("-s", "-service", "-svc"):
+                service = arg
+                if (service.upper() not in SERVICES):
+                    ut.Term.print_red  ("Invalid Service : " + str(service))
+                    ut.Term.print_green("Known Services  : " + str(SERVICES))
+                    ut.Term.print_blue(usage)
+                    return None
+                cl_args["SERVICE"] = service.upper()
+                continue
+            elif opt.lower() in ("-c", "-command", "-cmd"):
+                command = arg
+                if (command.upper() not in AEPCTL_COMMANDS):
+                    ut.Term.print_red("Invalid Command : "   + str(service))
+                    ut.Term.print_green("Known Commands  : " + str(AEPCTL_COMMANDS))
+                    ut.Term.print_blue(usage)
+                    return None
+                cl_args["COMMAND"] = command.upper()
+                continue
+            else :
+                ut.Term.print_red("Invalid Command Line Option : " + opt)
+                ut.Term.print_blue(usage)
+                return None
+        for arg in args :
+            if   (arg.upper() in SERVICES)  :
+                if (not cl_args["SERVICE"]):
+                    cl_args["SERVICE"] = arg
+                else:
+                    cl_args["ID"] = arg
+                continue
+            if   (not cl_args["RESSOURCE"]) : cl_args["RESSOURCE"] = arg
+            elif (not cl_args["COMMAND"])   : cl_args["COMMAND"]   = arg
+            elif (not cl_args["ID"])        : cl_args["ID"]        = arg
+            elif (not cl_args["PAYLOAD"])   : cl_args["PAYLOAD"]   = arg
+            else : cl_args["PAYLOAD"] = cl_args["PAYLOAD"] + " " + arg
             continue
-        if   (not cl_args["RESSOURCE"]) : cl_args["RESSOURCE"] = arg
-        elif (not cl_args["COMMAND"])   : cl_args["COMMAND"]   = arg
-        elif (not cl_args["ID"])        : cl_args["ID"]        = arg
-        elif (not cl_args["PAYLOAD"])   : cl_args["PAYLOAD"]   = arg
-        else : cl_args["PAYLOAD"] = cl_args["PAYLOAD"] + " " + arg
-        continue
-    if (not cl_args["SERVICE"]): cl_args["SERVICE"] = "ds"
-    # logger.info("Command Line Args : \n" + json.dumps(cl_args, indent=3))
-    return cl_args
+        if (not cl_args["SERVICE"]): cl_args["SERVICE"] = "ds"
+        # logger.info("Command Line Args : \n" + json.dumps(cl_args, indent=3))
+        return cl_args
 
-def main(argv, interactive : bool = False):
-    global AEPCTL_Configuration
+    @staticmethod
+    def set_aepctl_dirs(P_AEPCTL_ROOT_DIR: str, P_AEPCTL_WORK_DIR: str):
+        global CONFIG_DIRECTORY, TMP_DIRECTORY, DATA_DIRECTORY, TEST_DIRECTORY
+        global LOGS_DIRECTORY, SCRIPTS_DIRECTORY, BACKUP_DIRECTORY, STORE_DIRECTORY
+        global STORES_FILE, CONFIG_FILE
+        if (not P_AEPCTL_ROOT_DIR): P_AEPCTL_ROOT_DIR = AEPCTL_ROOT_DIR
+        if (not P_AEPCTL_WORK_DIR): P_AEPCTL_WORK_DIR = AEPCTL_WORK_DIR
+        CONFIG_DIRECTORY  = P_AEPCTL_ROOT_DIR + os.sep + "etc"
+        DATA_DIRECTORY    = P_AEPCTL_ROOT_DIR + os.sep + "data"
+        TMP_DIRECTORY     = P_AEPCTL_ROOT_DIR + os.sep + "tmp"
+        TEST_DIRECTORY    = P_AEPCTL_ROOT_DIR + os.sep + "tests"
+        LOGS_DIRECTORY    = P_AEPCTL_ROOT_DIR + os.sep + "logs"
+        SCRIPTS_DIRECTORY = P_AEPCTL_ROOT_DIR + os.sep + "scripts"
+        BACKUP_DIRECTORY  = P_AEPCTL_ROOT_DIR + os.sep + "backup"
+        STORE_DIRECTORY   = P_AEPCTL_WORK_DIR + os.sep + "store"
+        STORES_FILE       = P_AEPCTL_ROOT_DIR + os.sep + "etc" + os.sep + "stores.json"
 
-    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+    @staticmethod
+    def main(argv, interactive : bool = False):
+        global AEPCTL_Configuration
 
-    args = read_command_line_args(argv)
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-    if (args == None):
-        return None
+        args = AepCtl.read_command_line_args(argv)
 
-    if (not interactive):
-        ut.Verbose.set_verbose(p_verbose=args["VERBOSE"], silent=True)
-    else:
-        ut.Verbose.init_verbose(False)
+        if (args == None):
+            return None
 
-    logger.info("Command Line Arguments : " + str(argv))
-    logger.info("Command Line Args : \n" + json.dumps(args, indent=3))
+        if (not interactive):
+            ut.Verbose.set_verbose(p_verbose=args["VERBOSE"], silent=True)
+        else:
+            ut.Verbose.init_verbose(False)
 
-    AEPCTL_Configuration = ut.init_Configuration(cfg_filename=AEPCTL_Configuration_FileName,  # Default Config FileName
-                                                 cmd_line_arg=CONFIG_FILE,  # Command Line Arg. Config FileName
-                                                 env_cfg_var="AEPCTL_CONFIGURATION",  # Env Var with the Config FileName
-                                                 default_cfg=def_AEPCTL_Configuration,  # Default Configuration
-                                                 tag="AEPCTL Configuration")
+        logger.info("Command Line Arguments : " + str(argv))
+        logger.info("Command Line Args : \n" + json.dumps(args, indent=3))
 
-    CFG_AEPCTL_ROOT_DIR = AEPCTL_Configuration.get("AEPCTL_DIRECTORY")
-    CFG_AEPCTL_WORK_DIR = AEPCTL_Configuration.get("AEPCTL_DIRECTORY")
-    CFG_AEPCTL_HOME_DIR = AEPCTL_HOME_DIR
-    set_aepctl_dirs(CFG_AEPCTL_ROOT_DIR, CFG_AEPCTL_WORK_DIR)
-    logger.info("AEPCTL_HOME_DIR  : " + str(CFG_AEPCTL_HOME_DIR))
-    logger.info("AEPCTL_ROOT_DIR  : " + str(CFG_AEPCTL_ROOT_DIR))
-    logger.info("AEPCTL_WORK_DIR  : " + str(CFG_AEPCTL_WORK_DIR))
-    # os.chdir(AEPCTL_HOME_DIR)
+        AEPCTL_Configuration = ut.init_Configuration(cfg_filename=AEPCTL_Configuration_FileName,  # Default Config FileName
+                                                     cmd_line_arg=CONFIG_FILE,  # Command Line Arg. Config FileName
+                                                     env_cfg_var="AEPCTL_CONFIGURATION",  # Env Var with the Config FileName
+                                                     default_cfg=def_AEPCTL_Configuration,  # Default Configuration
+                                                     tag="AEPCTL Configuration")
 
-    return AepCtl.handle_command(args)
+        CFG_AEPCTL_ROOT_DIR = AEPCTL_Configuration.get("AEPCTL_DIRECTORY")
+        CFG_AEPCTL_WORK_DIR = AEPCTL_Configuration.get("AEPCTL_DIRECTORY")
+        CFG_AEPCTL_HOME_DIR = AEPCTL_HOME_DIR
+        AepCtl.set_aepctl_dirs(CFG_AEPCTL_ROOT_DIR, CFG_AEPCTL_WORK_DIR)
+        logger.info("AEPCTL_HOME_DIR  : " + str(CFG_AEPCTL_HOME_DIR))
+        logger.info("AEPCTL_ROOT_DIR  : " + str(CFG_AEPCTL_ROOT_DIR))
+        logger.info("AEPCTL_WORK_DIR  : " + str(CFG_AEPCTL_WORK_DIR))
+        # os.chdir(AEPCTL_HOME_DIR)
+
+        return AepCtl.handle_command(args)
 
 
 if __name__ == '__main__':    # pragma: no cover
     if (len(sys.argv[1:]) == 0):
-        # No arguments - interactive session
-        interactive_prompt()
+        # No arguments : interactive session
+        AepCtl.interactive_prompt()
     else:
-        # Arguments - one time command
-        main(argv=sys.argv[1:], interactive=False)
+        # Arguments : one time command
+        AepCtl.main(argv=sys.argv[1:], interactive=False)
 
 
 ###
@@ -4009,14 +4533,13 @@ class TestMain(unittest.TestCase):     # pragma: no cover
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     def testCommandLineArguments(self):
-        main("-v fs providers list names")
+        AepCtl.main("-v fs providers list names")
 
     def testInteractive(self):
         command = input(AEPCTL_PROMPT + " > ")
         while command != "exit" :
-            res = main(command, interactive=True)
+            res = AepCtl.main(command, interactive=True)
             logger.debug(res)
-            # print(str(res))
             command = input(AEPCTL_PROMPT + " > ")
 
 
@@ -4024,9 +4547,15 @@ class TestMain(unittest.TestCase):     # pragma: no cover
 class TestWso2Manager(unittest.TestCase):    # pragma: no cover
 
     def setUp(self) -> None:
+        global AEPCTL_Configuration
+        AEPCTL_Configuration = ut.init_Configuration(cfg_filename=AEPCTL_Configuration_FileName,  # Default File Name
+                                                     cmd_line_arg=CONFIG_FILE,  # Command Line Arg. FileName
+                                                     env_cfg_var="AEPCTL_CONFIGURATION",  # Env Var with the FileName
+                                                     default_cfg=def_AEPCTL_Configuration,  # Default Configuration
+                                                     tag="AEPCTL Configuration")
         self.userManager  = Wso2UsersManager()
-        self.apiManager   = Wso2ApiManager()
-        self.devManager   = Wso2ApiDevManager()
+        self.apiManager   = Wso2ApisManager()
+        self.devManager   = Wso2SubscriptionsManager()
         urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
     def test_userManager(self):  # Need WSO2 server to test this
@@ -4090,39 +4619,40 @@ class TestWso2Manager(unittest.TestCase):    # pragma: no cover
 
         # Testing Commands
         prefix = "ws users "
-        res = main(prefix + "help ")
+        res = AepCtl.main(prefix + "help ")
         self.assertIn("create", res)
-        res = main(prefix + "list help")
+        res = AepCtl.main(prefix + "list help")
         self.assertIn("names", res)
-        res = main(prefix + "delete apiconsumer")
-        res = main(prefix + "get apiconsumer")
+        res = AepCtl.main(prefix + "delete apiconsumer")
+        res = AepCtl.main(prefix + "get apiconsumer")
         self.assertNotIn("apiconsumer", res)
-        res = main(prefix + "list users")
+        res = AepCtl.main(prefix + "list users")
         self.assertNotIn("apiconsumer", res)
-        res = main(prefix + "list ")
+        res = AepCtl.main(prefix + "list ")
         self.assertNotIn("apiconsumer", res)
-        res = main(prefix + "list names")
+        res = AepCtl.main(prefix + "list names")
         self.assertNotIn("apiconsumer", res)
-        res = main(prefix + "list roles")
+        res = AepCtl.main(prefix + "list roles")
         self.assertNotIn("apiconsumer", res)
-        res = main(prefix + "create apiconsumer apiconsumer")
+        res = AepCtl.main(prefix + "create apiconsumer apiconsumer")
         self.assertIn("apiconsumer", res)
-        res = main(prefix + "get apiconsumer")
+        res = AepCtl.main(prefix + "get apiconsumer")
         self.assertIn("apiconsumer", res)
-        res = main(prefix + "list ")
+        res = AepCtl.main(prefix + "list ")
         self.assertIn("apiconsumer", res)
-        res = main(prefix + "delete apiconsumer")
+        res = AepCtl.main(prefix + "delete apiconsumer")
         self.assertIn("apiconsumer", res)
-        res = main(prefix + "get apiconsumer")
+        res = AepCtl.main(prefix + "get apiconsumer")
         self.assertNotIn("apiconsumer", res)
-        res = main(prefix + "list ")
+        res = AepCtl.main(prefix + "list ")
         self.assertNotIn("apiconsumer", res)
 
     def test_policy(self):  # Need WSO2 server to test this
-        self.apiManager.authentify()
-        self.apiManager.policy_list(policyType="subscription")
-        print(str(self.apiManager.d_data.get("count")))
-        print(str(self.apiManager.d_data.get("list/0")))
+        self.apiPolicyManager = Wso2PoliciesManager()
+        self.apiPolicyManager.authentify()
+        self.apiPolicyManager.policy_list(policyType="subscription")
+        print(str(self.apiPolicyManager.d_data.get("count")))
+        print(str(self.apiPolicyManager.d_data.get("list/0")))
         policy_create = """
         {
           "policyName": "TestPolicy2",
@@ -4137,20 +4667,24 @@ class TestWso2Manager(unittest.TestCase):    # pragma: no cover
               "requestCount": 5
             }
           },
+        }
+                """
+
+        """
           "rateLimitCount": 5,
           "rateLimitTimeUnit": "sec",
           "subscriberCount": 10,
           "customAttributes": [],
           "stopOnQuotaReach": true,
           "billingPlan": "FREE"
-        }
-                """
-        self.apiManager.policy_create(policy=policy_create,    policyType="subscription")
-        if (not self.apiManager.isError()):
-            policy_id = self.apiManager.d_data.get("policyId")
+        """
+        # Delete leftover
+        self.apiPolicyManager.delete(idName="TestPolicy2")
+        new_pol = self.apiPolicyManager.create(entity=policy_create)
+        if (not self.apiPolicyManager.isError()):
+            policy_id = new_pol["policyId"]
             print(str(policy_id))
-            self.apiManager.policy_get(policy_id=policy_id,    policyType="subscription")
-            self.apiManager.policy_delete(policy_id=policy_id, policyType="subscription")
+            del_pol = self.apiPolicyManager.delete(idName=policy_id)
         else:
             print(str("Creation Error"))
 
@@ -4469,9 +5003,9 @@ class TestDataStore(unittest.TestCase):
         desc_att = self.storeManager.get_desc_att(store.entity_type)
         new_entry_dict = ut.loadDataContent(new_entry)
         # Backup Entries
-        backup_entries_list = store.list()
-        backup_entries = store.delete_all(backup=backup)
-        # self.assertEqual(backup_entries_list, backup_entries)  # too long some times
+        # backup_entries_list = store.list()
+        backup_entries = store.deleteAll(backup=backup)
+        # self.assertEqual(backup_entries_list, backup_entries)  # too long sometimes
 
         # Now should be empty
         self.assertEqual([], store.list())
@@ -4487,7 +5021,7 @@ class TestDataStore(unittest.TestCase):
         entry = store.create(entity=5, backup=backup)
         self.assertEqual(None, entry)
         self.assertEqual(True, store.isError())
-        self.assertIn("Invalid Format : 5", store.getError())
+        self.assertIn("Invalid Dict Format : 5", store.getError())
 
         # Create Entry
         entry = store.create(entity=new_entry, backup=backup)
@@ -4526,15 +5060,15 @@ class TestDataStore(unittest.TestCase):
         self.assertEqual(True,  store.exist(idName=entry[id_att]))
 
         # Test Get By
-        self.assertEqual(entry[id_att],    store.id_by_name(idName=entry[id_att]))
-        self.assertEqual(entry[name_att],  store.name_by_id(idName=entry[id_att]))
-        self.assertEqual(entry[desc_att],  store.desc_by_idname(idName=entry[id_att]))
-        self.assertEqual(entry[id_att],    store.id_by_name(idName=entry[name_att]))
-        self.assertEqual(entry[name_att],  store.name_by_id(idName=entry[name_att]))
-        self.assertEqual(entry[desc_att],  store.desc_by_idname(idName=entry[name_att]))
-        self.assertEqual(None,             store.id_by_name(idName="TT"))
-        self.assertEqual(None,             store.name_by_id(idName="TT"))
-        self.assertEqual(None,             store.desc_by_idname(idName="TT"))
+        self.assertEqual(entry[id_att], store.idByName(idName=entry[id_att]))
+        self.assertEqual(entry[name_att], store.nameById(idName=entry[id_att]))
+        self.assertEqual(entry[desc_att], store.descByIdname(idName=entry[id_att]))
+        self.assertEqual(entry[id_att], store.idByName(idName=entry[name_att]))
+        self.assertEqual(entry[name_att], store.nameById(idName=entry[name_att]))
+        self.assertEqual(entry[desc_att], store.descByIdname(idName=entry[name_att]))
+        self.assertEqual(None, store.idByName(idName="TT"))
+        self.assertEqual(None, store.nameById(idName="TT"))
+        self.assertEqual(None, store.descByIdname(idName="TT"))
 
         # Get Entry Errors
         none_entry = store.get(idName="TT")
@@ -4550,7 +5084,7 @@ class TestDataStore(unittest.TestCase):
         created_entry = store.create(entity=5, backup=backup)
         self.assertEqual(None, created_entry)
         self.assertEqual(True, store.isError())
-        self.assertEqual("Invalid Format : 5", store.getError())
+        self.assertEqual("Invalid Dict Format : 5", store.getError())
         create_entry = copy.deepcopy(ut.loadDataContent(new_entry))
         create_entry.pop(name_att, None)
         created_entry = store.create(entity=create_entry, backup=backup)
@@ -4580,7 +5114,7 @@ class TestDataStore(unittest.TestCase):
         update_entry = store.update(entity=5, backup=backup)
         self.assertEqual(None, update_entry)
         self.assertEqual(True, store.isError())
-        self.assertEqual("Invalid Format : 5", store.getError())
+        self.assertEqual("Invalid Dict Format : 5", store.getError())
 
         # Delete Entry Errors
         deleted_entry = store.delete(identifier="TT", backup=backup)
@@ -4605,17 +5139,21 @@ class TestDataStore(unittest.TestCase):
 
         # Delete All Entries
         entry = store.create(entity=new_entry, backup=backup)
+        self.assertIsNotNone(entry)
         self.assertEqual(1, store.list(count=True))
-        store.delete_all(backup=backup)
+        store.deleteAll(backup=backup)
         self.assertEqual(0, store.list(count=True))
 
         openapi = StoreManager().get_openapi(entity=store_entity)
+        self.assertIsNotNone(openapi)
         schema  = StoreManager().get_schema(entity=store_entity)
+        self.assertIsNotNone(schema)
 
         # Restore Entries
         for entry in backup_entries :
             store.create(entry, backup=backup)
         entry_list = store.list()
+        self.assertIsNotNone(entry_list)
         # It differs because of create which creates new ids. ... to be fixed.
         # self.assertEqual(backup_entries_list, entry_list)
 
@@ -4627,7 +5165,7 @@ class TestDataStore(unittest.TestCase):
 
         # Backup Entries
         backup_entries_list = store.list()
-        backup_entries      = store.delete_all(backup=backup)
+        backup_entries      = store.deleteAll(backup=backup)
         self.assertEqual(backup_entries_list, backup_entries)
 
         entry_file_name = ".payload.json"
@@ -4641,32 +5179,32 @@ class TestDataStore(unittest.TestCase):
         prefix = verbose + " " + service + " " + ent_type + " "
 
         # Delete All
-        res = main(prefix + "delete all")
+        res = AepCtl.main(prefix + "delete all")
         self.assertIn("[", res)
-        res = main(prefix + "list count")
+        res = AepCtl.main(prefix + "list count")
         self.assertIn("0", res)
 
         # Now should be empty
-        res = main(prefix + "list")
+        res = AepCtl.main(prefix + "list")
         self.assertEqual(res, "[]")
-        res = main(prefix + "list ids")
+        res = AepCtl.main(prefix + "list ids")
         self.assertEqual(res, "[]")
-        res = main(prefix + "list names")
+        res = AepCtl.main(prefix + "list names")
         self.assertEqual(res, "[]")
-        res = main(prefix + "list count")
+        res = AepCtl.main(prefix + "list count")
         self.assertEqual(res, "0")
 
         # Create Entry
-        res = main(prefix + "create " + entry_file_name)
+        res = AepCtl.main(prefix + "create " + entry_file_name)
         self.assertIn(entry[desc_att], res)
         created_entry = ut.loadDataContent(res)
-        res = main(prefix + "list names")
+        res = AepCtl.main(prefix + "list names")
         self.assertIn(entry[name_att], res)
-        res = main(prefix + "list ids")
+        res = AepCtl.main(prefix + "list ids")
         self.assertIn(created_entry[id_att], res)
-        res = main(prefix + "list count")
+        res = AepCtl.main(prefix + "list count")
         self.assertIn("1", res)
-        res = main(prefix + "list")
+        res = AepCtl.main(prefix + "list")
         self.assertIn(entry[name_att], res)
         self.assertIn(created_entry[id_att], res)
         self.assertIn(entry[desc_att], res)
@@ -4674,94 +5212,94 @@ class TestDataStore(unittest.TestCase):
         # Create Entry Errors
         entry_error_file_name = ".payload_error.json"
         ut.saveFileContent("TT", entry_error_file_name)
-        res = main(prefix + "create -p " + entry_error_file_name)
+        res = AepCtl.main(prefix + "create -p " + entry_error_file_name)
         self.assertIn("Cannot JSON/YAML Decode", res)
         ut.saveFileContent("5", entry_error_file_name)
-        res = main(prefix + "create -p " + entry_error_file_name)
+        res = AepCtl.main(prefix + "create -p " + entry_error_file_name)
         self.assertIn("Cannot JSON/YAML Decode", res)
 
         # Get Testing
-        res = main(prefix + "get " + created_entry[id_att])  # by ID
+        res = AepCtl.main(prefix + "get " + created_entry[id_att])  # by ID
         self.assertIn(entry[name_att], res)
         self.assertIn(created_entry[id_att], res)
         self.assertIn(entry[desc_att], res)
         self.assertEqual(self.no_id(entry, id_att), ut.loadDataContent(self.no_id(res, id_att)))
-        res = main(prefix + "get " + created_entry[name_att])  # by Name
+        res = AepCtl.main(prefix + "get " + created_entry[name_att])  # by Name
         self.assertIn(entry[name_att], res)
         self.assertIn(created_entry[id_att], res)
         self.assertIn(entry[desc_att], res)
         self.assertEqual(self.no_id(entry, id_att), ut.loadDataContent(self.no_id(res, id_att)))
 
         # Get Entry Errors
-        res = main(prefix + "get TT")
+        res = AepCtl.main(prefix + "get TT")
         self.assertIn("No such entry : TT", res)
 
         # Update Entry
         entry_file_name = ".payload.json"
-        res = main(prefix + "get " + created_entry[id_att])  # by ID
+        res = AepCtl.main(prefix + "get " + created_entry[id_att])  # by ID
         entry = ut.loadDataContent(res)
         entry[desc_att] = "New Description"
         ut.saveJsonFile(entry, entry_file_name)
 
-        res = main(prefix + "update -p " + entry_file_name)
+        res = AepCtl.main(prefix + "update -p " + entry_file_name)
         self.assertIn("New Description", res)
-        res = main(prefix + "get " + created_entry[id_att])  # by ID
+        res = AepCtl.main(prefix + "get " + created_entry[id_att])  # by ID
         self.assertIn("New Description", res)
 
         # Update Entry Errors
         ut.saveFileContent("TT", entry_error_file_name)
-        res = main(prefix + "update -p " + entry_error_file_name)
+        res = AepCtl.main(prefix + "update -p " + entry_error_file_name)
         self.assertIn("Cannot JSON/YAML Decode", res)
         ut.saveFileContent("5", entry_error_file_name)
-        res = main(prefix + "update -p " + entry_error_file_name)
+        res = AepCtl.main(prefix + "update -p " + entry_error_file_name)
         self.assertIn("Cannot JSON/YAML Decode", res)
 
         update_entry = ut.loadDataFile(entry_file_name)
         update_entry.pop(name_att, None)
         update_entry = ut.saveDataFile(update_entry, entry_file_name)
-        res = main(prefix + "update -p " + entry_file_name)
+        res = AepCtl.main(prefix + "update -p " + entry_file_name)
         self.assertIn("is a required property", res)
 
         # Delete Entry Errors
-        res = main(prefix + "delete TT ")
+        res = AepCtl.main(prefix + "delete TT ")
         self.assertIn("No such entry : TT", res)
 
         # Delete Entry
-        res = main(prefix + "delete " + created_entry[id_att])  # by ID
+        res = AepCtl.main(prefix + "delete " + created_entry[id_att])  # by ID
         self.assertIn("New Description", res)
-        res = main(prefix + "get " + created_entry[id_att])  # by ID
+        res = AepCtl.main(prefix + "get " + created_entry[id_att])  # by ID
         self.assertIn("No such entry", res)
 
         # openapi / schema
-        res = main(prefix + "openapi ")
-        self.assertIn("components:", res)
-        res = main(prefix + "get openapi ")
-        self.assertIn("components:", res)
-        res = main(prefix + "schema ")
-        self.assertIn("$schema:", res)
-        res = main(prefix + "get schema ")
-        self.assertIn("$schema:", res)
+        res = AepCtl.main(prefix + "openapi ")
+        self.assertIn("components", res)
+        res = AepCtl.main(prefix + "get openapi ")
+        self.assertIn("components", res)
+        res = AepCtl.main(prefix + "schema ")
+        self.assertIn("$schema", res)
+        res = AepCtl.main(prefix + "get schema ")
+        self.assertIn("$schema", res)
 
         # help
-        res = main(prefix + "help ")
-        self.assertIn("aepctl overview", res)
-        res = main(prefix + " help get")
-        self.assertIn("aepctl overview", res)
-        res = main("help ")
+        res = AepCtl.main(prefix + "help ")
+        self.assertIn("[help|get", res)
+        res = AepCtl.main(prefix + " help get")
+        self.assertIn("[help|get", res)
+        res = AepCtl.main("help ")
         self.assertIn("providers", res)
-        res = main("")
+        res = AepCtl.main("")
         self.assertIn("No command nor resource specified", res)
 
         # Reset Store
-        res = main(prefix + "delete all")
+        res = AepCtl.main(prefix + "delete all")
         self.assertIn("[", res)
-        res = main(prefix + "list count")
+        res = AepCtl.main(prefix + "list count")
         self.assertIn("0", res)
-        res = main(prefix + " list")
+        res = AepCtl.main(prefix + " list")
         self.assertEqual(res, "[]")
-        res = main(prefix + " list ids")
+        res = AepCtl.main(prefix + " list ids")
         self.assertEqual(res, "[]")
-        res = main(prefix + " list names")
+        res = AepCtl.main(prefix + " list names")
         self.assertEqual(res, "[]")
 
         # Restore Entries
@@ -4799,7 +5337,7 @@ class TestDataStore(unittest.TestCase):
     def test_ProvidersRest(self):
         self.test_Providers(store_type="rest", backup=False)
 
-    def test_Providers(self, store_type="file", backup:bool = False):
+    def test_Providers(self, store_type="file", backup : bool = False):
         new_entry = """
         { 
           "ProviderName" : "ProviderName",
@@ -4856,8 +5394,31 @@ class TestDataStore(unittest.TestCase):
     def test_all_rest(self):
         self.test_all(store_type="rest")
 
+    def test_all_anme(self):
+        self.test_all(store_type="anme")
+
     def test_all_file(self):
         self.test_all(store_type="file")
+
+    def test_ANME(self):
+        new_entry = """
+        { 
+          "ArticleName" : "ArticleName",
+          "ArticleDescription": "ArticleDescription",
+          "ArticlePage": "ArticlePage",
+          "ArticleLogo": "ArticleLogo"
+          }
+        """
+        # server = AEPCTL_Configuration.get("ANME_SERVER")
+        # server = "https://localhost:5000"
+        server = "https://anme.pagekite.me"
+        anme = AnmeDataStore(server=server, entity_type="articles")
+        theList = anme.list(ids=True)
+        print(theList)
+        entry = anme.create(new_entry)
+        print(entry)
+        theList = anme.list()
+        print(theList)
 
 
 class TestAll(unittest.TestCase):
@@ -4866,9 +5427,10 @@ class TestAll(unittest.TestCase):
         # DataStore
         tds = TestDataStore()
         tds.setUp()
-        tds.test_all_file()
+        # tds.test_all_file()
         # tds.test_all_rest()
+        tds.test_all_anme()
         # WS02
-        tws = TestWso2Manager()
-        tws.setUp()
-        tws.test_all()
+        # tws = TestWso2Manager()
+        # tws.setUp()
+        # tws.test_all()

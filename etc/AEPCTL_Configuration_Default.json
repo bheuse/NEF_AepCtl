@@ -3,7 +3,6 @@
     "WSO2_SERVER": "https://localhost:9443",
     "CATALOG_SERVER": "http://localhost:30106",
     "USERS_SERVER": "http://localhost:30107",
-    "DUMP_DIRECTORY": "/home/bheuse/.aepctl/dump",
     "STORE_DIRECTORY": "/home/bheuse/.aepctl/store",
     "STORES_FILE": "/home/bheuse/.aepctl/etc/stores.json",
     "__NAME__": "AEPCTL_DefaultConfiguration"

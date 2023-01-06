@@ -2,6 +2,7 @@
 # aepctl overview
 
 A utility to manage the Amdocs Exposure Platform, in the flavour of kubectl and apictl for wso2
+
 - Command line interface, interactive prompt, basic ui
 - Manage datastore, api gateway, nef services
 - Back up and restore
@@ -23,6 +24,7 @@ Use the following syntax to run `aepectl` commands from your terminal window:
     $ aepctl ws list categories
 
 Where: 
+
 - `flags` : -v for verbose logs, -h for help / usage, -c <file> to use an alternative configuration file.
 - `service`: specifies the service to address the command to. 
    `fs` for the local file datastore, 
@@ -44,9 +46,9 @@ Where:
     APPLICATION_PROFILES = ["ACCOUNTS", "SERVICES", "CONTACTS", "ROLES", "INDUSTRIES", "USECASES"]
     SUBSCRIPTION = ["SUBSCRIPTIONS", "API_CONSUMERS"]
 #### WS :
-    APIM  = ["APIS", "POLICIES", "CATEGORIES", "PRODUCTS"]
+    APIM = ["APIS", "POLICIES", "CATEGORIES", "PRODUCTS"]
     DEVM = ["APPLICATIONS", "SUBSCRIPTIONS"]
-    ADM   = ["USERS", "SETTINGS"]
+    ADM  = ["USERS", "SETTINGS"]
 
 ## Interactive Prompt
 
@@ -72,7 +74,7 @@ An interactive version is available, that prompt for commands and support comman
 
 On the first execution, a default configuration file is created in `~/.aepctl/AEPCTL_Configuration.json`
 
-The addresses of the servers can be specified here :
+The addresses of the servers can be specified in this file :
 
     "WSO2_SERVER": "https://localhost:9443",
     "CATALOG_SERVER": "http://localhost:32106",
@@ -81,6 +83,7 @@ The addresses of the servers can be specified here :
 ## Building an executable
 
 `aepctl` is written in python. 
+
 A self-contained executable can be generated using `build.bat` or build.sh. 
 The UI requires an X server in Linux for display.
 
@@ -93,28 +96,46 @@ The UI requires an X server in Linux for display.
 `TO BE COMPLETED`
 
 
-
 AF-DEMO Instructions : NEF-330
 
 
 # WSO2 API Manager Portals
+
+WSO2 API Manager Portals are accessible here, on localhost:
+
 - [API Manager Management Console](https://localhost:9443/carbon/)
 - [API Manager Publisher Portal](https://localhost:9443/publisher)
 - [API Manager Developer Portal](https://localhost:9443/devportal)
 
 # WSO2 API Manager APIs
+
+WSO2 API Manager APIs are documented here:
+
 - [WSO2 Admin Portal Rest API](https://apim.docs.wso2.com/en/latest/reference/product-apis/admin-apis/admin-v2/admin-v2/)
 - [WSO2 Publisher Rest API](https://apim.docs.wso2.com/en/latest/reference/product-apis/publisher-apis/publisher-v2/publisher-v2/)
 - [WSO2 Developer Portal Rest API](https://apim.docs.wso2.com/en/latest/reference/product-apis/devportal-apis/devportal-v2/devportal-v2/)
 - [WSO2 Users and Roles Soap API](https://docs.wso2.com/display/IS580/Managing+Users+and+Roles+with+APIs)
 
-# WSO2 API Manager API Control Command Line
+# WSO2 API Manager 
+
+## API Control Command Line
+
+`apictl` is the Wso2 equivalent of kubectl for K8S. 
+
 Download from [previous-releases](https://wso2.com/api-management/previous-releases/), select Tooling / CLI
 
 ```
 $ ./apictl.exe add env production --apim https://localhost:9443
 $ ./apictl.exe login production -u admin -p admin -k
 ```
+
+## WSO2 Management using APIs 
+
+### WSO2 API Manager APIs
+- [WSO2 Admin Portal Rest API](https://apim.docs.wso2.com/en/latest/reference/product-apis/admin-apis/admin-v2/admin-v2/)
+- [WSO2 Publisher Rest API](https://apim.docs.wso2.com/en/latest/reference/product-apis/publisher-apis/publisher-v2/publisher-v2/)
+- [WSO2 Developer Portal Rest API](https://apim.docs.wso2.com/en/latest/reference/product-apis/devportal-apis/devportal-v2/devportal-v2/)
+- [WSO2 Users and Roles Soap API](https://docs.wso2.com/display/IS580/Managing+Users+and+Roles+with+APIs)
 
 ### Examples:
 1. [Obtain the consumer key/secret key pair](examples/rest-api/1.auth1.sh) ([Content](examples/rest-api/auth.json))
@@ -132,6 +153,10 @@ $ ./apictl.exe login production -u admin -p admin -k
 13. [Create a new user Soap](examples/soap-api/1.adduser.sh) ([Content](examples/soap-api/adduser.xml))
 
 ### Steps to get access to WSO2 installation in AWS:
+
+```
+> This is Phase 1 instructions 
+```
 
 0. Login on Amdocs VPN 
 1. Login on Openet VPN

@@ -1,4 +1,4 @@
-$id: https://amdocs.com/schemas/nef/API_Article.json
+$id#: https://amdocs.com/schemas/nef/API_Article.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: API_Article
 description: No Description for API Article

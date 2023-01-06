@@ -7,7 +7,7 @@ $defs:
         properties:
             ConsumerName:
                 description: No Description for ConsumerName
-                example: ''
+                example: ConsumerName
                 format: ''
                 mandatory: y
                 name: ConsumerName
@@ -16,7 +16,7 @@ $defs:
                 type: string
             Contact_Details:
                 description: No Description for Contact Details
-                example: ''
+                example: Contact_Details
                 format: ''
                 mandatory: y
                 name: Contact_Details
@@ -25,7 +25,7 @@ $defs:
                 type: string
             NEF_Credentials:
                 description: 'No Description for NEF Credentials '
-                example: NEF_Credentials_
+                example: NEF_Credentials
                 format: ''
                 mandatory: y
                 name: NEF_Credentials
@@ -37,40 +37,28 @@ $defs:
         - Contact_Details
         - NEF_Credentials
         type: object
-    API_Subscription:
-        NAME: API_Subscription
-        description: API Subscription -
-        example: API Subscription
-        name: API_Subscription
-        properties:
-            TBC:
-                description: No Description for TBC
-                example: ''
-                format: ''
-                mandatory: y
-                name: TBC
-                pattern: ''
-                precision: '0'
-                type: string
-        required:
-        - TBC
-        type: object
-$id: https://amdocs.com/schemas/nef/Service.json
+$id#: https://amdocs.com/schemas/nef/Service.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: Service
-description: No Description for Service
+description: 'Provides Access to '
 example: Service
-name: Service
+mandatory: y
+name: Organization_-_Services_AF_API_Consumers
 properties:
     API_Consumers:
         $ref: '#/$defs/API_Consumers'
         description: 'Provides Access to '
     API_Subscription:
-        $ref: '#/$defs/API_Subscription'
-        description: 'Use '
+        $ref: '#/components/schemas/API_Subscription'
+        $ref#: NEF_ApplicationUserProfile_DataModel_API_Subscription_Schema.json
+        cardinality: OneToOne
+        description: Subscribe to Use
+        mandatory: y
+        name: Organization_-_Services_API_Set
+        type: string
     Industry:
         description: No Description for Industry
-        example: ''
+        example: Industry
         format: ''
         mandatory: y
         name: Industry
@@ -79,7 +67,7 @@ properties:
         type: string
     Name:
         description: No Description for Name
-        example: ''
+        example: Name
         format: ''
         mandatory: y
         name: Name
@@ -88,7 +76,7 @@ properties:
         type: string
     UseCase:
         description: No Description for UseCase
-        example: ''
+        example: UseCase
         format: ''
         mandatory: y
         name: UseCase
@@ -97,7 +85,7 @@ properties:
         type: string
     VolumeOrg:
         description: No Description for VolumeOrg
-        example: Column_1_
+        example: VolumeOrg
         format: ''
         mandatory: n
         name: VolumeOrg
@@ -106,15 +94,14 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - Name
 - Industry
 - UseCase

@@ -1,14 +1,14 @@
 {
    "name": "API_Bundle",
    "type": "object",
-   "description": "Set of Related APIs, defined in the Catalog, for industry specific usage\\u000b(HealthCare, Telecom, Manufacturing, Finance, \u00e2\u20ac\u00a6)",
+   "description": "Set of Related APIs, defined in the Catalog, for industry specific usage\\u000b(HealthCare, Telecom, Manufacturing, Finance, \u2026)",
    "example": "API Bundle",
    "properties": {
       "id": {
          "name": "id",
          "description": "Enter Description Here",
          "example": "id",
-         "mandatory": "y",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -47,17 +47,19 @@
       "API": {
          "description": "Includes ",
          "type": "string",
-         "-$ref": "NEF_Catalog_DataModel_API_Schema.json"
+         "$ref#": "NEF_Catalog_DataModel_API_Schema.json",
+         "name": "include_API_Bundle_API",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       }
    },
    "NAME": "API_Bundle",
    "required": [
-      "id",
       "Name",
       "Industry",
       "Use_Case"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/API_Bundle.json",
+   "$id#": "https://amdocs.com/schemas/nef/API_Bundle.json",
    "title": "Schema for API_Bundle"
 }

@@ -1,7 +1,7 @@
 {
-   "name": "API",
+   "name": "API_API_Details",
    "type": "object",
-   "description": "API : A Set of related API Methods (YAML)",
+   "description": "API_API_Details",
    "example": "API",
    "properties": {
       "id": {
@@ -56,7 +56,7 @@
       },
       "Charging_Policies": {
          "name": "Charging_Policies",
-         "description": "Charging Policies that can be applied on this API.API : Charging Policy Profile \u00e2\u20ac\u201c Charge access to APIs for API Consumers:\nMonthly fee\nPay per use\nFree \u00e2\u20ac\u00a6",
+         "description": "Charging Policies that can be applied on this API.API : Charging Policy Profile \u2013 Charge access to APIs for API Consumers:\nMonthly fee\nPay per use\nFree \u2026",
          "example": "Charging_Policies",
          "mandatory": "y",
          "pattern": "",
@@ -96,39 +96,55 @@
       },
       "UsagePolicy": {
          "description": "include_API_UsagePolicy",
-         "$ref": "#/$defs/UsagePolicy"
+         "type": "string",
+         "$ref#": "NEF_Catalog_DataModel_UsagePolicy_Schema.json",
+         "name": "include_API_UsagePolicy",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       },
       "API_Details": {
          "description": "API_API_Details",
          "$ref": "#/$defs/API_Details"
       },
       "API_Category": {
-         "description": "API_API_Category",
+         "description": "API belongs to category",
          "type": "array",
          "items": {
-            "-$ref": "NEF_Catalog_DataModel_API_Category_Schema.json",
-            "type": "string"
+            "$ref#": "NEF_Catalog_DataModel_API_Category_Schema.json",
+            "type": "string",
+            "name": "API_API_Category",
+            "description": "desc",
+            "mandatory": "y"
          }
       },
       "API_Collection": {
          "description": "API_API_Collection",
          "type": "array",
          "items": {
-            "-$ref": "NEF_Catalog_DataModel_API_Collection_Schema.json",
-            "type": "string"
+            "$ref#": "NEF_Catalog_DataModel_API_Collection_Schema.json",
+            "type": "string",
+            "name": "API_API_Collection",
+            "description": "desc",
+            "mandatory": "n"
          }
       },
       "API_Provider": {
          "description": "Provides ",
          "type": "string",
-         "-$ref": "NEF_Catalog_DataModel_API_Provider_Schema.json"
+         "$ref#": "NEF_Catalog_DataModel_API_Provider_Schema.json",
+         "name": "API_API__Provider_",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       },
       "API_Article": {
          "description": "API_API_Article",
          "type": "array",
          "items": {
-            "-$ref": "NEF_Catalog_DataModel_API_Article_Schema.json",
-            "type": "string"
+            "$ref#": "NEF_Catalog_DataModel_API_Article_Schema.json",
+            "type": "string",
+            "name": "API_API_Article",
+            "description": "desc",
+            "mandatory": "n"
          }
       }
    },
@@ -144,53 +160,9 @@
       "Version"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/API.json",
+   "$id#": "https://amdocs.com/schemas/nef/API.json",
    "title": "Schema for API",
    "$defs": {
-      "UsagePolicy": {
-         "name": "UsagePolicy",
-         "type": "object",
-         "description": "No Description for UsagePolicy",
-         "example": "UsagePolicy",
-         "properties": {
-            "VariableName": {
-               "name": "VariableName",
-               "description": "No Description for VariableName",
-               "example": "VariableName",
-               "mandatory": "y",
-               "pattern": "",
-               "type": "string",
-               "format": "",
-               "precision": "0"
-            },
-            "VariableSemantic": {
-               "name": "VariableSemantic",
-               "description": "No Description for VariableSemantic",
-               "example": "VariableSemantic",
-               "mandatory": "y",
-               "pattern": "",
-               "type": "string",
-               "format": "",
-               "precision": "0"
-            },
-            "VariableType": {
-               "name": "VariableType",
-               "description": "No Description for VariableType",
-               "example": "VariableType",
-               "mandatory": "y",
-               "pattern": "",
-               "type": "string",
-               "format": "",
-               "precision": "0"
-            }
-         },
-         "NAME": "UsagePolicy",
-         "required": [
-            "VariableName",
-            "VariableSemantic",
-            "VariableType"
-         ]
-      },
       "API_Details": {
          "name": "API_Details",
          "type": "object",
@@ -345,5 +317,6 @@
             "FeaturesPage"
          ]
       }
-   }
+   },
+   "mandatory": "y"
 }

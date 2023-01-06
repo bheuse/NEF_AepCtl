@@ -1,4 +1,4 @@
-$id: https://amdocs.com/schemas/nef/Role.json
+$id#: https://amdocs.com/schemas/nef/Role.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: Role
 description: No Description for Role
@@ -7,7 +7,7 @@ name: Role
 properties:
     RoleDescription:
         description: Role Description
-        example: ''
+        example: RoleDescription
         format: ''
         mandatory: y
         name: RoleDescription
@@ -16,7 +16,7 @@ properties:
         type: string
     RoleName:
         description: User Role
-        example: provider
+        example: RoleName
         format: ''
         mandatory: y
         name: RoleName
@@ -25,7 +25,7 @@ properties:
         type: string
     RoleValue:
         description: Role Value
-        example: provider
+        example: RoleValue
         format: ''
         mandatory: y
         name: RoleValue
@@ -34,15 +34,14 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - RoleName
 - RoleValue
 - RoleDescription

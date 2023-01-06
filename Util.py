@@ -53,7 +53,7 @@ import requests
 
 from bs4 import BeautifulSoup
 import importlib
-import dpath.util
+import dpath
 from jsonpath_ng import parse
 
 import logging
@@ -2669,7 +2669,7 @@ class SuperDict():
     # Get Item by Key Path, with / as separator
     def getPath(self, key: str, default=None):
         try:
-            v = dpath.util.get(self.data, key)
+            v = dpath.get(self.data, key)
             if (v != None): return v
             else:
                 logger.debug("Key not found : ["+key+"] - Defaulted to ["+str(default)+"]")
@@ -2681,7 +2681,7 @@ class SuperDict():
     # Del Item by Key Path, with / as separator
     def delPath(self, key: str):
         if not self.hasPath(key): return
-        return dpath.util.delete(self.data, key)
+        return dpath.delete(self.data, key)
 
         up_path  = re.sub("\/$", "", re.sub("[a-zA-Z0-9 ]*$", "", key))
         last_key = key.replace(up_path, "").replace("/", "")
@@ -2707,9 +2707,9 @@ class SuperDict():
             value = value.getAsData()
         try:
             if (self.getPath(key) == None):
-                return dpath.util.new(self.data, key, value)
+                return dpath.new(self.data, key, value)
             else:
-                return dpath.util.set(self.data, key, value)
+                return dpath.set(self.data, key, value)
         except ValueError :  # More than one match
             return None
         except KeyError  :   # No match
@@ -3314,9 +3314,9 @@ def validateSchema(instance, schema_data):
         validate(instance=instance, schema=schema)
         logger.info("JSON Schema Validated OK")
         return schema
-    except:
+    except Exception as e:
         # logger.exception("JSON Schema Validation Failed: " + str(schema_data))
-        logger.info("JSON Schema Validation Failed.")
+        logger.info("JSON Schema Validation Failed : " + str(e))
         raise
 
 
@@ -3362,6 +3362,32 @@ class ObjectReader():
         self.schema = None
         self.object = None
 
+    @staticmethod
+    def readSimpleObject(object : dict = None)-> dict :
+        if (not object) : object = dict()
+        if (not isinstance(object, dict)):
+            object = loadDataContent(object)
+        for key in object:
+            Term.print_blue   ("Property : " + key)
+            read_input = input("Enter Value [" + object[key] + "] : ")
+            if (read_input.strip() != ""):
+                object[key] = read_input
+        return object
+
+    @staticmethod
+    def readSimpleObjectAttribute(object : dict, p_key : str)-> dict :
+        if (not object) : object = dict()
+        if (not isinstance(object, dict)):
+            object = loadDataContent(object)
+        if (p_key not in object):
+            Term.print_error("No such attribute : "+p_key)
+            return object
+        Term.print_blue   ("Property : " + p_key)
+        read_input = input("Enter Value [" + object[p_key] + "] : ")
+        if (read_input.strip() != ""):
+            object[p_key] = read_input
+        return object
+
     def readObjectForThisSchema(self, schema_data : Union[str,dict], object : dict = None)-> dict :
         if (not isinstance(schema_data, dict)):
             schema_data = loadDataFile(schema_data)
@@ -3382,7 +3408,7 @@ class ObjectReader():
                 continue
             elif ((prop.has("type")) and (prop.get("type") in ["boolean", "number", "string"])):
                 object[prop.get("name", property)] = self.readBasicProperty(prop, property, prop.get("name", property))
-            elif (prop.has("-$ref")):  # Reference to Other Object (Foreign Key)
+            elif (prop.has("$ref")):  # Reference to Other Object (Foreign Key)
                 object[prop.get("name", property)] = self.readReferenceProperty(prop, property, prop.get("name", property))
         try:
             validateSchema(object,self.schema.getAsData())
@@ -3556,8 +3582,51 @@ def merge_Configuration(p_config):
 
 
 def save_Configuration(p_filename, p_config: SuperDict, tag=""):
+    global currentConfiguration
+    if (isinstance(p_config,SuperDict)):
+        config = p_config.getAsData()
+    elif (isinstance(p_config,dict)):
+        config = p_config
+    elif (isinstance(p_config,str)):
+        config = loadDataContent(p_config)
+    if (not p_filename):
+        if ("CONFIGURATION_FILE" in currentConfiguration.getAsData()):
+            p_filename = currentConfiguration["CONFIGURATION_FILE"]
     logger.info("Saving "+tag+" : {}".format(p_filename))
-    saveDataFile(p_config.getAsData(), p_filename, safe=False)
+    saveDataFile(config, p_filename, safe=False)
+    currentConfiguration = SuperDict(config)
+    return currentConfiguration
+
+def set_Configuration(p_filename, p_key, p_value, tag="") -> dict:
+    global currentConfiguration
+    if (not p_filename):
+        if ("CONFIGURATION_FILE" in currentConfiguration.getAsData()):
+            p_filename = currentConfiguration["CONFIGURATION_FILE"]
+    config = Util.getCurrentConfiguration()
+    if (p_key not in config.getAsData()):
+        Term.print_error("Invalid Configuration Parameter : " + p_key)
+        return config
+    if ((not p_value) or (p_value.strip() == "") or (p_value == p_key)):
+        config = ObjectReader.readSimpleObjectAttribute(currentConfiguration.getAsData(),p_key)
+    else:
+        config[p_key] = p_value
+    Util.save_Configuration(None, config, tag)
+    Term.print_green("Configuration Parameter ["+p_key+"] = " +p_value)
+    currentConfiguration = config
+    return config
+
+def get_Configuration(p_filename, p_key) -> str:
+    global currentConfiguration
+    if (not p_filename):
+        if ("CONFIGURATION_FILE" in currentConfiguration.getAsData()):
+            p_filename = currentConfiguration["CONFIGURATION_FILE"]
+    config = Util.getCurrentConfiguration()
+    if (p_key not in config.getAsData()):
+        Term.print_error("Invalid Configuration Parameter : " + p_key)
+        return config
+    p_value = config[p_key]
+    Term.print_green("Configuration Parameter ["+p_key+"] : " +p_value)
+    return p_value
 
 
 def load_Configuration(p_filename, tag) -> SuperDict:

@@ -1,10 +1,10 @@
 @echo off
 
-mkdir -n ..\build
+mkdir ..\build
 cd ..\build
 
-pyinstaller --noconfirm ../aepctl.py
-copy dist\aepctl\aepctl.exe build
-pyinstaller --noconfirm ../aepctlui.py
-copy dist\aepctlui\aepctlui.exe build
+pyinstaller --noconfirm --onefile ../aepctl.py
+copy dist\aepctl.exe ..
+pyinstaller --noconfirm --onefile ../aepctlui.py
+copy dist\aepctlui.exe ..
 

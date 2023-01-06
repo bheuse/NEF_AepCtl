@@ -3,7 +3,6 @@
     "WSO2_SERVER": "https://localhost:9443",
     "CATALOG_SERVER": "http://localhost:30106",
     "USERS_SERVER": "http://localhost:30107",
-    "DUMP_DIRECTORY": "dump",
     "STORE_DIRECTORY": "store",
     "STORES_FILE": "stores.json",
     "__NAME__": "AEPCTL_DefaultConfiguration"

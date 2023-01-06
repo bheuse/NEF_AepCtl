@@ -2,7 +2,7 @@ openapi: 3.0.2
 info:
   title: NEF Business Data Model
   version: 1.0.0
-  description: NEF Business Data Model.  This is generated, modify source architect
+  description: NEF Business Data Model. This is generated, modify source architect
     data model instead.
   contact:
     name: Bernard Heuse
@@ -37,14 +37,14 @@ security:
 - oAuth2ClientCredentials: []
 paths:
   /datastore/APIs:
-    summary: Path used to manage the list of apis.
-    description: The REST endpoint/path used to list and create zero or more `API`.  This
+    summary: Path used to manage the list of usagepolicys.
+    description: The REST endpoint/path used to list and create zero or more `UsagePolicy`.  This
       path contains a `GET` and `POST` operation to perform the list and create tasks,
       respectively.
     get:
-      operationId: getAPIs
-      summary: List All APIs
-      description: Gets a list of all `API` entities.
+      operationId: getUsagePolicys
+      summary: List All UsagePolicys
+      description: Gets a list of all `UsagePolicy` entities.
       parameters:
       - in: query
         name: API_Name
@@ -67,30 +67,43 @@ paths:
           type: boolean
         allowEmptyValue: true
         description: Return JSON Schema
-      - in: query
-        name: API_Provider_Name
-        schema:
-          type: string
-        description: Filter for API_Provider_Name
       responses:
         '200':
+          description: Successful response - returns an array of `UsagePolicy` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/API'
-          description: Successful response - returns an array of `API` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UsagePolicy'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
     post:
-      operationId: createAPI
-      summary: Create a API
-      description: Creates a new instance of a `API`.
+      operationId: createUsagePolicy
+      summary: Create a UsagePolicy
+      description: Creates a new instance of a `UsagePolicy`.
       requestBody:
-        description: A new `API` to be created.
+        description: A new `UsagePolicy` to be created.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/API'
+              $ref: '#/components/schemas/UsagePolicy'
         required: true
       responses:
         '202':
@@ -98,40 +111,40 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/API'
+                $ref: '#/components/schemas/UsagePolicy'
   /datastore/APIs/{id}:
-    summary: Path used to manage a single API.
+    summary: Path used to manage a single UsagePolicy.
     description: The REST endpoint/path used to get, update, and delete single instances
-      of an `API`.  This path contains `GET`, `PUT`, and `DELETE` operations used
-      to perform the get, update, and delete tasks, respectively.
+      of an `UsagePolicy`.  This path contains `GET`, `PUT`, and `DELETE` operations
+      used to perform the get, update, and delete tasks, respectively.
     parameters:
     - name: id
-      description: A unique identifier for a `API`.
+      description: A unique identifier for a `UsagePolicy`.
       schema:
         type: string
       in: path
       required: true
     get:
-      operationId: getAPI
-      summary: Get a API
-      description: Gets the details of a single instance of a `API`.
+      operationId: getUsagePolicy
+      summary: Get a UsagePolicy
+      description: Gets the details of a single instance of a `UsagePolicy`.
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/API'
-          description: Successful response - returns a single `API`.
+                $ref: '#/components/schemas/UsagePolicy'
+          description: Successful response - returns a single `UsagePolicy`.
     put:
-      operationId: updateAPI
-      summary: Update a API
-      description: Updates an existing `API`.
+      operationId: updateUsagePolicy
+      summary: Update a UsagePolicy
+      description: Updates an existing `UsagePolicy`.
       requestBody:
-        description: Updated `API` information.
+        description: Updated `UsagePolicy` information.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/API'
+              $ref: '#/components/schemas/UsagePolicy'
         required: true
       responses:
         '202':
@@ -139,11 +152,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/API'
+                $ref: '#/components/schemas/UsagePolicy'
     delete:
-      operationId: deleteAPI
-      summary: Delete a API
-      description: Deletes an existing `API`.
+      operationId: deleteUsagePolicy
+      summary: Delete a UsagePolicy
+      description: Deletes an existing `UsagePolicy`.
       responses:
         '204':
           description: Successful response.
@@ -175,13 +188,31 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `API_Bundle` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/API_Bundle'
-          description: Successful response - returns an array of `API_Bundle` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/API_Bundle'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
   /datastore/API_Bundles/{id}:
     summary: Path used to manage a single API_Bundle.
     description: The REST endpoint/path used to get, update, and delete single instances
@@ -233,13 +264,31 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `API_Category` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/API_Category'
-          description: Successful response - returns an array of `API_Category` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/API_Category'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
     post:
       operationId: createAPI_Category
       summary: Create a API_Category
@@ -334,14 +383,32 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `API_Collection`
+            entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/API_Collection'
-          description: Successful response - returns an array of `API_Collection`
-            entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/API_Collection'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
     post:
       operationId: createAPI_Collection
       summary: Create a API_Collection
@@ -436,13 +503,31 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `API_Provider` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/API_Provider'
-          description: Successful response - returns an array of `API_Provider` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/API_Provider'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
     post:
       operationId: createAPI_Provider
       summary: Create a API_Provider
@@ -537,13 +622,31 @@ paths:
         description: Return JSON Schema
       responses:
         '200':
+          description: Successful response - returns an array of `API_Article` entities.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/API_Article'
-          description: Successful response - returns an array of `API_Article` entities.
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  list:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/API_Article'
+                  pagination:
+                    type: object
+                    properties:
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                      total:
+                        type: integer
+                      next:
+                        type: string
+                      previous:
+                        type: string
     post:
       operationId: createAPI_Article
       summary: Create a API_Article
@@ -626,25 +729,25 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         API_Provider_Name:
           description: Enter Description Here
-          example: noExampleValue
+          example: API_Provider_Name
           pattern: ''
           type: string
           format: ''
         YAML:
           description: API YAML - EndPoints
-          example: ''
+          example: YAML
           pattern: ''
           type: string
           format: ''
         API_Name:
           description: Enter Description Here
-          example: noExampleValue
+          example: API_Name
           pattern: ''
           type: string
           format: ''
@@ -656,38 +759,38 @@ components:
           format: ''
         Charging_Policies:
           description: "Charging Policies that can be applied on this API.API : Charging\
-            \ Policy Profile \xE2\u20AC\u201C Charge access to APIs for API Consumers:\n\
-            Monthly fee\nPay per use\nFree \xE2\u20AC\xA6"
-          example: Charging_Policies_
+            \ Policy Profile \u2013 Charge access to APIs for API Consumers:\nMonthly\
+            \ fee\nPay per use\nFree \u2026"
+          example: Charging_Policies
           pattern: ''
           type: string
           format: ''
         API_Documentation:
           description: 'No Description for API Documentation '
-          example: API_Documentation_
+          example: API_Documentation
           pattern: ''
           type: string
           format: ''
         API_Use_Cases:
           description: 'No Description for API Use Cases '
-          example: API_Use_Cases_
+          example: API_Use_Cases
           pattern: ''
           type: string
           format: ''
         Version:
           description: No Description for Version
-          example: ''
+          example: Version
           pattern: ''
           type: string
           format: ''
         UsagePolicy:
           description: include_API_UsagePolicy
-          $ref: '#/components/schemas/UsagePolicy'
+          type: string
         API_Details:
           description: API_API_Details
           $ref: '#/components/schemas/API_Details'
         API_Category:
-          description: API_API_Category
+          description: API belongs to category
           type: array
           items:
             type: string
@@ -705,7 +808,6 @@ components:
           items:
             type: string
       required:
-      - id
       - API_Provider_Name
       - YAML
       - API_Name
@@ -717,31 +819,30 @@ components:
     API_Bundle:
       type: object
       description: "Set of Related APIs, defined in the Catalog, for industry specific\
-        \ usage\\u000b(HealthCare, Telecom, Manufacturing, Finance, \xE2\u20AC\xA6\
-        )"
+        \ usage\\u000b(HealthCare, Telecom, Manufacturing, Finance, \u2026)"
       example: API Bundle
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         Name:
           description: No Description for Name
-          example: ''
+          example: Name
           pattern: ''
           type: string
           format: ''
         Industry:
           description: No Description for Industry
-          example: ''
+          example: Industry
           pattern: ''
           type: string
           format: ''
         Use_Case:
           description: No Description for Use Case
-          example: ''
+          example: Use_Case
           pattern: ''
           type: string
           format: ''
@@ -749,7 +850,6 @@ components:
           description: 'Includes '
           type: string
       required:
-      - id
       - Name
       - Industry
       - Use_Case
@@ -758,28 +858,63 @@ components:
       description: No Description for UsagePolicy
       example: UsagePolicy
       properties:
-        VariableName:
-          description: No Description for VariableName
-          example: ''
+        PolicyName:
+          description: Enter Description Here
+          example: PolicyName
           pattern: ''
           type: string
           format: ''
-        VariableSemantic:
-          description: No Description for VariableSemantic
-          example: ''
+        RequestCount:
+          description: Enter Description Here
+          example: RequestCount
           pattern: ''
           type: string
           format: ''
-        VariableType:
-          description: No Description for VariableType
-          example: ''
+        DataVolumeValue:
+          description: Enter Description Here
+          example: DataVolumeValue
+          pattern: ''
+          type: string
+          format: ''
+        DataVolumeUnit:
+          description: Enter Description Here
+          example: DataVolumeUnit
+          pattern: ''
+          type: string
+          format: ''
+        Description:
+          description: Enter Description Here
+          example: Description
+          pattern: ''
+          type: string
+          format: ''
+        UnitTimeValue:
+          description: Enter Description Here
+          example: UnitTimeValue
+          pattern: ''
+          type: string
+          format: ''
+        UnitTimePeriod:
+          description: Enter Description Here
+          example: UnitTimePeriod
+          pattern: ''
+          type: string
+          format: ''
+        PolicyType:
+          description: Enter Description Here
+          example: PolicyType
           pattern: ''
           type: string
           format: ''
       required:
-      - VariableName
-      - VariableSemantic
-      - VariableType
+      - PolicyName
+      - RequestCount
+      - DataVolumeValue
+      - DataVolumeUnit
+      - Description
+      - UnitTimeValue
+      - UnitTimePeriod
+      - PolicyType
     API_Details:
       type: object
       description: No Description for API Details
@@ -787,79 +922,79 @@ components:
       properties:
         PublicAPI:
           description: Public API or Private API is False.
-          example: noExampleValue
+          example: PublicAPI
           pattern: ''
           type: boolean
           format: ''
         Verified:
           description: Enter Description Here
-          example: noExampleValue
+          example: Verified
           pattern: ''
           type: boolean
           format: ''
         Official:
           description: Enter Description Here
-          example: noExampleValue
+          example: Official
           pattern: ''
           type: boolean
           format: ''
         Popularity:
           description: Enter Description Here
-          example: noExampleValue
+          example: Popularity
           pattern: ''
           type: integer
           format: ''
         Latency:
           description: Enter Description Here
-          example: noExampleValue
+          example: Latency
           pattern: ''
           type: string
           format: ''
         ServiceLevel:
           description: Enter Description Here
-          example: noExampleValue
+          example: ServiceLevel
           pattern: ''
           type: string
           format: ''
         LastUpdate:
           description: Enter Description Here
-          example: noExampleValue
+          example: LastUpdate
           pattern: ''
           type: string
           format: ''
         Free:
           description: Free / Paid
-          example: noExampleValue
+          example: Free
           pattern: ''
           type: boolean
           format: ''
         ReadMe:
           description: Enter Description Here
-          example: noExampleValue
+          example: ReadMe
           pattern: ''
           type: string
           format: ''
         Logo:
           description: Enter Description Here
-          example: noExampleValue
+          example: Logo
           pattern: ''
           type: string
           format: ''
         Summary:
           description: Enter Description Here
-          example: noExampleValue
+          example: Summary
           pattern: ''
           type: string
           format: ''
         OverviewPage:
           description: Enter Description Here
-          example: noExampleValue
+          example: OverviewPage
           pattern: ''
           type: string
           format: ''
         FeaturesPage:
           description: Enter Description Here
-          example: noExampleValue
+          example: FeaturesPage
           pattern: ''
           type: string
           format: ''
@@ -884,30 +1019,29 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         CategoryName:
           description: Enter Description Here
-          example: noExampleValue
+          example: CategoryName
           pattern: ''
           type: string
           format: ''
         CategoryDescription:
           description: Enter Description Here
-          example: noExampleValue
+          example: CategoryDescription
           pattern: ''
           type: string
           format: ''
         CategoryLogo:
           description: Enter Description Here
-          example: noExampleValue
+          example: CategoryLogo
           pattern: ''
           type: string
           format: ''
       required:
-      - id
       - CategoryName
       - CategoryDescription
       - CategoryLogo
@@ -918,30 +1052,29 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         CollectionName:
           description: Enter Description Here
-          example: noExampleValue
+          example: CollectionName
           pattern: ''
           type: string
           format: ''
         CollectionDescription:
           description: Enter Description Here
-          example: noExampleValue
+          example: CollectionDescription
           pattern: ''
           type: string
           format: ''
         CollectionLogo:
           description: Collection Logo
-          example: noExampleValue
+          example: CollectionLogo
           pattern: ''
           type: string
           format: ''
       required:
-      - id
       - CollectionName
       - CollectionDescription
       - CollectionLogo
@@ -952,51 +1085,50 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         ProviderName:
           description: Enter Description Here
-          example: noExampleValue
+          example: ProviderName
           pattern: ''
           type: string
           format: ''
         ProviderDescription:
           description: Enter Description Here
-          example: noExampleValue
+          example: ProviderDescription
           pattern: ''
           type: string
           format: ''
-        PoviderIcon:
+        ProviderIcon:
           description: Collection Logo
-          example: noExampleValue
+          example: ProviderIcon
           pattern: ''
           type: string
           format: ''
         ProviderBigLogo:
           description: Enter Description Here
-          example: noExampleValue
+          example: ProviderBigLogo
           pattern: ''
           type: string
           format: ''
         Contact:
           description: Enter Description Here
-          example: noExampleValue
+          example: Contact
           pattern: ''
           type: string
           format: ''
         WebSite:
           description: Enter Description Here
-          example: noExampleValue
+          example: WebSite
           pattern: ''
           type: string
           format: ''
       required:
-      - id
       - ProviderName
       - ProviderDescription
-      - PoviderIcon
+      - ProviderIcon
       - ProviderBigLogo
       - Contact
       - WebSite
@@ -1007,36 +1139,35 @@ components:
       properties:
         id:
           description: Enter Description Here
-          example: noExampleValue
+          example: id
           pattern: ''
           type: string
           format: ''
         ArticleName:
           description: Enter Description Here
-          example: noExampleValue
+          example: ArticleName
           pattern: ''
           type: string
           format: ''
         ArticleDescription:
           description: Enter Description Here
-          example: noExampleValue
+          example: ArticleDescription
           pattern: ''
           type: string
           format: ''
         ArticlePage:
           description: Enter Description Here
-          example: noExampleValue
+          example: ArticlePage
           pattern: ''
           type: string
           format: ''
         ArticleLogo:
           description: Enter Description Here
-          example: noExampleValue
+          example: ArticleLogo
           pattern: ''
           type: string
           format: ''
       required:
-      - id
       - ArticleName
       - ArticleDescription
       - ArticlePage

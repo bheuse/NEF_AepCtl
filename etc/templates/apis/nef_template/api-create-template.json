@@ -23,7 +23,7 @@
   "tags": [
   ],
   "policies": [
-    "TestPolicy1"
+    "Gold"
   ],
   "apiThrottlingPolicy": "Unlimited",
   "authorizationHeader": "Authorization",

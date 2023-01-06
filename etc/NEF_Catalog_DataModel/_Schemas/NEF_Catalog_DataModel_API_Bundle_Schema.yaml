@@ -1,14 +1,17 @@
-$id: https://amdocs.com/schemas/nef/API_Bundle.json
+$id#: https://amdocs.com/schemas/nef/API_Bundle.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: API_Bundle
 description: "Set of Related APIs, defined in the Catalog, for industry specific usage\\\
-    u000b(HealthCare, Telecom, Manufacturing, Finance, \xE2\u20AC\xA6)"
+    u000b(HealthCare, Telecom, Manufacturing, Finance, \u2026)"
 example: API Bundle
 name: API_Bundle
 properties:
     API:
-        -$ref: NEF_Catalog_DataModel_API_Schema.json
+        $ref#: NEF_Catalog_DataModel_API_Schema.json
+        cardinality: OneToOne
         description: 'Includes '
+        mandatory: y
+        name: include_API_Bundle_API
         type: string
     Industry:
         description: No Description for Industry
@@ -41,13 +44,12 @@ properties:
         description: Enter Description Here
         example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - Name
 - Industry
 - Use_Case

@@ -137,67 +137,39 @@ $defs:
         - OverviewPage
         - FeaturesPage
         type: object
-    UsagePolicy:
-        NAME: UsagePolicy
-        description: No Description for UsagePolicy
-        example: UsagePolicy
-        name: UsagePolicy
-        properties:
-            VariableName:
-                description: No Description for VariableName
-                example: VariableName
-                format: ''
-                mandatory: y
-                name: VariableName
-                pattern: ''
-                precision: '0'
-                type: string
-            VariableSemantic:
-                description: No Description for VariableSemantic
-                example: VariableSemantic
-                format: ''
-                mandatory: y
-                name: VariableSemantic
-                pattern: ''
-                precision: '0'
-                type: string
-            VariableType:
-                description: No Description for VariableType
-                example: VariableType
-                format: ''
-                mandatory: y
-                name: VariableType
-                pattern: ''
-                precision: '0'
-                type: string
-        required:
-        - VariableName
-        - VariableSemantic
-        - VariableType
-        type: object
-$id: https://amdocs.com/schemas/nef/API.json
+$id#: https://amdocs.com/schemas/nef/API.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: API
-description: 'API : A Set of related API Methods (YAML)'
+description: API_API_Details
 example: API
-name: API
+mandatory: y
+name: API_API_Details
 properties:
     API_Article:
         description: API_API_Article
         items:
-            -$ref: NEF_Catalog_DataModel_API_Article_Schema.json
+            $ref#: NEF_Catalog_DataModel_API_Article_Schema.json
+            description: desc
+            mandatory: n
+            name: API_API_Article
             type: string
         type: array
     API_Category:
-        description: API_API_Category
+        description: API belongs to category
         items:
-            -$ref: NEF_Catalog_DataModel_API_Category_Schema.json
+            $ref#: NEF_Catalog_DataModel_API_Category_Schema.json
+            description: desc
+            mandatory: y
+            name: API_API_Category
             type: string
         type: array
     API_Collection:
         description: API_API_Collection
         items:
-            -$ref: NEF_Catalog_DataModel_API_Collection_Schema.json
+            $ref#: NEF_Catalog_DataModel_API_Collection_Schema.json
+            description: desc
+            mandatory: n
+            name: API_API_Collection
             type: string
         type: array
     API_Description:
@@ -231,8 +203,11 @@ properties:
         precision: '0'
         type: string
     API_Provider:
-        -$ref: NEF_Catalog_DataModel_API_Provider_Schema.json
+        $ref#: NEF_Catalog_DataModel_API_Provider_Schema.json
+        cardinality: OneToOne
         description: 'Provides '
+        mandatory: y
+        name: API_API__Provider_
         type: string
     API_Provider_Name:
         description: Enter Description Here
@@ -254,8 +229,8 @@ properties:
         type: string
     Charging_Policies:
         description: "Charging Policies that can be applied on this API.API : Charging\
-            \ Policy Profile \xE2\u20AC\u201C Charge access to APIs for API Consumers:\n\
-            Monthly fee\nPay per use\nFree \xE2\u20AC\xA6"
+            \ Policy Profile \u2013 Charge access to APIs for API Consumers:\nMonthly\
+            \ fee\nPay per use\nFree \u2026"
         example: Charging_Policies
         format: ''
         mandatory: y
@@ -264,8 +239,12 @@ properties:
         precision: '0'
         type: string
     UsagePolicy:
-        $ref: '#/$defs/UsagePolicy'
+        $ref#: NEF_Catalog_DataModel_UsagePolicy_Schema.json
+        cardinality: OneToOne
         description: include_API_UsagePolicy
+        mandatory: y
+        name: include_API_UsagePolicy
+        type: string
     Version:
         description: No Description for Version
         example: Version

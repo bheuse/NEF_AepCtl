@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "AccountName": {
          "name": "AccountName",
          "description": "Account Name",
-         "example": "",
+         "example": "AccountName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "AccountDescription": {
          "name": "AccountDescription",
          "description": "Account Description",
-         "example": "",
+         "example": "AccountDescription",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "AccountState": {
          "name": "AccountState",
          "description": "Account State",
-         "example": "noExampleValue",
+         "example": "AccountState",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,7 @@
       "AccountCreationDate": {
          "name": "AccountCreationDate",
          "description": "Account creation date.",
-         "example": "",
+         "example": "AccountCreationDate",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -57,7 +57,7 @@
       "CompanyName": {
          "name": "CompanyName",
          "description": "Company Name",
-         "example": "NXP",
+         "example": "CompanyName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -67,7 +67,7 @@
       "CompanySize": {
          "name": "CompanySize",
          "description": "Company Size",
-         "example": "100-199",
+         "example": "CompanySize",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -77,30 +77,41 @@
       "Industry": {
          "description": "Account_Industry",
          "$ref": "#/components/schemas/Industry",
-         "-$ref": "NEF_ApplicationUserProfile_DataModel_Industry_Schema.json",
-         "type": "string"
+         "$ref#": "NEF_ApplicationUserProfile_DataModel_Industry_Schema.json",
+         "type": "string",
+         "name": "Account_Industry",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       },
       "Service": {
          "description": "Has Teams Partners",
          "$ref": "#/components/schemas/Service",
-         "-$ref": "NEF_ApplicationUserProfile_DataModel_Service_Schema.json",
-         "type": "string"
+         "$ref#": "NEF_ApplicationUserProfile_DataModel_Service_Schema.json",
+         "type": "string",
+         "name": "Account_Organization",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       },
       "UseCase": {
          "description": "Account_UseCase",
          "$ref": "#/components/schemas/UseCase",
-         "-$ref": "NEF_ApplicationUserProfile_DataModel_UseCase_Schema.json",
-         "type": "string"
+         "$ref#": "NEF_ApplicationUserProfile_DataModel_UseCase_Schema.json",
+         "type": "string",
+         "name": "Account_UseCase",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       },
       "Contact": {
          "description": "Account_Contact",
          "type": "string",
-         "-$ref": "NEF_ApplicationUserProfile_DataModel_Contact_Schema.json"
+         "$ref#": "NEF_ApplicationUserProfile_DataModel_Contact_Schema.json",
+         "name": "Account_Contact",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       }
    },
    "NAME": "Account",
    "required": [
-      "id",
       "AccountName",
       "AccountDescription",
       "AccountState",
@@ -110,6 +121,6 @@
       "Industry"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/Account.json",
+   "$id#": "https://amdocs.com/schemas/nef/Account.json",
    "title": "Schema for Account"
 }

@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "UserEmail": {
          "name": "UserEmail",
          "description": "User Email",
-         "example": "eva.kumar@nxp.com",
+         "example": "UserEmail",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "UserName": {
          "name": "UserName",
          "description": "User Name",
-         "example": "Kumar",
+         "example": "UserName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "UserFirstName": {
          "name": "UserFirstName",
          "description": "User Firstname",
-         "example": "Eva",
+         "example": "UserFirstName",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,7 @@
       "UserPicture": {
          "name": "UserPicture",
          "description": "User Picture",
-         "example": "noExampleValue",
+         "example": "UserPicture",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -57,7 +57,7 @@
       "UserPhoneNumber": {
          "name": "UserPhoneNumber",
          "description": "User Phone Number",
-         "example": "eva.kumar@nxp.com",
+         "example": "UserPhoneNumber",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -67,7 +67,7 @@
       "UserJobRole": {
          "name": "UserJobRole",
          "description": "User Job Role",
-         "example": "",
+         "example": "UserJobRole",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -77,7 +77,7 @@
       "UserPassword": {
          "name": "UserPassword",
          "description": "User Password",
-         "example": "eva.kumar@nxp.com",
+         "example": "UserPassword",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -87,7 +87,7 @@
       "UserState": {
          "name": "UserState",
          "description": "User State",
-         "example": "noExampleValue",
+         "example": "UserState",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -97,7 +97,7 @@
       "UserCreationDate": {
          "name": "UserCreationDate",
          "description": "User creation date.",
-         "example": "",
+         "example": "UserCreationDate",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -107,7 +107,7 @@
       "UserModificationDate": {
          "name": "UserModificationDate",
          "description": "User modification date.",
-         "example": "",
+         "example": "UserModificationDate",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -117,7 +117,7 @@
       "UserLastLoginDate": {
          "name": "UserLastLoginDate",
          "description": "User last login date.",
-         "example": "",
+         "example": "UserLastLoginDate",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -127,7 +127,7 @@
       "UserTermOfUseDate": {
          "name": "UserTermOfUseDate",
          "description": "The date the user has agreed on Term of use.",
-         "example": "noExampleValue",
+         "example": "UserTermOfUseDate",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -137,12 +137,14 @@
       "Role": {
          "description": "Has role ",
          "type": "string",
-         "-$ref": "NEF_ApplicationUserProfile_DataModel_Role_Schema.json"
+         "$ref#": "NEF_ApplicationUserProfile_DataModel_Role_Schema.json",
+         "name": "Contact_v",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       }
    },
    "NAME": "Contact",
    "required": [
-      "id",
       "UserEmail",
       "UserName",
       "UserFirstName",
@@ -157,6 +159,6 @@
       "UserTermOfUseDate"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/Contact.json",
+   "$id#": "https://amdocs.com/schemas/nef/Contact.json",
    "title": "Schema for Contact"
 }

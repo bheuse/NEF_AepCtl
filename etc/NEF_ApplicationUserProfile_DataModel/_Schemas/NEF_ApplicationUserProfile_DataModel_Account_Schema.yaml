@@ -1,4 +1,4 @@
-$id: https://amdocs.com/schemas/nef/Account.json
+$id#: https://amdocs.com/schemas/nef/Account.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: Account
 description: No Description for Account
@@ -7,7 +7,7 @@ name: Account
 properties:
     AccountCreationDate:
         description: Account creation date.
-        example: ''
+        example: AccountCreationDate
         format: ''
         mandatory: y
         name: AccountCreationDate
@@ -16,7 +16,7 @@ properties:
         type: string
     AccountDescription:
         description: Account Description
-        example: ''
+        example: AccountDescription
         format: ''
         mandatory: y
         name: AccountDescription
@@ -25,7 +25,7 @@ properties:
         type: string
     AccountName:
         description: Account Name
-        example: ''
+        example: AccountName
         format: ''
         mandatory: y
         name: AccountName
@@ -34,7 +34,7 @@ properties:
         type: string
     AccountState:
         description: Account State
-        example: noExampleValue
+        example: AccountState
         format: ''
         mandatory: y
         name: AccountState
@@ -43,7 +43,7 @@ properties:
         type: string
     CompanyName:
         description: Company Name
-        example: NXP
+        example: CompanyName
         format: ''
         mandatory: y
         name: CompanyName
@@ -52,7 +52,7 @@ properties:
         type: string
     CompanySize:
         description: Company Size
-        example: 100-199
+        example: CompanySize
         format: ''
         mandatory: y
         name: CompanySize
@@ -60,35 +60,46 @@ properties:
         precision: '0'
         type: string
     Contact:
-        -$ref: NEF_ApplicationUserProfile_DataModel_Contact_Schema.json
+        $ref#: NEF_ApplicationUserProfile_DataModel_Contact_Schema.json
+        cardinality: OneToOne
         description: Account_Contact
+        mandatory: y
+        name: Account_Contact
         type: string
     Industry:
         $ref: '#/components/schemas/Industry'
-        -$ref: NEF_ApplicationUserProfile_DataModel_Industry_Schema.json
+        $ref#: NEF_ApplicationUserProfile_DataModel_Industry_Schema.json
+        cardinality: OneToOne
         description: Account_Industry
+        mandatory: y
+        name: Account_Industry
         type: string
     Service:
         $ref: '#/components/schemas/Service'
-        -$ref: NEF_ApplicationUserProfile_DataModel_Service_Schema.json
+        $ref#: NEF_ApplicationUserProfile_DataModel_Service_Schema.json
+        cardinality: OneToOne
         description: Has Teams Partners
+        mandatory: y
+        name: Account_Organization
         type: string
     UseCase:
         $ref: '#/components/schemas/UseCase'
-        -$ref: NEF_ApplicationUserProfile_DataModel_UseCase_Schema.json
+        $ref#: NEF_ApplicationUserProfile_DataModel_UseCase_Schema.json
+        cardinality: OneToOne
         description: Account_UseCase
+        mandatory: y
+        name: Account_UseCase
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - AccountName
 - AccountDescription
 - AccountState

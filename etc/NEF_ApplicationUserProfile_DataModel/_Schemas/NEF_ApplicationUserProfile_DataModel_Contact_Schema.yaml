@@ -1,4 +1,4 @@
-$id: https://amdocs.com/schemas/nef/Contact.json
+$id#: https://amdocs.com/schemas/nef/Contact.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: Contact
 description: Contact and Credential Details
@@ -6,12 +6,15 @@ example: Contact
 name: Contact
 properties:
     Role:
-        -$ref: NEF_ApplicationUserProfile_DataModel_Role_Schema.json
+        $ref#: NEF_ApplicationUserProfile_DataModel_Role_Schema.json
+        cardinality: OneToOne
         description: 'Has role '
+        mandatory: y
+        name: Contact_v
         type: string
     UserCreationDate:
         description: User creation date.
-        example: ''
+        example: UserCreationDate
         format: ''
         mandatory: y
         name: UserCreationDate
@@ -20,7 +23,7 @@ properties:
         type: string
     UserEmail:
         description: User Email
-        example: eva.kumar@nxp.com
+        example: UserEmail
         format: ''
         mandatory: y
         name: UserEmail
@@ -29,7 +32,7 @@ properties:
         type: string
     UserFirstName:
         description: User Firstname
-        example: Eva
+        example: UserFirstName
         format: ''
         mandatory: y
         name: UserFirstName
@@ -38,7 +41,7 @@ properties:
         type: string
     UserJobRole:
         description: User Job Role
-        example: ''
+        example: UserJobRole
         format: ''
         mandatory: y
         name: UserJobRole
@@ -47,7 +50,7 @@ properties:
         type: string
     UserLastLoginDate:
         description: User last login date.
-        example: ''
+        example: UserLastLoginDate
         format: ''
         mandatory: y
         name: UserLastLoginDate
@@ -56,7 +59,7 @@ properties:
         type: string
     UserModificationDate:
         description: User modification date.
-        example: ''
+        example: UserModificationDate
         format: ''
         mandatory: y
         name: UserModificationDate
@@ -65,7 +68,7 @@ properties:
         type: string
     UserName:
         description: User Name
-        example: Kumar
+        example: UserName
         format: ''
         mandatory: y
         name: UserName
@@ -74,7 +77,7 @@ properties:
         type: string
     UserPassword:
         description: User Password
-        example: eva.kumar@nxp.com
+        example: UserPassword
         format: ''
         mandatory: y
         name: UserPassword
@@ -83,7 +86,7 @@ properties:
         type: string
     UserPhoneNumber:
         description: User Phone Number
-        example: eva.kumar@nxp.com
+        example: UserPhoneNumber
         format: ''
         mandatory: y
         name: UserPhoneNumber
@@ -92,7 +95,7 @@ properties:
         type: string
     UserPicture:
         description: User Picture
-        example: noExampleValue
+        example: UserPicture
         format: ''
         mandatory: y
         name: UserPicture
@@ -101,7 +104,7 @@ properties:
         type: string
     UserState:
         description: User State
-        example: noExampleValue
+        example: UserState
         format: ''
         mandatory: y
         name: UserState
@@ -110,7 +113,7 @@ properties:
         type: string
     UserTermOfUseDate:
         description: The date the user has agreed on Term of use.
-        example: noExampleValue
+        example: UserTermOfUseDate
         format: ''
         mandatory: y
         name: UserTermOfUseDate
@@ -119,15 +122,14 @@ properties:
         type: string
     id:
         description: Enter Description Here
-        example: noExampleValue
+        example: id
         format: ''
-        mandatory: y
+        mandatory: n
         name: id
         pattern: ''
         precision: '0'
         type: string
 required:
-- id
 - UserEmail
 - UserName
 - UserFirstName

@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "IndustryPopularity": {
          "name": "IndustryPopularity",
          "description": "Industry Popularity",
-         "example": "noExampleValue",
+         "example": "IndustryPopularity",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "IndustryInfo": {
          "name": "IndustryInfo",
          "description": "Industry Info",
-         "example": "noExampleValue",
+         "example": "IndustryInfo",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "IndustryLogo": {
          "name": "IndustryLogo",
          "description": "Industry Logo",
-         "example": "noExampleValue",
+         "example": "IndustryLogo",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,7 @@
       "IndustryCategory": {
          "name": "IndustryCategory",
          "description": "Industry Category",
-         "example": "noExampleValue",
+         "example": "IndustryCategory",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -57,13 +57,12 @@
    },
    "NAME": "Industry",
    "required": [
-      "id",
       "IndustryPopularity",
       "IndustryInfo",
       "IndustryLogo",
       "IndustryCategory"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/Industry.json",
+   "$id#": "https://amdocs.com/schemas/nef/Industry.json",
    "title": "Schema for Industry"
 }

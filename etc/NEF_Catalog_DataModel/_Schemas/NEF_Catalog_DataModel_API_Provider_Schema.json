@@ -85,6 +85,6 @@
       "WebSite"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/API_Provider.json",
+   "$id#": "https://amdocs.com/schemas/nef/API_Provider.json",
    "title": "Schema for API_Provider"
 }

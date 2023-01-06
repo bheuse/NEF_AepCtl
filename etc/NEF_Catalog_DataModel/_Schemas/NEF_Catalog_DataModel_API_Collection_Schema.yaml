@@ -1,4 +1,4 @@
-$id: https://amdocs.com/schemas/nef/API_Collection.json
+$id#: https://amdocs.com/schemas/nef/API_Collection.json
 $schema: http://json-schema.org/draft-07/schema
 NAME: API_Collection
 description: No Description for API Collection

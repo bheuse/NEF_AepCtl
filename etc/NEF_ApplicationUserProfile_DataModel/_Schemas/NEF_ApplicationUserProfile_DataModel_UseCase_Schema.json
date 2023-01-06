@@ -7,8 +7,8 @@
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "UseCasePopularity": {
          "name": "UseCasePopularity",
          "description": "UseCase Popularity",
-         "example": "noExampleValue",
+         "example": "UseCasePopularity",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "UseCaseInfo": {
          "name": "UseCaseInfo",
          "description": "Use Case Info",
-         "example": "noExampleValue",
+         "example": "UseCaseInfo",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "UseCaseLogo": {
          "name": "UseCaseLogo",
          "description": "Use Case Logo",
-         "example": "noExampleValue",
+         "example": "UseCaseLogo",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,7 @@
       "UseCaseCategory": {
          "name": "UseCaseCategory",
          "description": "UseCase Category",
-         "example": "noExampleValue",
+         "example": "UseCaseCategory",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -57,13 +57,12 @@
    },
    "NAME": "UseCase",
    "required": [
-      "id",
       "UseCasePopularity",
       "UseCaseInfo",
       "UseCaseLogo",
       "UseCaseCategory"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/UseCase.json",
+   "$id#": "https://amdocs.com/schemas/nef/UseCase.json",
    "title": "Schema for UseCase"
 }

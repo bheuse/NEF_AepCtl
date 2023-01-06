@@ -1,14 +1,14 @@
 {
-   "name": "Service",
+   "name": "Organization_-_Services_AF_API_Consumers",
    "type": "object",
-   "description": "No Description for Service",
+   "description": "Provides Access to ",
    "example": "Service",
    "properties": {
       "id": {
          "name": "id",
          "description": "Enter Description Here",
-         "example": "noExampleValue",
-         "mandatory": "y",
+         "example": "id",
+         "mandatory": "n",
          "pattern": "",
          "type": "string",
          "format": "",
@@ -17,7 +17,7 @@
       "Name": {
          "name": "Name",
          "description": "No Description for Name",
-         "example": "",
+         "example": "Name",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -27,7 +27,7 @@
       "Industry": {
          "name": "Industry",
          "description": "No Description for Industry",
-         "example": "",
+         "example": "Industry",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -37,7 +37,7 @@
       "UseCase": {
          "name": "UseCase",
          "description": "No Description for UseCase",
-         "example": "",
+         "example": "UseCase",
          "mandatory": "y",
          "pattern": "",
          "type": "string",
@@ -47,7 +47,7 @@
       "VolumeOrg": {
          "name": "VolumeOrg",
          "description": "No Description for VolumeOrg",
-         "example": "Column_1_",
+         "example": "VolumeOrg",
          "mandatory": "n",
          "pattern": "",
          "type": "string",
@@ -55,8 +55,13 @@
          "precision": "0"
       },
       "API_Subscription": {
-         "description": "Use ",
-         "$ref": "#/$defs/API_Subscription"
+         "description": "Subscribe to Use",
+         "$ref": "#/components/schemas/API_Subscription",
+         "$ref#": "NEF_ApplicationUserProfile_DataModel_API_Subscription_Schema.json",
+         "type": "string",
+         "name": "Organization_-_Services_API_Set",
+         "cardinality": "OneToOne",
+         "mandatory": "y"
       },
       "API_Consumers": {
          "description": "Provides Access to ",
@@ -65,13 +70,12 @@
    },
    "NAME": "Service",
    "required": [
-      "id",
       "Name",
       "Industry",
       "UseCase"
    ],
    "$schema": "http://json-schema.org/draft-07/schema",
-   "$id": "https://amdocs.com/schemas/nef/Service.json",
+   "$id#": "https://amdocs.com/schemas/nef/Service.json",
    "title": "Schema for Service",
    "$defs": {
       "API_Consumers": {
@@ -83,7 +87,7 @@
             "ConsumerName": {
                "name": "ConsumerName",
                "description": "No Description for ConsumerName",
-               "example": "",
+               "example": "ConsumerName",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -93,7 +97,7 @@
             "Contact_Details": {
                "name": "Contact_Details",
                "description": "No Description for Contact Details",
-               "example": "",
+               "example": "Contact_Details",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -103,7 +107,7 @@
             "NEF_Credentials": {
                "name": "NEF_Credentials",
                "description": "No Description for NEF Credentials ",
-               "example": "NEF_Credentials_",
+               "example": "NEF_Credentials",
                "mandatory": "y",
                "pattern": "",
                "type": "string",
@@ -117,28 +121,7 @@
             "Contact_Details",
             "NEF_Credentials"
          ]
-      },
-      "API_Subscription": {
-         "name": "API_Subscription",
-         "type": "object",
-         "description": "API Subscription -",
-         "example": "API Subscription",
-         "properties": {
-            "TBC": {
-               "name": "TBC",
-               "description": "No Description for TBC",
-               "example": "",
-               "mandatory": "y",
-               "pattern": "",
-               "type": "string",
-               "format": "",
-               "precision": "0"
-            }
-         },
-         "NAME": "API_Subscription",
-         "required": [
-            "TBC"
-         ]
       }
-   }
+   },
+   "mandatory": "y"
 }
