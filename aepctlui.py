@@ -1411,6 +1411,6 @@ class MainGUI(threading.Thread):
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
-    aepctl.AepCtl.init()
+    aep.AepCtl.init()
     MainGUI().run(debug=True)
 

@@ -682,6 +682,7 @@ class FileDataStore(DataStoreInterface):
     def __init__(self, directory=None, entity_type="articles", name_att=None, desc_att=None, id_att=None, service=None, schema=None):
         global STORE_DIRECTORY
         if (not directory) : directory = STORE_DIRECTORY
+        self.cache       = None
         DataStoreInterface.__init__(self, entity_type=entity_type, name_att=name_att, desc_att=desc_att, id_att=id_att, service=service, schema=schema)
         self.cache       = self.loadFile(directory=directory, save=False)
 
@@ -3293,7 +3294,7 @@ WSO2_RESSOURCES = APIM_RESSOURCES + DEVM_RESSOURCES + ADM_RESSOURCES
 WSO2_RESSOURCES = StoreManager().get_ressources("wso2")
 
 AEPCTL_COMMANDS_DISPLAY   = [ "HELP",      "VERBOSE",      "DS", "FS", "WS", "TMF", "ANME", "EXIT", "UI",      "BROWSER",       "COMMANDS"        , "BATCH" ]
-AEPCTL_COMMANDS           = [ "HELP", "H", "VERBOSE", "V", "DS", "FS", "WS", "TMF", "ANME", "EXIT", "UI", "U", "BROWSER", "BR", "COMMANDS", "CMDS", "BATCH", "B"  ]
+AEPCTL_COMMANDS           = [ "HELP", "H", "VERBOSE", "V", "DS", "FS", "WS", "TMF", "ANME", "EXIT", "UI", "U", "BROWSER", "BR", "COMMANDS", "CMDS", "BATCH", "B", "LOAD", "L"  ]
 AEPCTL_RESSOURCES_DISPLAY = [ "CONFIG"]
 AEPCTL_RESSOURCES         = [ "CONFIG", "CFG", "C" ]
 
@@ -4238,13 +4239,28 @@ class AepCtl:
     @staticmethod
     def handle_command(arguments):
 
-        resource = arguments["RESSOURCE"].upper() if (("RESSOURCE" in arguments) and (arguments["RESSOURCE"])) else ""
-        command  = arguments["COMMAND"].upper()   if (("COMMAND" in arguments)   and (arguments["COMMAND"]))   else ""
+        logger.info("1")
+        logger.info("SERVICE   = " + str(arguments["SERVICE"]   if (("SERVICE" in arguments) and (arguments["SERVICE"])) else ""))
+        logger.info("RESSOURCE = " + str(arguments["RESSOURCE"] if (("RESSOURCE" in arguments) and (arguments["RESSOURCE"])) else ""))
+        logger.info("COMMAND   = " + str(arguments["COMMAND"]   if (("COMMAND" in arguments) and (arguments["COMMAND"])) else ""))
+        logger.info("IDNAME    = " + str(arguments["IDNAME"]    if (("IDNAME" in arguments) and (arguments["IDNAME"])) else ""))
+        logger.info("PAYLOAD   = " + str(arguments["PAYLOAD"]   if (("PAYLOAD" in arguments) and (arguments["PAYLOAD"])) else ""))
+
+        resource = arguments["RESSOURCE"]    if (("RESSOURCE" in arguments) and (arguments["RESSOURCE"])) else ""   # .upper()
+        command  = arguments["COMMAND"]   if (("COMMAND" in arguments)   and (arguments["COMMAND"]))   else ""   # .upper()
         idName   = arguments["ID"]                if (("ID" in arguments)        and (arguments["ID"]))        else ""
-        service  = arguments["SERVICE"].upper()   if (("SERVICE" in arguments)   and (arguments["SERVICE"]))   else "REST"
+        service  = arguments["SERVICE"]   if (("SERVICE" in arguments)   and (arguments["SERVICE"]))   else "REST"   # .upper()
         entry    = arguments["PAYLOAD"]           if (("PAYLOAD" in arguments)   and (arguments["PAYLOAD"]))   else idName
         entry    = re.sub("\\\"", '"', entry)
         arguments["PAYLOAD"] = entry
+
+        logger.info("2")
+        logger.info("SERVICE   = " + str(service))
+        logger.info("RESSOURCE = " + str(resource))
+        logger.info("COMMAND   = " + str(command))
+        logger.info("IDNAME    = " + str(idName))
+        logger.info("PAYLOAD   = " + str(entry))
+
         if (    (resource.upper() in AEPCTL_COMMANDS) or
                 (command.upper()  in AEP_RESSOURCES) or
                 (command.upper()  in WSO2_RESSOURCES)):
@@ -4254,6 +4270,13 @@ class AepCtl:
             logger.info("Swapped Resource=" + str(resource) + " Command=" + str(command))
         resource = resource.strip()
         command  = command.strip()
+
+        logger.info("3")
+        logger.info("SERVICE   = " + str(service))
+        logger.info("RESSOURCE = " + str(resource))
+        logger.info("COMMAND   = " + str(command))
+        logger.info("IDNAME    = " + str(idName))
+        logger.info("PAYLOAD   = " + str(entry))
 
         arguments["RESSOURCE"] = resource
         arguments["COMMAND"]   = command
@@ -4271,6 +4294,7 @@ class AepCtl:
             command  = resource
             resource = "all"
 
+        logger.info("4")
         logger.info("SERVICE   = " + str(service))
         logger.info("RESSOURCE = " + str(resource))
         logger.info("COMMAND   = " + str(command))

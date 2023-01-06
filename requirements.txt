@@ -50,4 +50,7 @@ coverage
 fastapi
 uvicorn[standard]
 markdown
+termcolor
+tk
+PySimpleGUI
 # shutil
