@@ -15,7 +15,6 @@ import Util_GUI as utg
 from threading import Thread
 import sys
 
-import aepctl
 import aepctl as aep
 
 logging.basicConfig(format='%(levelname)s:%(name)s:%(message)s', level=logging.INFO)
@@ -1405,8 +1404,7 @@ class MainGUI(threading.Thread):
 
     @staticmethod
     def start_aepctlui() -> str :
-        thread = Thread(target=MainGUI().run())
-        thread.setDaemon(True)
+        thread = Thread(target=MainGUI().run(),daemon = True)
         thread.start()
         return "aepctlui"
 

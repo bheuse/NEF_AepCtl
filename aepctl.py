@@ -32,7 +32,7 @@ from prompt_toolkit.completion import NestedCompleter
 from prompt_toolkit.completion import PathCompleter
 # from prompt_toolkit.contrib.completers.system import SystemCompleter
 import aepctlui
-import eapctlms
+import aepctlms
 
 ###
 ### Logging
@@ -2702,7 +2702,7 @@ class FactoryLoader:
             pathname = ut.get_cwd_directory()
         for key in entry:
             val = entry[key]
-            # Handle 64 encoded string @b64file:<filenanme>:<b64 payload>
+            # Handle 64 encoded string @b64file:<filename>:<b64 payload>
             if isinstance(val, str) and val.startswith("@b64file:"):
                 b64data  = re.sub("@b64file:.*:", "", val)
                 no_data = True if (b64data == "") else False
@@ -3270,7 +3270,9 @@ class StoreManager():
 LOCAL_SERVICE     = ["LOCAL", "FILES", "FS"]
 DATASTORE_SERVICE = ["AEP", "REST", "DS"]
 WSO2_SERVICE      = ["WSO2", "APIG", "WS", "APIM"]
-SERVICES          = LOCAL_SERVICE + DATASTORE_SERVICE + WSO2_SERVICE
+TMF_SERVICE       = ["TMF"]
+ANME_SERVICE      = ["ANME"]
+SERVICES          = LOCAL_SERVICE + DATASTORE_SERVICE + WSO2_SERVICE + TMF_SERVICE + ANME_SERVICE
 
 #                          Providers    Articles    Categories    Collections    APIs    ApiBundles    UsagePolicies
 AEP_CATALOG_RESSOURCES = ["PROVIDERS", "ARTICLES", "CATEGORIES", "COLLECTIONS", "APIS", "APIBUNDLES", "USAGEPOLICIES"]
@@ -3281,17 +3283,17 @@ AEP_APPLICATION_USER_PROFILES_RESSOURCES = StoreManager().get_ressources("userpr
 
 AEP_RESSOURCES = AEP_CATALOG_RESSOURCES + AEP_APPLICATION_USER_PROFILES_RESSOURCES
 
-#                WS_Apis WS_Policies WS_Categories  ### to do: PRODUCTS
+#                  WS_Apis  WS_Policies WS_Categories  ### to do: PRODUCTS
 APIM_RESSOURCES = ["APIS", "POLICIES", "CATEGORIES", "PRODUCTS"]
-#                WS_Applications  ### to do: SUBSCRIPTIONS
+#                   WS_Applications  ### to do: SUBSCRIPTIONS
 DEVM_RESSOURCES = ["APPLICATIONS", "SUBSCRIPTIONS"]
-#                WS_Users WS_Settings
+#                   WS_Users WS_Settings
 ADM_RESSOURCES  = ["USERS", "SETTINGS"]
 WSO2_RESSOURCES = APIM_RESSOURCES + DEVM_RESSOURCES + ADM_RESSOURCES
 WSO2_RESSOURCES = StoreManager().get_ressources("wso2")
 
-AEPCTL_COMMANDS_DISPLAY   = [ "HELP",      "VERBOSE",      "DS", "FS", "WS", "EXIT", "UI",      "BROWSER",       "COMMANDS"        , "BATCH" ]
-AEPCTL_COMMANDS           = [ "HELP", "H", "VERBOSE", "V", "DS", "FS", "WS", "EXIT", "UI", "U", "BROWSER", "BR", "COMMANDS", "CMDS", "BATCH", "B"  ]
+AEPCTL_COMMANDS_DISPLAY   = [ "HELP",      "VERBOSE",      "DS", "FS", "WS", "TMF", "ANME", "EXIT", "UI",      "BROWSER",       "COMMANDS"        , "BATCH" ]
+AEPCTL_COMMANDS           = [ "HELP", "H", "VERBOSE", "V", "DS", "FS", "WS", "TMF", "ANME", "EXIT", "UI", "U", "BROWSER", "BR", "COMMANDS", "CMDS", "BATCH", "B"  ]
 AEPCTL_RESSOURCES_DISPLAY = [ "CONFIG"]
 AEPCTL_RESSOURCES         = [ "CONFIG", "CFG", "C" ]
 
@@ -3367,6 +3369,7 @@ AEPCTL_RESSOURCES         = [ "CONFIG", "CFG", "C" ]
 class AepCtl:
 
     ONCE_UI = False
+    ONCE_MS = False
 
     @staticmethod
     def error(resource: str, command: str, message: str, help_text: str = None) -> str:
@@ -3526,6 +3529,16 @@ class AepCtl:
             return aepctlui.start_aepctlui()
 
     @staticmethod
+    def aepctlms():
+        if (AepCtl.ONCE_MS):
+            ut.Term.print_red("aepctlms only once - sorry (")
+            return None
+        else:
+            AepCtl.ONCE_MS = True
+            ut.Term.print_yellow("aepctlms")
+            return aepctlms.start_aepctlms()
+
+    @staticmethod
     def display_help():
         console = Console()
         with open("aepctl.md", "r+") as help_file:
@@ -3545,6 +3558,25 @@ class AepCtl:
         new_config = ut.ObjectReader.readSimpleObject(config)
         ut.save_Configuration(None, new_config)
         ut.Term.print_green(ut.to_json(new_config))
+        return new_config
+
+    @staticmethod
+    def set_config(key : str, value : str) -> str:
+        config = str(ut.getCurrentConfiguration())
+        new_config = ut.ObjectReader.readSimpleObject(config)
+        new_config[key] = value
+        ut.save_Configuration(None, new_config)
+        ut.Term.print_green(ut.to_json(new_config))
+        return new_config
+
+    @staticmethod
+    def set_config_key(key : str, value : str = None) -> str:
+        new_config = ut.getCurrentConfiguration().getAsData()
+        if (value) :
+            new_config[key] = value
+        else:
+            new_config = ut.ObjectReader.readSimpleObjectAttribute(new_config, key)
+        ut.save_Configuration(None, new_config)
         return new_config
 
     @staticmethod
@@ -3579,6 +3611,10 @@ class AepCtl:
             "get"     :  {"apim", "dev", "admin", "help"},
             "display" :  {"apim", "dev", "admin", "help"},
         },
+        "server": {
+            "get"    :  None,
+            "set"     :  {"<url>", "https://localhost:9443", WSO2_SERVER},
+        },
         "apis": {
             "help"    :  None,
             "list"    :  {"entries", "names", "ids", "help"},
@@ -3587,11 +3623,11 @@ class AepCtl:
             "display" :  {"<id>", "<name/version>", "help"},
             "delete"  :  {"<id>", "<name/version>", "help"},
             "lifecycle" : { "created"    : { "<id>" , "<name/version>", "help"},
-                           "publish"    : { "<id>" , "<name/version>", "help"},
-                           "prototyped" : { "<id>" , "<name/version>", "help"},
-                           "deprecated" : { "<id>" , "<name/version>", "help"},
-                           "blocked"    : { "<id>" , "<name/version>", "help"},
-                           "retired"    : { "<id>" , "<name/version>", "help"}
+                            "publish"    : { "<id>" , "<name/version>", "help"},
+                            "prototyped" : { "<id>" , "<name/version>", "help"},
+                            "deprecated" : { "<id>" , "<name/version>", "help"},
+                            "blocked"    : { "<id>" , "<name/version>", "help"},
+                            "retired"    : { "<id>" , "<name/version>", "help"}
                           },
             "details" :  {"<id>", "all", "help"},
             "backup"  :  None,
@@ -3613,23 +3649,23 @@ class AepCtl:
         "categories": {
             "help"    :  None,
             "list"    :  {"entries", "names", "ids", "count", "help"},
-            "browse"  :  { "all",   "help"},
-            "get"     :  {"<name>", "help"},
-            "display" :  {"<name>", "help"},
-            "delete"  :  {"<name>", "help"},
-            "create"  :  {"<name>": {"<description>"}},
-            "update"  :  {"<name>": {"<description>"}},
+            "browse"  :  {"all"    ,   "help"},
+            "get"     :  {"<name>" , "help"},
+            "display" :  {"<name>" , "help"},
+            "delete"  :  {"<name>" , "help"},
+            "create"  :  {"<name>" : {"<description>"}},
+            "update"  :  {"<name>" : {"<description>"}},
             "backup"  :  None,
         },
         "applications": {
             "help"    :  None,
             "list"    :  {"entries", "names", "ids", "count", "help"},
-            "browse"  :  { "all",   "help"},
-            "get"     :  {"<name>", "help"},
-            "display" :  {"<name>", "help"},
-            "delete"  :  {"<name>", "help"},
-            "keys"    :  {"<name>", "help"},
-            "genkeys" :  {"<name>", "help"},
+            "browse"  :  { "all"   , "help"},
+            "get"     :  {"<name>" , "help"},
+            "display" :  {"<name>" , "help"},
+            "delete"  :  {"<name>" , "help"},
+            "keys"    :  {"<name>" , "help"},
+            "genkeys" :  {"<name>" , "help"},
             "backup"  :  None,
         },
         "users": {
@@ -3663,19 +3699,19 @@ class AepCtl:
         if (command == "HELP"):  # help
             return AepCtl.help(resource.lower(), command, AepCtl.wso2_commands)
         if (command == "BACKUP"):  # back up
-            res = StoreManager().store_back_up(resource=resource, service="wso2")
-            return AepCtl.print(resource, res)
+            entries = StoreManager().store_back_up(resource=resource, service="wso2")
+            return AepCtl.print(resource, entries)
         if (command == "LIST"):  # users list
             if (idName.upper() in [ "COUNT" ]) :
                 return AepCtl.print(resource.lower() + " count", str(storeManager.list(count=True)))
             if (idName.upper() in [ "ROLES", "ROLE" ]) :
                 return AepCtl.print(resource.lower() + " roles", apiRoles)
             if (idName.upper() in [ "NAMES", "NAME"]):
-                nlist = storeManager.list(names=True)
-                return AepCtl.print(resource.lower(), nlist)
+                names = storeManager.list(names=True)
+                return AepCtl.print(resource.lower(), names)
             if (idName.upper() in [ "IDS", "ID" ]):
-                nlist = storeManager.list(ids=True)
-                return AepCtl.print(resource.lower(), nlist)
+                ids = storeManager.list(ids=True)
+                return AepCtl.print(resource.lower(), ids)
             return AepCtl.print(resource.lower(), storeManager.list())
         if (command == "BROWSE"):  # users list
             entry_list = list()
@@ -3683,7 +3719,7 @@ class AepCtl:
         if (command == "GET"):  # get user
             entry = storeManager.get(idName)
             return AepCtl.print(resource.lower(), entry, idName)
-        if (command == "DISPLAY"):  # get user
+        if (command == "DISPLAY"):  # display user
             entry = storeManager.get(idName)
             return AepCtl.display(resource.lower(), entry, idName)
         if (command in [ "CREATE", "UPDATE" ] ):  # create user
@@ -3722,6 +3758,16 @@ class AepCtl:
             return AepCtl.help(resource, command, AepCtl.wso2_commands)
         if (payload.upper() in ["HELP"]):  # <resource> <command> <idName> help
             return AepCtl.help(resource, command, AepCtl.wso2_commands)
+
+        if (resource.upper() in ["SERVER"]):  # <resource> <command> help
+            global WSO2_SERVER
+            if (command.upper() in ["SET"]):  # <resource> <command> help
+                config = AepCtl.set_config_key("WSO2_SERVER", idName)
+                WSO2_SERVER = config["WSO2_SERVER"]
+                return AepCtl.print("SERVER", config, "Configuration")
+            if (command.upper() in ["GET"]):  # <resource> <command> help
+                return AepCtl.print("SERVER", WSO2_SERVER, "Configuration")
+            return AepCtl.print("SERVER", WSO2_SERVER, "Configuration")
 
         # Browser URLs
         if (command in ["BROWSER", "BR"]):  # Open Portal
@@ -3998,18 +4044,21 @@ class AepCtl:
 
     FS_COMMANDS = ["LOAD", "SAVE", "IMPORT", "EXPORT", "BACKUP", "RESTORE", "DELETE_ALL", "PROVISION_WS"]
 
-    @staticmethod
     def get_aep_completer(for_service : str = "all"):  # pragma: no cover
         dcmd = dict()
-        if (for_service.lower() == "fs")  : dcmd = AepCtl.get_datastore_commands()
-        if (for_service.lower() == "ds")  : dcmd = AepCtl.get_datastore_commands()
-        if (for_service.lower() == "ws")  : dcmd = copy.deepcopy(AepCtl.wso2_commands)
-        if (for_service.lower() == "aep") : dcmd = AepCtl.get_aep_commands()
-        if (for_service.lower() == "all") :
+        if (for_service.lower() == "fs"): dcmd = AepCtl.get_datastore_commands()
+        if (for_service.lower() == "ds"): dcmd = AepCtl.get_datastore_commands()
+        if (for_service.lower() == "tmf"): dcmd = AepCtl.get_datastore_commands()
+        if (for_service.lower() == "anme"): dcmd = AepCtl.get_datastore_commands()
+        if (for_service.lower() == "ws"): dcmd = copy.deepcopy(AepCtl.wso2_commands)
+        if (for_service.lower() == "aep"): dcmd = AepCtl.get_aep_commands()
+        if (for_service.lower() == "all"):
             dcmd = AepCtl.get_aep_commands()
             dcmd["ws"] = copy.deepcopy(AepCtl.wso2_commands)
             dcmd["fs"] = AepCtl.get_datastore_commands()
             dcmd["ds"] = AepCtl.get_datastore_commands()
+            dcmd["tmf"] = AepCtl.get_datastore_commands()
+            dcmd["anme"] = AepCtl.get_datastore_commands()
         return NestedCompleter.from_nested_dict(dcmd)
 
     @staticmethod
@@ -4284,27 +4333,38 @@ class AepCtl:
             session = None
         command = ""
         ctrl_c  = False
-        while command != "exit":
+        while (command != "exit"):
             if (session):
-                if (current_context == "fs"): text = AEPCTL_PROMPT + colored("fs", "red") + " > "  # Not compatible with prompt ?
-                if (current_context == "fs"): text = HTML(AEPCTL_PROMPT + " <IndianRed>"      + current_context + "</IndianRed>" + " > ")
-                if (current_context == "ds"): text = HTML(AEPCTL_PROMPT + " <MediumSeaGreen>" + current_context + "</MediumSeaGreen>" + " > ")
-                if (current_context == "ws"): text = HTML(AEPCTL_PROMPT + " <DeepSkyBlue>"    + current_context + "</DeepSkyBlue>" + " > ")
+                if (current_context == "fs"):   text = AEPCTL_PROMPT + colored("fs", "red") + " > "  # Not compatible with prompt ?
+                if (current_context == "fs"):   text = HTML(AEPCTL_PROMPT + " <Red>"     + current_context + "</Red>" + " > ")
+                if (current_context == "ds"):   text = HTML(AEPCTL_PROMPT + " <Green>"   + current_context + "</Green>" + " > ")
+                if (current_context == "ws"):   text = HTML(AEPCTL_PROMPT + " <Blue>"    + current_context + "</Blue>" + " > ")
+                if (current_context == "tmf"):  text = HTML(AEPCTL_PROMPT + " <Purple>"  + current_context + "</Purple>" + " > ")
+                if (current_context == "anme"): text = HTML(AEPCTL_PROMPT + " <Yellow>"  + current_context + "</Yellow>" + " > ")
                 try:
-                    command = session.prompt(text, completer=AepCtl.get_aep_completer(current_context), complete_while_typing=True)
+                    # command = session.prompt(text, completer=AepCtl.get_aep_completer(current_context), complete_while_typing=True)
+                    command = session.prompt(text, completer=AepCtl.get_aep_completer("all"), complete_while_typing=True)
                     ctrl_c  = False
                 except KeyboardInterrupt :   # Capture CTRL-C Reset Line
                     if (ctrl_c) : return     # Double CTRL-C Exit
                     ctrl_c = True
                     continue
             else:
-                if (current_context == "fs"): text = AEPCTL_PROMPT + colored(current_context, "red")   + " > "  # Not compatible with prompt ?
-                if (current_context == "ds"): text = AEPCTL_PROMPT + colored(current_context, "green") + " > "  # Not compatible with prompt ?
-                if (current_context == "ws"): text = AEPCTL_PROMPT + colored(current_context, "blue")  + " > "  # Not compatible with prompt ?
+                if (current_context == "fs"):   text = AEPCTL_PROMPT + colored(current_context, "red")       + " > "  # Not compatible with prompt ?
+                if (current_context == "ds"):   text = AEPCTL_PROMPT + colored(current_context, "green")     + " > "  # Not compatible with prompt ?
+                if (current_context == "ws"):   text = AEPCTL_PROMPT + colored(current_context, "blue")      + " > "  # Not compatible with prompt ?
+                if (current_context == "tmf"):  text = AEPCTL_PROMPT + colored(current_context, "magenta")   + " > "  # Not compatible with prompt ?
+                if (current_context == "anme"): text = AEPCTL_PROMPT + colored(current_context, "yellow")    + " > "  # Not compatible with prompt ?
                 command = input(AEPCTL_PROMPT + " " + current_context + " > ")
             logger.info("Prompt command : " + command)
             command = command.strip()
+            if (command.startswith(current_context)):
+                command = re.sub("^"+current_context, "", command)
             if (command in ["", " "]):
+                continue
+            if (command.upper() in ["TREE", "T"]):
+                tree = AepCtl.get_aep_completer_tree(current_context)
+                ut.Term.print_green(tree)
                 continue
             if (command.upper() in ["EXIT", "X", "QUIT", "Q", "BYE", "B"]):
                 return None
@@ -4323,11 +4383,18 @@ class AepCtl:
                 ut.Term.print_blue("On WSO2 API Manager")
                 current_context = "ws"
                 continue
-            command = current_context + " " + command
+            if (command.upper() == "TMF"):
+                ut.Term.print_purple("On TMF DataStore")
+                current_context = "tmf"
+                continue
+            if (command.upper() == "ANME"):
+                ut.Term.print_yellow("On ANME File DataStore")
+                current_context = "anme"
+                continue
+            if (re.sub(" .*$", "", command).upper() not in [ "DS", "FS", "WS", "TMF", "ANME"]):
+                command = current_context + " " + command
             res = AepCtl.main(command, interactive=True)
             logger.debug(res)
-            # print(str(res))
-
 
     ###
     ### Main

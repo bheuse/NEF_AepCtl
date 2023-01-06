@@ -3,7 +3,7 @@
 
 A utility to manage the Amdocs Exposure Platform, in the flavour of kubectl and apictl for wso2
 
-- Command line interface, interactive prompt, basic ui
+- Command line interface, interactive prompt, basic ui, server
 - Manage datastore, api gateway, nef services
 - Back up and restore
 
@@ -87,7 +87,7 @@ The addresses of the servers can be specified in this file :
 A self-contained executable can be generated using `build.bat` or build.sh. 
 The UI requires an X server in Linux for display.
 
-## aepectl reference
+## aepctl reference
 
 `TO BE COMPLETED`
 
@@ -158,18 +158,21 @@ $ ./apictl.exe login production -u admin -p admin -k
 > This is Phase 1 instructions 
 ```
 
-0. Login on Amdocs VPN 
-1. Login on Openet VPN
-2. Initially need to install kubectl if it’s not installed yet
-3. To configure access to K8S need to put file eks-nef-cluster.yaml to ~/.kube directory with name ‘config’ without any extension.
-4. Check connection to K8S and status of required pods by ‘kubectl get pods -n pentest | grep wso2’ command:
+1. Login on Amdocs VPN 
+2. Login on Openet VPN
+3. Initially need to install kubectl if it’s not installed yet
+4. To configure access to K8S need to put file eks-nef-cluster.yaml to ~/.kube directory with name ‘config’ without any extension.
+5. Check connection to K8S and status of required pods by ‘kubectl get pods -n pentest | grep wso2’ command:
+
 ```
 On Linux  : $ KUBE_CTL="kubectl"
 On Cygwin : $ KUBE_CTL="/cygdrive/c/users/bheuse/PycharmProjects/NEF_AepCtl/tools/kubectl.exe"
 
 $ $KUBE_CTL get pods -n pentest | grep wso2
 ```
-5. Forward port from K8S service to your local machine by 'kubectl port-forward service/wso2am-single-node-am-service 9443:9443 -n pentest &' command:
+
+6. Forward port from K8S service to your local machine by 'kubectl port-forward service/wso2am-single-node-am-service 9443:9443 -n pentest &' command:
+
 ```
 On Linux  : $ KUBE_CTL="kubectl"
 On Cygwin : $ KUBE_CTL="/cygdrive/c/users/bheuse/PycharmProjects/NEF_AepCtl/tools/kubectl.exe"
@@ -180,8 +183,10 @@ $ $KUBE_CTL port-forward service/wso2am-single-node-am-service 8243:8243 -n pent
 $ $KUBE_CTL port-forward service/nef-services-catalog-service 30106:8080 -n pentest  &
 $ $KUBE_CTL port-forward service/nef-application-user-profile-service 30107:8080 -n pentest  &
 ```
-6. Execute 1.auth1.sh, 2.auth2.sh and etc.
-7. Gen Flask
+ 
+7. Execute 1.auth1.sh, 2.auth2.sh and etc.
+8. Gen Flask
+
 ```
 $ java -jar tools/swagger-codegen-cli.jar generate -i NEF_Catalog_DataModel_API.yaml -l python-flask
 ```

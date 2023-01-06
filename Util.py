@@ -334,6 +334,11 @@ class Term:
         logging.debug(text)
 
     @staticmethod
+    def print_purple(text):
+        print(colored(text, "magenta"))
+        logging.debug(text)
+
+    @staticmethod
     def print_yellow(text):
         print(colored(text, "yellow"))
         logging.debug(text)
@@ -3363,7 +3368,7 @@ class ObjectReader():
         self.object = None
 
     @staticmethod
-    def readSimpleObject(object : dict = None)-> dict :
+    def readSimpleObject(object : dict = None) -> dict :
         if (not object) : object = dict()
         if (not isinstance(object, dict)):
             object = loadDataContent(object)
@@ -3375,7 +3380,7 @@ class ObjectReader():
         return object
 
     @staticmethod
-    def readSimpleObjectAttribute(object : dict, p_key : str)-> dict :
+    def readSimpleObjectAttribute(object : dict, p_key : str) -> dict :
         if (not object) : object = dict()
         if (not isinstance(object, dict)):
             object = loadDataContent(object)
