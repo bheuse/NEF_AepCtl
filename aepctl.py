@@ -18,9 +18,10 @@ import unittest
 import datetime
 import base64
 from enum import StrEnum
-from typing import List
 from pydantic import Field
 from pydantic import BaseModel
+from fastapi import File, UploadFile
+from fastapi.responses import JSONResponse, PlainTextResponse
 from rich.console import Console
 from rich.markdown import Markdown
 import Util as ut
@@ -32,7 +33,7 @@ from prompt_toolkit.completion import NestedCompleter
 from prompt_toolkit.completion import PathCompleter
 # from prompt_toolkit.contrib.completers.system import SystemCompleter
 import aepctlui
-import aepctlms
+# import aepctlms
 
 ###
 ### Logging
@@ -50,6 +51,7 @@ logDir    = "."+os.sep+"logs"
 logFile   = logDir+os.sep+__name__+"-"+timestamp+".log"
 logging.basicConfig(filename=logFile, filemode='w', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
 logger    = logging.getLogger(__name__)
+
 
 class AepCtlError(Exception):
     def __init__(self, message=''):
@@ -95,7 +97,7 @@ CATALOG_SERVER  = "http://localhost:30106"
 USERS_SERVER    = "http://localhost:30107"
 ANME_SERVER     = "https://localhost:5000"    # "https://anme.pagekite.me"
 TMF_SERVER      = "https://localhost:8000"
-AEP_SERVER      = "localhost:6000"
+AEP_SERVER      = "localhost:8085"
 
 AEPCTL_PROMPT = "aepctl"
 
@@ -3382,7 +3384,7 @@ class AepCtl:
         logger.info(error_text)
         ut.Term.print_red(error_text)
         ut.Term.print_blue(help_text)
-        return error_text
+        return str(error_text) + " " + str(help_text)
 
     @staticmethod
     def init() -> None:
@@ -3457,6 +3459,7 @@ class AepCtl:
 
     @staticmethod
     def print(resource: str, data: Union[dict, str, list], idName: str = None) -> str:
+        if (not resource): resource = "entries"
         if (idName):
             name = str(resource).lower() + "/" + str(idName)
         else:
@@ -3522,7 +3525,7 @@ class AepCtl:
     @staticmethod
     def aepctlui():
         if (AepCtl.ONCE_UI):
-            ut.Term.print_red("aepctlui only once - sorry (")
+            ut.Term.print_red("aepctlui only once - sorry :(")
             return None
         else:
             AepCtl.ONCE_UI = True
@@ -3532,12 +3535,12 @@ class AepCtl:
     @staticmethod
     def aepctlms():
         if (AepCtl.ONCE_MS):
-            ut.Term.print_red("aepctlms only once - sorry (")
+            ut.Term.print_red("aepctlms only once - sorry :(")
             return None
         else:
             AepCtl.ONCE_MS = True
             ut.Term.print_yellow("aepctlms")
-            return aepctlms.start_aepctlms()
+            return aepctlms.main(aepctlServer=AEPCTL_Configuration.get("AEP_SERVER"))
 
     @staticmethod
     def display_help():
@@ -3967,60 +3970,61 @@ class AepCtl:
             return AepCtl.print("roles", apiRoles)
 
     handle_output_commands = {
-        "json": None,
-        "yaml": None,
-        "display": None,
-        "file": {"<filename>"},
+        "json"    : None,
+        "yaml"    : None,
+        "display" : None,
+        "browse"  : None,
+        "file"    : {"<filename>"},
     }
 
     ds_commands = {
-        "help": None,
-        "get": {
+        "help"       : None,
+        "get"        : {
             "<id>"    : None,
             "<name>"  : None,
             "schema"  : handle_output_commands,
             "openapi" : handle_output_commands,
         },
-        "display": {
+        "display"    : {
             "<id>"    : None,
             "<name>"  : None,
             "schema"  : handle_output_commands,
             "openapi" : handle_output_commands,
         },
-        "list": {
+        "list"       : {
             "entries" : None,
             "count"   : None,
             "names"   : None,
             "ids"     : None,
         },
-        "browse": None,
-        "create": {
+        "browse"     : None,
+        "create"     : {
             "interactive"            : None,
             "<json / yaml fileName>" : None,
             "<json / yaml payload>"  : None,
         },
-        "update": {
+        "update"     : {
             "<json / yaml fileName>" : None,
             "<json / yaml payload>"  : None,
         },
-        "delete": {
+        "delete"     : {
             "all"      : None,
             "<idName>" : None,
         },
-        "openapi"      : handle_output_commands,
-        "schema"       : handle_output_commands,
-        "template"     : handle_output_commands,
-        "load"    : {
+        "openapi"    : handle_output_commands,
+        "schema"     : handle_output_commands,
+        "template"   : handle_output_commands,
+        "load"       : {
             "delete_all" : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
             "merge"      : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
         },
-        "save"         : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
-        "backup"       : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
-        "restore"      : {"<id/name>", "<name/version>", "all", "dir", "help"},
-        "provision"    : {"<id/name>", "<name/version>", "all", "help"},
-        "import"       : {"<id/name>", "<name/version>", "all", "dir", "help"},
-        "export"       : {"<id/name>", "<name/version>", "all", "help"},
-        "delete_all"   : None ,
+        "save"       : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
+        "backup"     : PathCompleter(expanduser=True),  # SystemCompleter(),  # PathCompleter(expanduser=True),
+        "restore"    : {"<id/name>", "<name/version>", "all", "dir", "help"},
+        "provision"  : {"<id/name>", "<name/version>", "all", "help"},
+        "import"     : {"<id/name>", "<name/version>", "all", "dir", "help"},
+        "export"     : {"<id/name>", "<name/version>", "all", "help"},
+        "delete_all" : None ,
     }
 
     @staticmethod
@@ -4067,23 +4071,23 @@ class AepCtl:
 
         logger.info("handle_datastore_command")
 
+        service  = arguments["SERVICE"].upper()
         resource = arguments["RESSOURCE"]
-        command  = arguments["COMMAND"]
+        command  = arguments["COMMAND"].upper()
         idName   = arguments["ID"]
-        service  = arguments["SERVICE"]
         payload  = arguments["PAYLOAD"]
         service  = "file" if (service in LOCAL_SERVICE) else "rest"
 
         if (command in ["HELP"]):  # <resource>  help
             return AepCtl.help(resource, AepCtl.get_datastore_commands())
-        if (resource in ["HELP"]):  # <command> help
+        if (resource.upper() in ["HELP"]):  # <command> help
             return AepCtl.help(resource, AepCtl.get_datastore_commands())
-        if (resource == "STORES"):
+        if (resource.upper() == "STORES"):
             return AepCtl.print(resource, str(StoreManager.list_store_entities()))
         if ((command == "") and (resource == "")):
             return AepCtl.error(resource, command, "No command nor resource specified.", AepCtl.help(resource, AepCtl.get_datastore_commands()))
         store = None
-        if (resource != "all"):
+        if ((resource != "all") and (command not in ["LOAD", "L"])):
             try:
                 store = StoreManager().getStore(resource, file=service)
             except Exception as ex:
@@ -4100,7 +4104,7 @@ class AepCtl:
             template = StoreManager.get_template(entity=resource)
             return AepCtl.handle_output(template, resource, command, idName, fileName="Template_" + resource + ".yaml")
         elif (command in ["LIST", "BROWSE"]):
-            if (resource == "STORES"):
+            if (resource.upper() == "STORES"):
                 return AepCtl.print(resource, StoreManager.list_store_entities())
             entry_list = store.list(ids=(idName.lower() == "ids"), names=(idName.lower() == "names"), count=(idName.lower() == "count"))
             if (store.error()):
@@ -4171,6 +4175,9 @@ class AepCtl:
             res = StoreManager().store_back_up(resource=resource, service=service, directory=idName)
             return AepCtl.print(resource, res)
         elif (command in ["LOAD"]):
+            if ((idName == "") or  (idName == None)):
+                idName = resource
+                resource = None
             delete_all = False
             if (idName.lower() in ["deleteall", "delete_all", "reset"]):
                 delete_all = True
@@ -4265,8 +4272,8 @@ class AepCtl:
                 (command.upper()  in AEP_RESSOURCES) or
                 (command.upper()  in WSO2_RESSOURCES)):
             tmp_res  = command
-            command  = resource.upper()
-            resource = tmp_res.upper()
+            command  = resource   # .upper()
+            resource = tmp_res    # .upper()
             logger.info("Swapped Resource=" + str(resource) + " Command=" + str(command))
         resource = resource.strip()
         command  = command.strip()
@@ -4322,6 +4329,9 @@ class AepCtl:
             return ut.Verbose.swap_verbose()
         elif (command.upper() in ["UI", "U"]):
             return Thread(target=AepCtl.aepctlui).start()
+        elif (command.upper() in ["MS", "M"]):
+            # return Thread(target=AepCtl.aepctlms).start()
+            return AepCtl.aepctlms()
         elif (command.upper() in ["BATCH", "B"]):
             return AepCtl.batch(resource)
 
@@ -4602,6 +4612,51 @@ class AepCtl:
         # os.chdir(AEPCTL_HOME_DIR)
 
         return AepCtl.handle_command(args)
+
+    @staticmethod
+    def handle(command, payload : Union[dict, str, File] = None):
+        # command = re.sub("^"+Tags.fs,   "fs",   command)
+        # command = re.sub("^"+Tags.ds,   "ds",   command)
+        # command = re.sub("^"+Tags.ws,   "ws",   command)
+        # command = re.sub("^"+Tags.tmf,  "tmf",  command)
+        # command = re.sub("^"+Tags.anme, "anme", command)
+        logger.info("AepCtl Command " + str(command))
+        payload_filename = ut.uuid()
+
+        if (payload):
+            if (isinstance(payload, dict)):  # JSON Request Body
+                logger.info("AepCtl Payload \n" + ut.to_json(payload))
+                payload_filename = "backup" + os.sep + payload_filename+"_payload.json"
+                ut.saveJsonFile(payload, payload_filename)
+                logger.info("Payload saved in : " + payload_filename)
+                command = command + " " + payload_filename
+            if (isinstance(payload, str)):  # FileName
+                # payload = ut.loadData(str)
+                ut.saveJsonFile(payload, payload_filename)
+                payload_filename = payload
+                logger.info("Payload saved in : " + payload_filename)
+                command = command + " " + payload_filename
+            if (isinstance(payload, UploadFile)):  # File
+                payload_filename = "backup" + os.sep + payload_filename + "_" + payload.filename
+                with open(payload_filename, "wb+") as file_object:
+                    file_object.write(payload.file.read())
+                logger.info("Payload saved in : " + payload_filename)
+                command = command + " " + payload_filename
+
+            logger.info("AepCtl Command " + str(command))
+
+        result = AepCtl.main(command, interactive=False)
+
+        if (payload):
+            ut.safeDeleteFile(payload_filename)
+            logger.info("Payload deleted  : " + payload_filename)
+
+        logger.info(str(result))
+        js_res = ut.loadDataContent(result)
+        if (js_res):
+            return JSONResponse(content=js_res, status_code=200)
+        else:
+            return PlainTextResponse(content=result, status_code=400)
 
 
 if __name__ == '__main__':    # pragma: no cover

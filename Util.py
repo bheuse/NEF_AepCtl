@@ -2673,6 +2673,7 @@ class SuperDict():
 
     # Get Item by Key Path, with / as separator
     def getPath(self, key: str, default=None):
+        if (not key) : return default
         try:
             v = dpath.get(self.data, key)
             if (v != None): return v
@@ -2722,14 +2723,15 @@ class SuperDict():
 
     # Get Item by Key Path, with / as separator
     def get(self, key : str, default=None):
+        if (not key) : return default
         try:
             v = self.getPath(key)
             if (v != None): return v
             else:
-                logger.debug("Key not found : ["+key+"] - Defaulted to ["+str(default)+"]")
+                logger.debug("Key not found : [" + str(key) + "] - Defaulted to ["+str(default)+"]")
                 return default
         except:
-            logger.debug("Key Exception : [" + key + "] - Defaulted to [" + str(default) + "]")
+            logger.debug("Key Exception : [" + str(key) + "] - Defaulted to [" + str(default) + "]")
             return default
 
         self.rules = json_decode_multiline(rl.get("Rules"))

@@ -1304,7 +1304,7 @@ class MainGUI(threading.Thread):
 
             # Show Configuration
             if (self.current_event == 'Configuration ...') or ('M_CONFIG' in self.current_event):
-                res = self.aepctl("help")
+                res = self.aepctl("config")
                 sg.PopupScrolled(res, title="aepctl Configuration", size=(40, 20))
                 continue
 

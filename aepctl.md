@@ -1,4 +1,7 @@
 
+
+![img.png](https://www.amdocs.com/sites/default/files/Favicon-dark_0.png)
+
 # aepctl overview
 
 A utility to manage the Amdocs Exposure Platform, in the flavour of kubectl and apictl for wso2
